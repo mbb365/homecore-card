@@ -1,0 +1,41 @@
+<main id="app"><div class="shell">
+<div class="toast" id="toast" aria-live="polite"></div>
+
+<!-- HOME: the house page, drawn by test-focus.js into the grid -->
+<section class="view active" id="homeView">
+  <div class="grid"></div>
+</section>
+
+<!-- SETTINGS: HomeCore's own tabs are added by test-focus.js; the theme row is moved into its Appearance tab -->
+<section class="view" id="settingsView">
+  <div class="settingsHeader"><button class="back" id="settingsBack" aria-label="Back" data-icon="back"></button><div class="settingsTitle">HomeCore</div></div>
+  <div class="tabs rubberTabs">
+    <div class="rubberIndicator" id="rubberIndicator" aria-hidden="true"></div>
+    <button class="tab segBtn active" data-pane="appearancePane">Appearance</button>
+  </div>
+  <div class="settingsPane active" id="appearancePane">
+    <section class="card">
+      <div class="toggleList">
+        <div class="toggleRow">
+          <div>
+            <strong>Theme</strong>
+            <div class="status">Choose the app surface treatment.</div>
+          </div>
+          <div class="themeChoice">
+            <button class="themeBtn active" data-theme="dark">Dark</button>
+            <button class="themeBtn" data-theme="light">Light</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</section>
+</div>
+
+<!-- NAV -->
+<nav class="bottomNav">
+  <button class="navBtn active" id="homeNav" title="Home" aria-label="Home" data-icon="home"></button>
+  <button class="navBtn" id="settingsNav" title="Settings" aria-label="Settings" data-icon="settings"></button>
+  <button class="navBtn" id="tvNav" title="Full screen" aria-label="Full screen" data-icon="fullscreen"></button>
+</nav>
+</main>
