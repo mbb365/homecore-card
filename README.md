@@ -1,8 +1,14 @@
 # HomeCore
 
-A page for your whole house, to try HomeCore with your own devices. Experiments in a new design language.
+A test setup for HomeCore.
 
-HomeCore is one page for your whole house: your home's name and summaries, the weather, your rooms, favourites, what's just happened, energy, and your lights and heating. The rooms and the weather each open as a page of their own.
+This is being used for live testing of (but not limited to...) spacing / padding / colour / interaction / motion.
+
+CURRENT KEY FEEDBACK NEEDED IN - 
+What happens on the 'more info' popups. I am looking for how to display the generic data about an entity, and how to display a binary action.
+
+
+
 
 ## Install HomeCore, step by step
 
