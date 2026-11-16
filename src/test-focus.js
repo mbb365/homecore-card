@@ -2147,7 +2147,9 @@ export function mountTestFocus(root, { config, getHass }) {
     const pack = (f, c, w) => {
       const taken = new Set(), at = [];
       f.cards.forEach((it, i) => {
-        const big = mixed && i === 0 && c >= 2 && f.cards.length > 1, sc = big ? 2 : 1, sr = big && !phone ? 2 : 1;
+        // beside the stacked cards (Matt, 16 Nov: match the weather card) the big area is wide, not tall: two columns in
+        // the row that's the cards' height
+        const big = mixed && i === 0 && c >= 2 && f.cards.length > 1, sc = big ? 2 : 1, sr = big && !phone && !side ? 2 : 1;
         it.el.classList.remove('hcAreaS', 'hcAreaM', 'hcAreaL', 'hcAreaBig');
         it.el.classList.add('hcArea' + size.toUpperCase());
         it.el.classList.toggle('hcAreaBig', big);
@@ -2162,11 +2164,14 @@ export function mountTestFocus(root, { config, getHass }) {
       const rowsN = Math.max(0, ...at.map((p) => p.r + p.sr));
       // in Bento a card with nothing under it grows down to the group's foot, so the box has no hole (not on a phone,
       // where each row is as tall as it needs)
-      if (bento && !phone) at.forEach((p) => { while (p.r + p.sr < rowsN && !taken.has((p.r + p.sr) + ',' + p.c) && p.sc === 1) { taken.add((p.r + p.sr) + ',' + p.c); p.sr++; } });
+      // not beside the stacked cards, where nothing grows past the card beside it (Matt, 16 Nov)
+      if (bento && !phone && !side) at.forEach((p) => { while (p.r + p.sr < rowsN && !taken.has((p.r + p.sr) + ',' + p.c) && p.sc === 1) { taken.add((p.r + p.sr) + ',' + p.c); p.sr++; } });
       at.forEach((p) => Object.assign(p.it.el.style, { width: (p.sc * w + (p.sc - 1) * gap) + 'px', height: phone ? '' : (p.sr * ch + (p.sr - 1) * gap) + 'px' }));
-      // a phone's row as tall as its tallest card, measured once they've all let go of their old height
-      const rowHs = [...Array(rowsN)].map(() => (phone ? 0 : ch));
+      // a phone's row as tall as its tallest card, measured once they've all let go of their old height; beside the
+      // stacked cards the first row is their height, the weather card's (Matt, 16 Nov: "match the size of the weather card")
+      const rowHs = [...Array(rowsN)].map((_, r) => (phone ? 0 : side && r === 0 ? th : ch));
       if (phone) at.forEach((p) => { rowHs[p.r] = Math.max(rowHs[p.r], p.it.el.offsetHeight); });
+      else at.forEach((p) => { p.it.el.style.height = (rowHs.slice(p.r, p.r + p.sr).reduce((a2, b2) => a2 + b2, 0) + (p.sr - 1) * gap) + 'px'; });
       const rowY = []; let y = headH(f);
       rowHs.forEach((h, r) => { rowY[r] = y; y += h + gap; });
       return { h: y - (rowsN ? gap : 0), places: at.map((p) => ({ it: p.it, x: p.c * (w + gap), y: rowY[p.r], w: p.sc * w + (p.sc - 1) * gap, h: rowHs.slice(p.r, p.r + p.sr).reduce((a2, b2) => a2 + b2, 0) + (p.sr - 1) * gap })) };

@@ -654,7 +654,8 @@ button.tfAreaIcon{cursor:pointer}
 .tfRoomTile .tfRoomIcon{background:var(--hc-icon);color:var(--hc-icon-ink)}
 .tfRoomInline,.tfRoomSub{display:none}
 .tfRoomReading{display:flex;flex-direction:column;gap:4px;min-width:0}
-.tfRoomBig{overflow:hidden;color:var(--text);font:500 46px/46px var(--font-tile);letter-spacing:-.92px;white-space:nowrap;text-overflow:ellipsis}
+/* the reading as the Figma Source of truth's tfACMain (Matt, 16 Nov): 32 Geist ExtraLight on 38.5, at every size */
+.tfRoomBig{overflow:hidden;color:var(--text);font:200 32px/38.5px var(--font-tile);letter-spacing:0;white-space:nowrap;text-overflow:ellipsis}
 .tfRoomSub{overflow:hidden;color:var(--muted);font:400 16px/19px var(--font);white-space:nowrap;text-overflow:ellipsis}
 .tfRoomDevices{display:flex;gap:12px}
 .tfRoomDevices .tfIcon{border:0;padding:0;background:var(--hc-icon);color:var(--hc-icon-ink);cursor:pointer}
@@ -663,8 +664,6 @@ button.tfAreaIcon{cursor:pointer}
 #app.tfBoard .tfRoomTile[data-rows="1"] :is(.tfRoomReading,.tfRoomDevices),#app.tfBoard .tfRoomTile[data-rows="2"] .tfRoomDevices{display:none}
 #app.tfBoard .tfRoomTile:is([data-rows="4"],[data-rows="5"]) .tfActionHead .activityRowMeta{display:none}
 #app.tfBoard .tfRoomTile:is([data-rows="4"],[data-rows="5"]) .tfRoomSub{display:block}
-#app.tfBoard .tfRoomTile[data-rows="4"] .tfRoomBig{font-size:52px;line-height:52px;letter-spacing:-1.92px}
-#app.tfBoard .tfRoomTile[data-rows="5"] .tfRoomBig{font-size:64px;line-height:64px;letter-spacing:-1.92px}
 /* narrow (one column; Matt, 11 Nov): all four devices, two by two; at M the reading moves into the head to make room,
    at L and XL it stays big above them */
 #app.tfBoard .tfRoomTile[data-cols="1"]:is([data-rows="3"],[data-rows="4"],[data-rows="5"]) .tfRoomDevices{display:grid;grid-template-columns:repeat(2,max-content)}
@@ -1020,7 +1019,6 @@ button.tfAreaIcon{cursor:pointer}
 #app.tfOverview.tfDash #homeView .tfRoomTile>.tfActionHead{margin-bottom:0}
 #app.tfOverview.tfDash #homeView .tfRoomTile .tfActionHead .activityRowMeta{display:none}
 #app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomReading{margin-top:35px;gap:0}
-#app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomBig{font:400 48px/64px var(--font-tile);letter-spacing:-1.92px}
 #app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomSub{display:block;margin-top:-7px;font:400 16px/19px var(--font)}
 #app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomDevices{display:flex;justify-content:space-between;min-height:0;margin-top:auto;padding-top:16px}
 #app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomHeads{display:none}
@@ -1050,21 +1048,17 @@ button.tfAreaIcon{cursor:pointer}
    gives up to 15% on a smaller screen (--hc-k), its reading with it. A card shows what fits: its devices one row, the
    ones that don't fit left off */
 #app.tfOverview.tfDash #homeView .tfRoomTile{overflow:hidden}
-#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaL .tfRoomBig{font-size:calc(48px * var(--hc-k,1));line-height:calc(64px * var(--hc-k,1))}
 #app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaL .tfRoomReading{margin-top:calc(35px * var(--hc-k,1))}
 #app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaM .tfRoomReading{margin-top:calc(14px * var(--hc-k,1))}
-#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaM .tfRoomBig{font-size:calc(40px * var(--hc-k,1));line-height:calc(52px * var(--hc-k,1));letter-spacing:-1.6px}
 #app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaM .tfRoomSub{margin-top:-6px}
 #app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaS{padding:12px}
 #app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaS .tfRoomReading{margin-top:calc(8px * var(--hc-k,1))}
-#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaS .tfRoomBig{font-size:calc(32px * var(--hc-k,1));line-height:calc(40px * var(--hc-k,1));letter-spacing:-1.28px}
 #app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaS .tfRoomSub{display:none}
 #app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaM,.hcAreaS) .tfRoomDevices,
 #app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaM,.hcAreaS):not(:has(.tfRoomDevices :nth-child(4))) .tfRoomDevices{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:0 8px;height:var(--chip-size);overflow:hidden;padding-top:0;margin-top:auto}
 #app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaS .tfRoomReading{flex:none}
 #app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomReading{margin-bottom:12px} /* the devices at least 12 under it (on a phone the card is only as tall as it needs) */
 /* Bento's big area (two by two): the reading as Large's, its devices by name, two to a row, as the custom dashboard's wide area tile */
-#app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaS,.hcAreaM,.hcAreaL).hcAreaBig .tfRoomBig{font-size:calc(64px * var(--hc-k,1));line-height:calc(80px * var(--hc-k,1));letter-spacing:-2.56px}
 #app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaS,.hcAreaM,.hcAreaL).hcAreaBig .tfRoomReading{margin-top:calc(35px * var(--hc-k,1))}
 #app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaS,.hcAreaM,.hcAreaL).hcAreaBig .tfRoomSub{display:block}
 #app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaS,.hcAreaM,.hcAreaL).hcAreaBig .tfRoomDevices{display:none!important}
