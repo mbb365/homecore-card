@@ -2785,19 +2785,8 @@ export function mountTestFocus(root, { config, getHass }) {
   });
   homeTray.addEventListener('pointerdown', (ev) => {
     const g = ev.target.closest('[data-he-grip]'); if (!g || ev.button !== 0) return;
-    ev.preventDefault();
-    const li = g.closest('[data-he-id]'), ul = li.parentElement;
-    li.classList.add('moving');
-    const onMove = (e) => {
-      const rows = [...ul.children].filter((x) => x !== li), next = rows.find((x) => { const r = x.getBoundingClientRect(); return e.clientY < r.top + r.height / 2; });
-      if (next !== li.nextElementSibling) ul.insertBefore(li, next || null);
-    };
-    const onUp = () => {
-      removeEventListener('pointermove', onMove); removeEventListener('pointerup', onUp);
-      li.classList.remove('moving');
-      homeOrder(ul, [...ul.children].map((x) => x.dataset.heId).filter(Boolean));
-    };
-    addEventListener('pointermove', onMove); addEventListener('pointerup', onUp);
+    const ul = g.closest('[data-he-list]'), list = ul.dataset.heList;
+    listDrag(ev, g.closest('[data-he-id]'), 'heId', (ids) => homeOrder(ul, ids), (id) => homeTray.querySelector('[data-he-list="' + list + '"] [data-he-id="' + CSS.escape(id) + '"]'));
   });
   homeTray.addEventListener('input', (ev) => { if (ev.target.matches('[data-he-search]')) { const at = ev.target.selectionStart; drawHomeTray(); const i = homeTray.querySelector('[data-he-search]'); i.focus(); i.setSelectionRange(at, at); } });
   homeTray.addEventListener('click', (ev) => {
@@ -2927,19 +2916,7 @@ export function mountTestFocus(root, { config, getHass }) {
   });
   tray.addEventListener('pointerdown', (ev) => {
     const g = ev.target.closest('[data-area-grip]'); if (!g || ev.button !== 0) return;
-    ev.preventDefault();
-    const li = g.closest('[data-area-id]'), ul = li.parentElement;
-    li.classList.add('moving');
-    const onMove = (e) => {
-      const rows = [...ul.children].filter((x) => x !== li), next = rows.find((x) => { const r = x.getBoundingClientRect(); return e.clientY < r.top + r.height / 2; });
-      if (next !== li.nextElementSibling) ul.insertBefore(li, next || null);
-    };
-    const onUp = () => {
-      removeEventListener('pointermove', onMove); removeEventListener('pointerup', onUp);
-      li.classList.remove('moving');
-      saveAreaOrder([...ul.children].map((x) => x.dataset.areaId).filter(Boolean));
-    };
-    addEventListener('pointermove', onMove); addEventListener('pointerup', onUp);
+    listDrag(ev, g.closest('[data-area-id]'), 'areaId', saveAreaOrder, (id) => tray.querySelector('[data-area-id="' + CSS.escape(id) + '"]'));
   });
   // on a phone the keyboard covers the tray's foot (Matt, 16 Nov: the search disappeared under it): the tray ends
   // where the keyboard starts, and the field being typed in is scrolled into view
@@ -3122,26 +3099,58 @@ export function mountTestFocus(root, { config, getHass }) {
     savePhone(keys, key);
   });
   // the favourites' order, by their grips
-  function reorderFav(ev, li) {
+  /* a row dragged up or down a list (Matt, 16 Nov: "the correct animation and feel"): Dashboards' drag, the Motion
+     Lab's, along the list. It lifts 3.5% and follows the pointer on a spring (pull, keep), stretching a little with its
+     speed; the rows in the way slide aside (the lab's gap, with its overshoot); let go, it springs into its place (slide)
+     and squashes as it lands. Where it'll go follows the pointer, not the spring */
+  function listDrag(ev, li, key, save, findNow) {
     ev.preventDefault();
-    const list = li.parentElement;
-    li.classList.add('moving');
+    const D = M.drag, still = reduced(), lift = 1 + D.lift / 100;
+    const rows = [...li.parentElement.children].filter((x) => x.dataset[key]);
+    const from = rows.indexOf(li), rects = rows.map((x) => x.getBoundingClientRect()), last = rows.length - 1;
+    const shift = rects[from].height + (rows.length > 1 ? rects[1].top - rects[0].bottom : 0);
+    const mid = (i) => rects[i].top + rects[i].height / 2;
+    const y0 = ev.clientY, lo = rects[0].top - rects[from].top, hi = rects[last].top - rects[from].top;
+    let dy = 0, y = 0, vy = 0, lt = 1, to = from, raf = 0;
+    li.classList.add('hcListDragging');
+    rows.forEach((x) => { if (x !== li) x.style.transition = still ? 'none' : 'transform ' + D.gap + 'ms ' + EASE.land; });
+    const frame = () => {
+      raf = requestAnimationFrame(frame);
+      if (still) { y = dy; li.style.transform = 'translateY(' + y + 'px)'; return; }
+      vy = springStep(vy, dy - y, D.pull / 100, D.keep / 100); y += vy; lt += (lift - lt) * 0.25;
+      const st = Math.min(Math.abs(vy) / 48, 1);
+      li.style.transform = 'translateY(' + y.toFixed(2) + 'px) scale(' + (lt * (1 - 0.063 * st)).toFixed(4) + ',' + (lt * (1 + 0.1 * st)).toFixed(4) + ')';
+    };
+    raf = requestAnimationFrame(frame);
     const move = (e) => {
-      const over = [...list.children].find((x) => { const r = x.getBoundingClientRect(); return x !== li && e.clientY >= r.top && e.clientY <= r.bottom; });
-      if (over) { const r = over.getBoundingClientRect(); list.insertBefore(li, e.clientY < r.top + r.height / 2 ? over : over.nextSibling); }
+      dy = Math.max(lo, Math.min(hi, e.clientY - y0));
+      const c = mid(from) + dy, next = rows.filter((x, i) => i !== from && mid(i) < c).length;
+      if (next === to) return;
+      to = next;
+      rows.forEach((x, i) => { if (x !== li) x.style.transform = from < to && i > from && i <= to ? 'translateY(' + -shift + 'px)' : to < from && i >= to && i < from ? 'translateY(' + shift + 'px)' : ''; });
     };
     const up = () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-      window.removeEventListener('pointercancel', up);
-      li.classList.remove('moving');
-      const stars = new Set(starred());
-      trayHtml.favs = null;
-      saveFavs({ favourites: [...list.children].map((x) => x.dataset.trayFav).filter((id) => stars.has(id)) });
+      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
+      cancelAnimationFrame(raf);
+      const was = li.getBoundingClientRect(), id = li.dataset[key];
+      rows.forEach((x) => { x.style.transition = 'none'; x.style.transform = ''; });
+      li.classList.remove('hcListDragging');
+      const ids = rows.map((x) => x.dataset[key]);
+      ids.splice(to, 0, ids.splice(from, 1)[0]);
+      save(ids);
+      const now = findNow(id) || li;
+      requestAnimationFrame(() => rows.forEach((x) => { x.style.transition = ''; }));
+      if (still) return;
+      const r = now.getBoundingClientRect(), fy = was.top + was.height / 2 - (r.top + r.height / 2);
+      now.classList.add('hcListLanding');
+      const a = now.animate([{ transform: 'translateY(' + fy + 'px) scale(' + lt + ')', filter: 'drop-shadow(0 10px 30px rgba(0,0,0,.35))' }, { transform: 'none', filter: 'drop-shadow(0 0 0 rgba(0,0,0,0))' }], { duration: D.slide, easing: EASE.land });
+      a.finished.then(() => { now.classList.remove('hcListLanding'); squash(now); }, () => now.classList.remove('hcListLanding'));
     };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-    window.addEventListener('pointercancel', up);
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
+  }
+  function reorderFav(ev, li) {
+    listDrag(ev, li, 'trayFav', (ids) => { const stars = new Set(starred()); trayHtml.favs = null; saveFavs({ favourites: ids.filter((id) => stars.has(id)) }); },
+      (id) => tray.querySelector('[data-tray-fav="' + CSS.escape(id) + '"]'));
   }
   tray.addEventListener('pointerdown', (ev) => {
     if (ev.button > 0) return;

@@ -1102,6 +1102,9 @@ button.tfAreaIcon{cursor:pointer}
 .hcHeRow{display:grid;grid-template-columns:36px var(--chip-size) minmax(0,1fr) auto;align-items:center;gap:10px;min-height:var(--tile-min);padding:0 4px;border-radius:var(--r-tile)}
 .hcHeRow .tfIcon{background:var(--hc-icon);color:var(--hc-icon-ink)}
 .hcHeRow.moving{background:var(--card);box-shadow:var(--hc-hair-all)}
+/* a row being dragged in a list (Dashboards' drag, along the list): above the rest, lifted, with the cards' shadow */
+:is(.hcHeRow,.tfTrayFav):is(.hcListDragging,.hcListLanding){position:relative;z-index:5;background:var(--card)}
+:is(.hcHeRow,.tfTrayFav).hcListDragging{filter:drop-shadow(0 10px 30px rgba(0,0,0,.35));cursor:grabbing}
 .hcHeGrip{color:var(--muted);cursor:grab;touch-action:none}
 .hcHeSum .tfIcon{color:var(--sum-ink,var(--hc-icon-ink))}
 #app .hcHeRow.hcHeSum .tfIcon{background-color:transparent} /* no chip, as on the overview */
