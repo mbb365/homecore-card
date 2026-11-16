@@ -1181,7 +1181,10 @@ export function mountTestFocus(root, { config, getHass }) {
   }
   let areaRooms = []; // the rooms with area cards, in Matt's order
   // the areas the Areas card shows (Matt, 11 Nov: chosen in the edit tray); one switched off keeps its page and its tile
-  const areasShown = () => { const off = new Set(prefs.dash?.areasOff || []); return areaRooms.filter((r) => !off.has(r.id)); };
+  // the areas in their order (Matt, 16 Nov: dragged in the edit tray's Areas tab, the same order on Home); none dragged
+  // yet, the areas page's
+  const byAreaOrder = (list) => { const o = prefs.areaOrder || []; const at = (r) => { const i = o.indexOf(r.id); return i < 0 ? o.length + list.indexOf(r) : i; }; return [...list].sort((a, b) => at(a) - at(b)); };
+  const areasShown = () => { const off = new Set(prefs.dash?.areasOff || []); return byAreaOrder(areaRooms).filter((r) => !off.has(r.id)); };
   const areasHtml = (order) => {
     const shown = areasShown();
     if (!shown.some((r) => r.id === activeArea)) activeArea = shown[0]?.id || null;
@@ -1423,7 +1426,7 @@ export function mountTestFocus(root, { config, getHass }) {
     ]);
     // edit mode's old choices (sections, order, sizes…) are left behind: the page is laid out as Home Assistant has it
     const v = mine?.value || {};
-    prefs = { favourites: v.favourites ?? null, sources: v.sources, hiddenSums: v.hiddenSums, shownSums: v.shownSums, home: v.home, dash: v.dash, named: v.named, favHidden: v.favHidden, suggest: v.suggest, favSeeded: v.favSeeded, favsTitle: v.favsTitle };
+    prefs = { favourites: v.favourites ?? null, sources: v.sources, hiddenSums: v.hiddenSums, shownSums: v.shownSums, home: v.home, dash: v.dash, named: v.named, favHidden: v.favHidden, suggest: v.suggest, favSeeded: v.favSeeded, favsTitle: v.favsTitle, areaOrder: v.areaOrder };
     haHome = home?.value || {};
     haSecurity = security?.value || {};
     predicted = Array.isArray(usage?.entities) ? usage.entities : [];
@@ -1755,7 +1758,8 @@ export function mountTestFocus(root, { config, getHass }) {
   // a card the page hasn't offered before starts off the board, waiting in the edit tray (known: the ones it has)
   // the overview's board is always the same: Favourites and each area's card, every one XL, nothing hidden but the
   // rest, and nothing saved
-  const overviewRooms = () => areaRooms.map((r) => 'room:' + r.id);
+  const overviewRoomsAll = () => byAreaOrder(areaRooms);
+  const overviewRooms = () => { const off = new Set(prefs.home?.areasOff || []); return overviewRoomsAll().filter((r) => !off.has(r.id)).map((r) => 'room:' + r.id); };
   function overviewPrefs() {
     const rooms = overviewRooms();
     return { cells: {}, spans: { favs: 2 }, hidden: Object.keys(BOARD_NAMES).filter((k) => !['title', ...(prefs.home?.sums === false ? [] : ['sums']), ...(prefs.home?.favs === false ? [] : ['favs']), ...(homeWeather() ? ['wx'] : []), ...(homeEnergy() ? ['energy'] : [])].includes(k)),
@@ -2600,8 +2604,8 @@ export function mountTestFocus(root, { config, getHass }) {
     '<button class="pill tfTrayAdd hcAddBtn" type="button" data-tile-add aria-expanded="false">' + PLUS + '<span>Add tile</span></button>' +
     '<div class="tfTrayPick" data-pick="tiles" hidden><input class="addInput" type="search" placeholder="Search devices" aria-label="Search devices" autocomplete="off" data-tile-search>' +
     '<ul class="tfTrayList" data-tray="tilepick"></ul></div></section>' +
-    '<section class="tfTraySection"><div class="sectionLabel">Areas</div><p class="tfTrayNote">Which areas the Areas card shows, and one area on its own instead.</p>' +
-    '<button class="pill tfTrayAdd" type="button" data-area-choose aria-expanded="false">Choose areas</button>' +
+    '<section class="tfTraySection"><div class="sectionLabel">Areas</div><p class="tfTrayNote">Which areas the Areas card shows. Drag to change their order, here and on Home.</p>' +
+    '<ul class="tfTrayList hcHeList" data-tray="areas"></ul>' +
     '<button class="pill tfTrayAdd hcAddBtn" type="button" data-room-add aria-expanded="false">' + PLUS + '<span>Add area</span></button>' +
     '<ul class="tfTrayList" data-tray="roompick" hidden></ul></section>' +
     '<section class="tfTraySection" data-tray="phone"></section>' +
@@ -2610,36 +2614,6 @@ export function mountTestFocus(root, { config, getHass }) {
     '<div class="tfTrayPick" data-pick="favs" hidden><input class="addInput" type="search" placeholder="Search devices" aria-label="Search devices" autocomplete="off" data-fav-search>' +
     '<ul class="tfTrayList" data-tray="pick"></ul></div><div class="toggleRow tfTraySuggest" data-tray="favtitle"></div><div class="toggleRow tfTraySuggest" data-tray="suggest"></div></section></div>';
   app.appendChild(tray);
-  /* Choose areas (Matt, 11 Nov): a pop-out beside the tray, a switch for each area the Areas card can show; one
-     switched off keeps its page and its own tile. It closes with Escape, and with the tray */
-  const areaPop = Object.assign(document.createElement('div'), { className: 'card tfTrayPop' });
-  areaPop.setAttribute('role', 'dialog'); areaPop.setAttribute('aria-label', 'Areas'); areaPop.hidden = true;
-  app.appendChild(areaPop);
-  const areaChoose = () => tray.querySelector('[data-area-choose]');
-  function drawAreaPop() {
-    const shown = new Set(areasShown().map((r) => r.id));
-    areaPop.innerHTML = '<div class="tfTrayPopTitle">Areas</div>' + areaRooms.map((r) => '<div class="tfTrayPopRow">' +
-      '<button class="switch' + (shown.has(r.id) ? ' on' : '') + '" type="button" role="switch" aria-checked="' + shown.has(r.id) + '" aria-label="' + esc(r.name) + '" data-area-on="' + esc(r.id) + '"></button>' +
-      '<span class="tfIcon"><span class="tfAreaGlyph"' + iconSlot('area:' + r.id, r.icon || 'mdi:texture-box', r.name) + '></span></span><span class="tfTrayPopName">' + esc(r.name) + '</span></div>').join('');
-    fillIcons(areaPop);
-  }
-  function closeAreaPop() { if (areaPop.hidden) return; areaPop.hidden = true; areaChoose()?.setAttribute('aria-expanded', 'false'); }
-  function toggleAreaPop() {
-    if (!areaPop.hidden) { closeAreaPop(); return; }
-    drawAreaPop(); areaPop.hidden = false; areaChoose().setAttribute('aria-expanded', 'true');
-    const r = areaChoose().getBoundingClientRect();
-    areaPop.style.top = Math.max(16, Math.min(r.top - 12, innerHeight - areaPop.offsetHeight - 16)) + 'px';
-  }
-  areaPop.addEventListener('click', (ev) => {
-    const sw = ev.target.closest('[data-area-on]');
-    if (!sw) return;
-    const on = !sw.classList.contains('on'), off = new Set(prefs.dash?.areasOff || []);
-    if (on) off.delete(sw.dataset.areaOn); else off.add(sw.dataset.areaOn);
-    saveDash({ ...dashPrefs(), areasOff: [...off] });
-    sw.classList.toggle('on', on); sw.setAttribute('aria-checked', String(on));
-    refresh();
-  });
-  areaPop.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { ev.stopPropagation(); closeAreaPop(); areaChoose()?.focus(); } });
   let trayTucked = false, trayPicking = false, tilePicking = false, roomPicking = false, favAim = null, phoneShown = false;
   const trayHtml = {};
   const trayPut = (key, html) => {
@@ -2710,7 +2684,11 @@ export function mountTestFocus(root, { config, getHass }) {
     const sumLi = (k) => { const x = SUMMARIES[k]; return '<li class="hcHeRow hcHeSum" data-he-id="' + esc(k) + '"' + (x.colour && sumInk(x.colour) ? ' style="' + sumInk(x.colour).slice(1) + '"' : '') + '>' + heGrip(x.name) +
       '<span class="tfIcon"' + iconSlot('', x.icon, x.name) + '></span><span class="activityRowName">' + esc(x.name) + '</span>' + sw(sumOn(k), x.name, 'data-he-sum="' + esc(k) + '"') + '</li>'; };
     const search = homeTray.querySelector('[data-he-search]')?.value || '';
-    const tabs = [['page', 'Page'], ['favs', 'Favourites'], ['sums', 'Summaries']];
+    const tabs = [['page', 'Page'], ['favs', 'Favourites'], ['sums', 'Summaries'], ['areas', 'Areas']];
+    const areasOff = new Set(prefs.home?.areasOff || []);
+    const areaLi = (r) => '<li class="hcHeRow" data-he-id="' + esc(r.id) + '">' + heGrip(r.name) +
+      '<span class="tfIcon"><span class="tfAreaGlyph"' + iconSlot('area:' + r.id, r.icon || 'mdi:texture-box', r.name) + '></span></span><span class="activityRowName">' + esc(r.name) + '</span>' +
+      sw(!areasOff.has(r.id), 'Show ' + r.name + ' on Home', 'data-he-area="' + esc(r.id) + '"') + '</li>';
     const bodies = {
       page: '<div class="hcHeLine"><span class="activityRowName">Welcome message</span>' + infoBtn('welcome') + sw(welcomeOn(), 'Welcome message', 'data-he-welcome') + '</div>' +
         // the weather card and Energy today, where the house has them
@@ -2739,6 +2717,8 @@ export function mountTestFocus(root, { config, getHass }) {
         homeSeg('Width', 'data-he-sums-width', sumsFit() ? 'fit' : 'match', [['match', 'Match the cards'], ['fit', 'Fit the summaries']]) +
         '<hr class="hcHeRule">' +
         '<ul class="tfTrayList hcHeList" data-he-list="sums">' + homeSumOrder().map(sumLi).join('') + '</ul>',
+      areas: '<p class="tfTrayNote">Which areas show on Home. Drag to change their order, here and on the custom dashboard.</p>' +
+        '<ul class="tfTrayList hcHeList" data-he-list="areas">' + overviewRoomsAll().map(areaLi).join('') + '</ul>',
     };
     homeTray.querySelector('[data-he-body]').innerHTML =
       // the note about the areas page first (Matt, 12 Nov: "to the top of the rollover"), as Home Assistant's dialog has it
@@ -2792,8 +2772,8 @@ export function mountTestFocus(root, { config, getHass }) {
     if (homeEditing) { ev.stopPropagation(); setHomeEditing(false); $('dashEditNav')?.focus(); }
   }, true);
   // a row moves up or down its list: its grip dragged, or the arrows on it
-  const homeList = (ul) => (ul.dataset.heList === 'favs' ? starred() : homeSumOrder());
-  const homeOrder = (ul, ids) => (ul.dataset.heList === 'favs' ? homeSave({ favourites: ids }) : homePrefs({ sumOrder: ids }));
+  const homeList = (ul) => (ul.dataset.heList === 'favs' ? starred() : ul.dataset.heList === 'areas' ? overviewRoomsAll().map((r) => r.id) : homeSumOrder());
+  const homeOrder = (ul, ids) => (ul.dataset.heList === 'favs' ? homeSave({ favourites: ids }) : ul.dataset.heList === 'areas' ? (homeSave({ areaOrder: ids }), layoutBoard()) : homePrefs({ sumOrder: ids }));
   homeTray.addEventListener('keydown', (ev) => {
     const g = ev.target.closest('[data-he-grip]'); if (!g || !['ArrowUp', 'ArrowDown'].includes(ev.key)) return;
     ev.preventDefault();
@@ -2834,6 +2814,7 @@ export function mountTestFocus(root, { config, getHass }) {
     const ca = t.closest('[data-he-cards-as]'); if (ca) { homePrefs({ cardsAs: ca.dataset.heCardsAs }); return; }
     const fl = t.closest('[data-he-flag]'); if (fl) { const key = fl.dataset.heFlag; homePrefs({ [key]: !homeFlag(key) }); if (key === 'favsTitle') render(); return; } // the card's wrapper is drawn again only by a full render
     if (t.closest('[data-he-suggest]')) { homeSave({ suggest: !suggestOn() }); return; }
+    const ha = t.closest('[data-he-area]'); if (ha) { const off = new Set(prefs.home?.areasOff || []), id = ha.dataset.heArea; if (off.has(id)) off.delete(id); else off.add(id); homePrefs({ areasOff: [...off] }); return; }
     const sm = t.closest('[data-he-sum]');
     if (sm) {
       const k = sm.dataset.heSum, on = !sumOn(k), h = prefs.home || {};
@@ -2851,7 +2832,6 @@ export function mountTestFocus(root, { config, getHass }) {
     tray.classList.toggle('tucked', show && trayTucked);
     tray.toggleAttribute('inert', !show);
     if (!show) phoneShown = false;
-    if (!show || !app.classList.contains('tfEditing')) closeAreaPop(); // the pop-out goes with edit mode (phones have none)
     renderPhone();
     if (!show) return;
     const tuck = tray.querySelector('[data-tray-tuck]');
@@ -2883,7 +2863,11 @@ export function mountTestFocus(root, { config, getHass }) {
     // the rooms not on the board yet, in the Areas card's order
     tray.querySelector('[data-tray="roompick"]').hidden = !roomPicking;
     tray.querySelector('[data-room-add]').setAttribute('aria-expanded', String(roomPicking));
-    if (roomPicking) { const there = new Set(tilesNow()); trayPut('roompick', areaRooms.filter((r) => !there.has('room:' + r.id)).map((r) => '<li><button class="tfTrayPickItem" type="button" data-room-pick="' + esc(r.id) + '">' +
+    const off = new Set(prefs.dash?.areasOff || []);
+    trayPut('areas', byAreaOrder(areaRooms).map((r) => '<li class="hcHeRow" data-area-id="' + esc(r.id) + '"><button class="tfTrayBtn hcHeGrip" type="button" data-area-grip aria-label="Move ' + esc(r.name) + '. Use the up and down arrows">' + GRIP + '</button>' +
+      '<span class="tfIcon"><span class="tfAreaGlyph"' + iconSlot('area:' + r.id, r.icon || 'mdi:texture-box', r.name) + '></span></span><span class="activityRowName">' + esc(r.name) + '</span>' +
+      '<button class="switch' + (off.has(r.id) ? '' : ' on') + '" type="button" role="switch" aria-checked="' + !off.has(r.id) + '" aria-label="Show ' + esc(r.name) + ' in the Areas card" data-area-on="' + esc(r.id) + '"></button></li>').join(''));
+    if (roomPicking) { const there = new Set(tilesNow()); trayPut('roompick', byAreaOrder(areaRooms).filter((r) => !there.has('room:' + r.id)).map((r) => '<li><button class="tfTrayPickItem" type="button" data-room-pick="' + esc(r.id) + '">' +
       '<span class="tfIcon"><span class="tfAreaGlyph"' + iconSlot('area:' + r.id, r.icon || 'mdi:texture-box', r.name) + '></span></span><span class="tfTrayName"><span class="activityRowName">' + esc(r.name) + '</span></span></button></li>').join('') || '<li class="tfTrayNote">Every area is on the board.</li>'); }
     tray.querySelector('[data-pick="favs"]').hidden = !trayPicking;
     tray.querySelector('[data-fav-add]').setAttribute('aria-expanded', String(trayPicking));
@@ -2923,13 +2907,40 @@ export function mountTestFocus(root, { config, getHass }) {
     else if (t.dataset.favPick) addFav(t.dataset.favPick);
     else if (t.hasAttribute('data-tile-add')) { tilePicking = !tilePicking; renderTray(); if (tilePicking) tray.querySelector('[data-tile-search]').focus({ preventScroll: true }); }
     else if (t.dataset.tilePick) addTile(t.dataset.tilePick);
-    else if (t.hasAttribute('data-area-choose')) toggleAreaPop();
     else if (t.hasAttribute('data-room-add')) { roomPicking = !roomPicking; renderTray(); }
     else if (t.dataset.roomPick) addTile('room:' + t.dataset.roomPick);
+    else if (t.dataset.areaOn) { const off = new Set(prefs.dash?.areasOff || []); if (off.has(t.dataset.areaOn)) off.delete(t.dataset.areaOn); else off.add(t.dataset.areaOn); saveDash({ ...dashPrefs(), areasOff: [...off] }); refresh(); renderTray(); }
     else if (t.hasAttribute('data-fav-suggest')) saveFavs({ suggest: !suggestOn() });
     else if (t.hasAttribute('data-fav-title')) { saveFavs({ favsTitle: !favsTitleOn() }); render(); } // the card's wrapper is drawn again only by a full render
   });
   tray.addEventListener('input', (ev) => { if (ev.target.matches('[data-fav-search],[data-tile-search]')) renderTray(); });
+  // an area moves up or down the list: its grip dragged, or the arrows on it; the order is Home's too
+  const saveAreaOrder = (ids) => { prefs = { ...prefs, areaOrder: ids }; savePrefs(); refresh(); renderTray(); };
+  tray.addEventListener('keydown', (ev) => {
+    const g = ev.target.closest?.('[data-area-grip]'); if (!g || !['ArrowUp', 'ArrowDown'].includes(ev.key)) return;
+    ev.preventDefault();
+    const id = g.closest('[data-area-id]').dataset.areaId, ids = byAreaOrder(areaRooms).map((r) => r.id), i = ids.indexOf(id), to = i + (ev.key === 'ArrowUp' ? -1 : 1);
+    if (to < 0 || to >= ids.length) return;
+    ids.splice(to, 0, ids.splice(i, 1)[0]);
+    saveAreaOrder(ids);
+    tray.querySelector('[data-area-id="' + CSS.escape(id) + '"] [data-area-grip]')?.focus();
+  });
+  tray.addEventListener('pointerdown', (ev) => {
+    const g = ev.target.closest('[data-area-grip]'); if (!g || ev.button !== 0) return;
+    ev.preventDefault();
+    const li = g.closest('[data-area-id]'), ul = li.parentElement;
+    li.classList.add('moving');
+    const onMove = (e) => {
+      const rows = [...ul.children].filter((x) => x !== li), next = rows.find((x) => { const r = x.getBoundingClientRect(); return e.clientY < r.top + r.height / 2; });
+      if (next !== li.nextElementSibling) ul.insertBefore(li, next || null);
+    };
+    const onUp = () => {
+      removeEventListener('pointermove', onMove); removeEventListener('pointerup', onUp);
+      li.classList.remove('moving');
+      saveAreaOrder([...ul.children].map((x) => x.dataset.areaId).filter(Boolean));
+    };
+    addEventListener('pointermove', onMove); addEventListener('pointerup', onUp);
+  });
   // on a phone the keyboard covers the tray's foot (Matt, 16 Nov: the search disappeared under it): the tray ends
   // where the keyboard starts, and the field being typed in is scrolled into view
   const vv = window.visualViewport;
