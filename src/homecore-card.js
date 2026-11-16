@@ -101,7 +101,7 @@ if (!customElements.get("homecore-card")) {
   window.customCards.push({
     type: "homecore-card",
     name: "HomeCore",
-    description: "A page for your whole house, to try HomeCore with your own devices.",
+    description: "A test environment for the HomeCore design language.",
     preview: false,
   });
   // eslint-disable-next-line no-console

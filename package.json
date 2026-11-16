@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.2.0",
   "type": "module",
-  "description": "HomeCore for Home Assistant — a page for your whole house",
+  "description": "A test environment for the HomeCore design language",
   "scripts": {
     "dev": "vite --port 5190 --open /dev/",
     "build": "vite build"
