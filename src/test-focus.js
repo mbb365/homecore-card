@@ -1405,7 +1405,7 @@ export function mountTestFocus(root, { config, getHass }) {
   // a shortcut Matt added on Home Assistant's home view goes where it points
   function go(path) {
     if (!document.querySelector('home-assistant')) return;
-    history.pushState(null, '', path);
+    window.history.pushState(null, '', path); // window's: `history` here is the readings' cache (Matt, 16 Nov: the device page link went nowhere)
     window.dispatchEvent(new CustomEvent('location-changed', { detail: { replace: false } }));
   }
   function openSummary(key, opener) {

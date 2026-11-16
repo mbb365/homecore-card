@@ -416,9 +416,10 @@ button.tfAreaIcon{cursor:pointer}
 #app.tfWeatherOpen .tfBento.tfPegs :is(.wbStripScroll,.wbBars .wbDayBars,.wbBars.wbTabbed .wbDayBars){min-height:0}
 /* the main: it opens its more-info */
 .tfABig{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-top:auto;min-height:0;height:auto;padding:0;border:0;border-radius:8px;background:none;color:var(--text);text-align:start;cursor:pointer}
-.tfABigMain{font:500 64px/1 var(--font-tile);letter-spacing:-.03em;white-space:nowrap}
-.tfABigMain.long{font-size:40px}
-.tfABigUnit{margin-inline-start:6px;font-size:24px;letter-spacing:0}
+/* the reading as the Figma Source of truth's tfACMain (Matt, 16 Nov: the font is way too big; it was 64 Medium): 32 Geist
+   ExtraLight on 38.5, its unit the same */
+.tfABigMain{font:200 32px/38.5px var(--font-tile);letter-spacing:0;white-space:nowrap}
+.tfABigUnit{margin-inline-start:.25em;font-size:inherit;letter-spacing:0}
 .tfABigSub{max-width:100%;overflow:hidden;color:var(--muted);font:400 16px/1.2 var(--font);white-space:nowrap;text-overflow:ellipsis}
 /* the controls: two to a row inside the padding, so their icons line up with the name; the icon is the button */
 /* an open area's tiles always hold two rows' room (Matt, 4 Nov), one row on their bottom edge, so its reading stays where
@@ -770,7 +771,6 @@ button.tfAreaIcon{cursor:pointer}
    (Matt, 6 Nov: there's space for it) */
 #app.tfBoard .tfAreas[data-rows="4"] .tfABig{flex:none;margin-top:auto;margin-bottom:auto}
 #app.tfBoard .tfAreas[data-rows="4"] .tfATiles{margin-top:0}
-#app.tfBoard .tfAreas[data-rows="4"] .tfABigMain{font-size:52px}
 #app.tfBoard .tfAreas[data-rows="4"] .panelExpanded{row-gap:12px}
 #app.tfBoard .tfAreas:is([data-rows="2"],[data-rows="3"],[data-rows="4"]) .tfATiles{margin-top:auto}
 #app.tfBoard .tfAreas[data-rows="2"] .tfATile:nth-child(n+3),#app.tfBoard .tfAreas:is([data-rows="3"],[data-rows="4"]) .tfATile:nth-child(n+5){display:none}
