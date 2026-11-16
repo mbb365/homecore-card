@@ -557,7 +557,8 @@ button.tfAreaIcon{cursor:pointer}
    bar at the side, and each scroll settles smoothly on the next tile (Matt, 27 Oct) */
 #homeView .card.tfDash-act>.activityRows{flex:none;margin-top:auto;max-height:300px;overflow-y:auto;overscroll-behavior:contain;scroll-snap-type:y mandatory;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--text) 25%,transparent) transparent}
 #homeView .card.tfDash-act>.activityRows>.activityRow{scroll-snap-align:start}
-#homeView .card.tfDash-energy .activityRows{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+/* the four sources two by two (Matt, 16 Nov) */
+#homeView .card.tfDash-energy .activityRows{grid-template-columns:repeat(2,minmax(0,1fr))}
 .tfDashCard :is(.activityRowName,.activityRowMeta){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tfDashCard .activityRow>*{min-width:0}
 .tfDashNone{margin:0;padding:var(--inset) 18px;color:var(--muted)}

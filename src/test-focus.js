@@ -1236,11 +1236,13 @@ export function mountTestFocus(root, { config, getHass }) {
   // the favourites start, once, with Home Assistant's home ones, then the made-up thermostat, curtains and watering, and
   // a lock (Matt, 28 Oct); after that the list is his, edited in the dashboard's edit tray like Home Assistant's
   let prefsReady = false;
+  const FAVOURITES_START = 6;
   function seedFavourites() {
     if (!prefsReady || prefs.favSeeded || !model.rooms.length || overview) return; // the overview has no made-up devices to seed from
     const first = (test) => Object.keys(states).find((id) => isMadeUp(id) && test(id));
     const made = [first((id) => id.startsWith('climate.')), first((id) => id.startsWith('cover.') && /curtain/.test(id)), first((id) => id.startsWith('valve.')), model.security.locks[0]];
-    prefs = { ...prefs, favourites: [...new Set([...(prefs.favourites ?? haHome.favorite_entities ?? []), ...made.filter(Boolean)])], favSeeded: true };
+    // six to start with (Matt, 16 Nov: six by default until the user changes it)
+    prefs = { ...prefs, favourites: [...new Set([...(prefs.favourites ?? haHome.favorite_entities ?? []), ...made.filter(Boolean)])].slice(0, FAVOURITES_START), favSeeded: true };
     savePrefs();
   }
   // the dashboard's Favourites: the favourites in their order, less those hidden to the edit tray; then, with Show
@@ -1249,8 +1251,10 @@ export function mountTestFocus(root, { config, getHass }) {
   function dashFavourites() {
     const hidden = new Set(overview ? [] : prefs.favHidden || []), stars = starred().filter((id) => !hidden.has(id));
     const fill = suggestOn() ? suggestionIds().filter((id) => !hidden.has(id) && dashLight(id)) : [];
-    // the overview's card grows with its favourites, so every one shows there; as a strip it stays at ten
-    return overview && !favsStrip() ? [...stars, ...fill] : [...stars, ...fill].slice(0, DASH_FAVOURITES);
+    // six to start with, suggestions filling up to that; more once the user has starred more (Matt, 16 Nov). The
+    // overview's card grows with its favourites, so every star shows there; the dashboard's card stays at ten
+    const most = Math.max(FAVOURITES_START, stars.length);
+    return [...stars, ...fill].slice(0, overview && !favsStrip() ? most : Math.min(DASH_FAVOURITES, most));
   }
   // starred first, then suggestions up to 8
   function favouriteIds(most = 8) {
