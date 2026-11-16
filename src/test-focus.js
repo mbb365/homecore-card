@@ -1423,7 +1423,7 @@ export function mountTestFocus(root, { config, getHass }) {
     ]);
     // edit mode's old choices (sections, order, sizes…) are left behind: the page is laid out as Home Assistant has it
     const v = mine?.value || {};
-    prefs = { favourites: v.favourites ?? null, sources: v.sources, hiddenSums: v.hiddenSums, shownSums: v.shownSums, home: v.home, dash: v.dash, named: v.named, favHidden: v.favHidden, suggest: v.suggest, favSeeded: v.favSeeded };
+    prefs = { favourites: v.favourites ?? null, sources: v.sources, hiddenSums: v.hiddenSums, shownSums: v.shownSums, home: v.home, dash: v.dash, named: v.named, favHidden: v.favHidden, suggest: v.suggest, favSeeded: v.favSeeded, favsTitle: v.favsTitle };
     haHome = home?.value || {};
     haSecurity = security?.value || {};
     predicted = Array.isArray(usage?.entities) ? usage.entities : [];
@@ -1684,7 +1684,7 @@ export function mountTestFocus(root, { config, getHass }) {
     if (!overview && areasShown().length) out.push({ key: 'areas', html: areasHtml(0) });
     // what you've starred always shows, from any room; only the suggestions that fill the card keep to the dashboard's rooms
     const favs = dashFavourites();
-    if (favs.length) out.push({ key: 'favs', wrap: dashWrap('tfDash-favs', 'favs', 'Favourites', true), tiles: favs.map((id) => ({ key: 'fav:' + id, html: deviceRow(id, { area: true }) })) });
+    if (favs.length) out.push({ key: 'favs', wrap: dashWrap('tfDash-favs', 'favs', 'Favourites', favsTitleOn()), tiles: favs.map((id) => ({ key: 'fav:' + id, html: deviceRow(id, { area: true }) })) });
     if (overview) {
       // the overview: Energy today once switched on (from your Energy dashboard; its sources load first), then each
       // area's card
@@ -1995,7 +1995,10 @@ export function mountTestFocus(root, { config, getHass }) {
   // the cards that aren't areas: Stacked down the left beside the areas (the start), or in Rows across the top over them
   // (Matt, 12 Nov, as the leadership demo: "this will be called a 'stacked' option. the other previous one will be 'rows'")
   const cardsAs = () => (prefs.home?.cardsAs === 'rows' ? 'rows' : 'stacked');
-  const HOME_FLAGS = { byFloor: true, bentoBoxes: true, bentoMixed: false };
+  const HOME_FLAGS = { byFloor: true, bentoBoxes: true, bentoMixed: false, favsTitle: false };
+  // Favourites with its title or without (Matt, 16 Nov): the dashboard's card has one unless it's turned off, the
+  // overview's none unless it's turned on
+  const favsTitleOn = () => (overview ? homeFlag('favsTitle') : prefs.favsTitle !== false);
   // the weather card and Energy today on the overview (Matt, 13 Nov, as the leadership demo): each off to start with,
   // switched on in Edit Home page, and only where the house has a weather entity or an Energy dashboard (nothing made up)
   const homeWeather = () => Boolean(prefs.home?.weather && weatherId());
@@ -2605,7 +2608,7 @@ export function mountTestFocus(root, { config, getHass }) {
     '<section class="tfTraySection"><div class="sectionLabel">Favourites</div><ul class="tfTrayList" data-tray="favs"></ul>' +
     '<button class="pill tfTrayAdd hcAddBtn" type="button" data-fav-add aria-expanded="false">' + PLUS + '<span>Add favourite</span></button>' +
     '<div class="tfTrayPick" data-pick="favs" hidden><input class="addInput" type="search" placeholder="Search devices" aria-label="Search devices" autocomplete="off" data-fav-search>' +
-    '<ul class="tfTrayList" data-tray="pick"></ul></div><div class="toggleRow tfTraySuggest" data-tray="suggest"></div></section></div>';
+    '<ul class="tfTrayList" data-tray="pick"></ul></div><div class="toggleRow tfTraySuggest" data-tray="favtitle"></div><div class="toggleRow tfTraySuggest" data-tray="suggest"></div></section></div>';
   app.appendChild(tray);
   /* Choose areas (Matt, 11 Nov): a pop-out beside the tray, a switch for each area the Areas card can show; one
      switched off keeps its page and its own tile. It closes with Escape, and with the tray */
@@ -2725,6 +2728,7 @@ export function mountTestFocus(root, { config, getHass }) {
         '<hr class="hcHeRule">' +
         '<div class="hcHeLabel"><span class="activityRowName">Favourite entities</span>' + infoBtn('favs') + '</div>' +
         homeSeg('Show as', 'data-he-favs-as', favsStrip() ? 'strip' : 'card', [['card', 'Card'], ['strip', 'Strip']]) +
+        (favsStrip() ? '' : '<div class="hcHeLine"><span class="activityRowName">Title</span>' + sw(homeFlag('favsTitle'), 'Title', 'data-he-flag="favsTitle"') + '</div>') +
         '<ul class="tfTrayList hcHeList" data-he-list="favs">' + (favs.map(favLi).join('') || '<li class="tfTrayNote">No favourites yet.</li>') + '</ul>' +
         '<button class="pill tfTrayAdd hcAddBtn" type="button" data-he-add aria-expanded="' + homePicking + '">' + PLUS + '<span>Add favourite</span></button>' +
         '<div class="tfTrayPick" data-he-pick' + (homePicking ? '' : ' hidden') + '><input class="addInput" type="search" placeholder="Search devices" aria-label="Search devices" autocomplete="off" data-he-search value="' + esc(search) + '">' +
@@ -2828,7 +2832,7 @@ export function mountTestFocus(root, { config, getHass }) {
     const as = t.closest('[data-he-area-size]'); if (as) { homePrefs({ areaSize: as.dataset.heAreaSize }); return; }
     const al = t.closest('[data-he-area-layout]'); if (al) { homePrefs({ areaLayout: al.dataset.heAreaLayout }); return; }
     const ca = t.closest('[data-he-cards-as]'); if (ca) { homePrefs({ cardsAs: ca.dataset.heCardsAs }); return; }
-    const fl = t.closest('[data-he-flag]'); if (fl) { const key = fl.dataset.heFlag; homePrefs({ [key]: !homeFlag(key) }); return; }
+    const fl = t.closest('[data-he-flag]'); if (fl) { const key = fl.dataset.heFlag; homePrefs({ [key]: !homeFlag(key) }); if (key === 'favsTitle') render(); return; } // the card's wrapper is drawn again only by a full render
     if (t.closest('[data-he-suggest]')) { homeSave({ suggest: !suggestOn() }); return; }
     const sm = t.closest('[data-he-sum]');
     if (sm) {
@@ -2884,6 +2888,8 @@ export function mountTestFocus(root, { config, getHass }) {
     tray.querySelector('[data-pick="favs"]').hidden = !trayPicking;
     tray.querySelector('[data-fav-add]').setAttribute('aria-expanded', String(trayPicking));
     if (trayPicking) trayPut('pick', pickHtml(tray.querySelector('[data-fav-search]').value, (id) => PICK_DOMAINS.test(id), new Set(starred()), 'data-fav-pick'));
+    trayPut('favtitle', '<div><strong>Title</strong><div class="status">Favourites, at the top of the card.</div></div>' +
+      '<button class="switch' + (favsTitleOn() ? ' on' : '') + '" type="button" role="switch" aria-checked="' + favsTitleOn() + '" data-fav-title aria-label="Title"></button>');
     trayPut('suggest', '<div><strong>Show suggestions</strong><div class="status">Fills the card after your favourites.</div></div>' +
       '<button class="switch' + (suggestOn() ? ' on' : '') + '" type="button" role="switch" aria-checked="' + suggestOn() + '" data-fav-suggest aria-label="Show suggestions"></button>');
   }
@@ -2921,8 +2927,16 @@ export function mountTestFocus(root, { config, getHass }) {
     else if (t.hasAttribute('data-room-add')) { roomPicking = !roomPicking; renderTray(); }
     else if (t.dataset.roomPick) addTile('room:' + t.dataset.roomPick);
     else if (t.hasAttribute('data-fav-suggest')) saveFavs({ suggest: !suggestOn() });
+    else if (t.hasAttribute('data-fav-title')) { saveFavs({ favsTitle: !favsTitleOn() }); render(); } // the card's wrapper is drawn again only by a full render
   });
   tray.addEventListener('input', (ev) => { if (ev.target.matches('[data-fav-search],[data-tile-search]')) renderTray(); });
+  // on a phone the keyboard covers the tray's foot (Matt, 16 Nov: the search disappeared under it): the tray ends
+  // where the keyboard starts, and the field being typed in is scrolled into view
+  const vv = window.visualViewport;
+  const fitTray = () => { if (!vv) return; const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)); tray.style.bottom = kb > 40 ? kb + 'px' : ''; };
+  vv?.addEventListener('resize', fitTray);
+  vv?.addEventListener('scroll', fitTray);
+  tray.addEventListener('focusin', (ev) => { if (ev.target.matches?.('input')) setTimeout(() => { fitTray(); ev.target.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 350); });
   // Escape closes the search it's in
   tray.addEventListener('keydown', (ev) => {
     const tiles = Boolean(ev.target.closest?.('[data-pick="tiles"],[data-tile-add]'));

@@ -868,7 +868,13 @@ button.tfAreaIcon{cursor:pointer}
 #housePane .tab.active{color:var(--on-bright)}
 /* (light mode's dark line where a brightness bar's fill ends went, Matt, 10 Nov; amber on the light track is 1.4:1) */
 /* fields: an edge in the muted text colour, and placeholders in it */
-#app.house :is(.settingsSelect,.addInput){border:1px solid var(--muted)}
+#app.house .settingsSelect{border:1px solid var(--muted)}
+/* a field, as HomeCore's form field (Figma Forms, Matt, 16 Nov: the search for devices): 46 tall, corner 16, 10 in, the
+   tile fill with a hairline; the text 16 Inter, the placeholder muted; hover a shade darker; focus a 1.6 line in blue */
+#app.house .addInput{display:block;width:100%;height:46px;min-height:0;box-sizing:border-box;margin:0;padding:0 10px;border:0;border-radius:var(--r-inner)!important;background:var(--tile);box-shadow:var(--hc-hair-all);color:var(--text);font:400 16px/18.4px Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:-.32px;-webkit-appearance:none;appearance:none;outline:none}
+#app.house .addInput:hover{background:color-mix(in srgb,var(--text) 6%,var(--tile))}
+#app.house .addInput:focus-visible,#app.house .addInput:focus{background:var(--tile);box-shadow:inset 0 0 0 1.6px var(--primary)}
+#app.house .addInput::-webkit-search-decoration,#app.house .addInput::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none}
 /* a list's arrow is ours, 16 in from its edge with the same room as its words have on the left (Matt, 8 Nov: the
    browser's sat against the edge) */
 #app.house{--select-chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 6l4.5 4.5L12.5 6' fill='none' stroke='%23d9d9d9' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
@@ -995,7 +1001,6 @@ button.tfAreaIcon{cursor:pointer}
 @media (max-width:620px){#app.tfOverview.tfDash #homeView .card.tfDash-bar .activityRows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* Favourites: no title, two columns of tiles 60 tall and 25 apart; no scrollbar, its lower edge fades while there's more */
 #app.tfOverview.tfDash #homeView .tfDash-favs{padding:10px;border-radius:var(--r-card)}
-#app.tfOverview.tfDash #homeView .tfDash-favs>.activityHeader{display:none}
 #app.tfOverview.tfDash #homeView .tfDash-favs>.activityRows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:60px;row-gap:25px;max-height:100%;margin:0;overflow-y:auto;scrollbar-width:none}
 #app.tfOverview.tfDash #homeView .tfDash-favs>.activityRows::-webkit-scrollbar{display:none}
 .hcFadeList.hcMore{-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 40px),transparent)}
