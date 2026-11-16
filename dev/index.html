@@ -47,6 +47,8 @@ const listeners = [];
 const slot = (key) => "homecore-dev:" + (key || "card");
 const read = (key) => { try { return JSON.parse(localStorage.getItem(slot(key))); } catch { return null; } };
 const states = {
+  // a camera that shows a radar, as some integrations give (Buienradar's public image stands in)
+  "camera.buienradar": { entity_id: "camera.buienradar", state: "idle", attributes: { friendly_name: "Buienradar", entity_picture: "https://api.buienradar.nl/image/1.0/RadarMapNL?w=700&h=765" } },
   "sensor.living_room_temperature": { entity_id: "sensor.living_room_temperature", state: "21.4", attributes: { friendly_name: "Living room temperature", unit_of_measurement: "°C" } },
   "weather.forecast_home": { entity_id: "weather.forecast_home", state: "sunny", attributes: { friendly_name: "Forecast Amsterdam", temperature: 26, temperature_unit: "°C" } },
 };

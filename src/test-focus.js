@@ -527,7 +527,7 @@ export function mountTestFocus(root, { config, getHass }) {
     if (!id || order == null) { bentoBox.remove(); return; }
     if (!bentoBox.isConnected) grid.append(bentoBox);
     bentoBox.style.order = order;
-    if (!bento && !suspended) { bento = mountWeatherBento(bentoBox, { getHass, entityId: id, style: look.wxStyle, hoursWindow: () => look.hoursWindow }); bentoId = id; }
+    if (!bento && !suspended) { bento = mountWeatherBento(bentoBox, { getHass, entityId: id, style: look.wxStyle, hoursWindow: () => look.hoursWindow, radarSource }); bentoId = id; }
   }
   // the dashboard's own weather cards (Matt, 27 Oct): the weather card, whose Now opens the Weather page, and Compared
   // to average in the place of the concept's to-do list; each kept mounted across redraws
@@ -552,12 +552,16 @@ export function mountTestFocus(root, { config, getHass }) {
     if (id && !dashBentos && !suspended) { dashBentos = new Map(); dashBentoId = id; }
     mountWidgets();
   }
+  // the Rain radar's source (Matt, 16 Nov: see a list, then choose it): RainViewer, or a camera on the instance; picked in
+  // the tile's ⋯ in edit mode and kept with the page, for the dashboard and the Weather page alike
+  const radarSource = () => dashPrefs().opts.radar?.source || 'rainviewer';
+  const radarSources = () => [['rainviewer', 'RainViewer'], ...Object.values(states).filter((st) => st.entity_id.startsWith('camera.')).sort((a, b) => nameOf(a.entity_id).localeCompare(nameOf(b.entity_id))).map((st) => ['camera:' + st.entity_id, nameOf(st.entity_id)])];
   function mountWidgets() {
     if (!dashBentos || suspended) return;
     const off = new Set(dashPrefs().hidden);
     DASH_WEATHER.forEach(([k, cards]) => {
       if (dashBentos.has(k) || (off.has(k) && !(drag?.fromTray && drag.key === k))) return;
-      dashBentos.set(k, mountWeatherBento(dashBoxes[k], { getHass, entityId: dashBentoId, style: look.wxStyle, cards, onOpen: k === 'wx' ? () => openArea('weather') : undefined }));
+      dashBentos.set(k, mountWeatherBento(dashBoxes[k], { getHass, entityId: dashBentoId, style: look.wxStyle, cards, onOpen: k === 'wx' ? () => openArea('weather') : undefined, radarSource }));
     });
   }
 
@@ -2319,7 +2323,10 @@ export function mountTestFocus(root, { config, getHass }) {
     // a room's tile too (Matt, 6 Nov): narrow, wide or really wide, like the cards
     const width = RESIZABLE.includes(key) || isRoomKey(key) ? '<div class="tfHeight tfWidth" role="group" aria-label="Width"><span class="tfHeightLabel" aria-hidden="true">Width</span><div class="tfHeightTabs">' +
       WIDTH_NAMES.map((name, i) => '<button type="button" role="menuitemradio" aria-checked="' + (i + 1 === Math.min(span, n)) + '" aria-label="' + name + ', ' + (i + 1) + (i ? ' columns' : ' column') + '" data-board-act="w:' + (i + 1) + '"' + (i < n ? '' : ' disabled') + '>' + name + '</button>').join('') + '</div></div>' : '';
-    menu.innerHTML = height + width +
+    // the Rain radar's source as a list, the chosen one marked (Matt, 16 Nov)
+    const source = key === 'radar' ? '<div class="tfHeight tfSource" role="group" aria-label="Source"><span class="tfHeightLabel" aria-hidden="true">Source</span><div class="tfSourceList">' +
+      radarSources().map(([v, label]) => '<button type="button" role="menuitemradio" aria-checked="' + (v === radarSource()) + '" data-board-act="src:' + esc(v) + '">' + esc(label) + '</button>').join('') + '</div></div>' : '';
+    menu.innerHTML = height + width + source +
       (key === 'energy' ? item('graph', (dash.opts.energy?.graph || 'above') === 'above' ? 'Graph below' : 'Graph above') : '') +
       item('left', 'Move left', full || p.col === 0) + item('right', 'Move right', full || p.col + p.cols >= n) +
       item('up', 'Move up', p.row <= 0) + item('down', 'Move down') + (tile ? item('remove', 'Remove') : item('hide', 'Hide'));
@@ -2343,6 +2350,7 @@ export function mountTestFocus(root, { config, getHass }) {
     const before = prefs, dash = dashPrefs(), cells = cellsNow(), here = cells[key] || { col: 0, row: 0 };
     if (act.startsWith('w:')) dash.spans = { ...dash.spans, [key]: act === 'w:full' ? 'full' : Number(act.slice(2)) };
     if (act.startsWith('h:')) dash.opts = { ...dash.opts, [key]: { ...(dash.opts[key] || {}), h: Number(act.slice(2)), tall: undefined } };
+    if (act.startsWith('src:')) dash.opts = { ...dash.opts, radar: { ...(dash.opts.radar || {}), source: act.slice(4) } };
     if (act === 'graph') dash.opts = { ...dash.opts, energy: { ...(dash.opts.energy || {}), graph: (dash.opts.energy?.graph || 'above') === 'above' ? 'below' : 'above' } };
     if (act === 'left') cells[key] = { ...here, col: here.col - 1 };
     if (act === 'right') cells[key] = { ...here, col: here.col + 1 };
@@ -2361,6 +2369,7 @@ export function mountTestFocus(root, { config, getHass }) {
       setTimeout(() => { if (boardOpen === open) closeBoardMenu(); }, M.tabs.dur);
     } else closeBoardMenu();
     if (act === 'graph') { units.delete('dash:energy'); refresh(); }
+    if (act.startsWith('src:')) { dashBentos?.get('radar')?.refresh(); bento?.refresh(); }
     if (act.startsWith('h:') && key.includes('.')) refresh(); // a room's tile shows what fits by its height alone // a tile's controls change with its height
     layoutBoard();
     if (act !== 'hide') grid.querySelector('[data-board-more="' + CSS.escape(key) + '"]')?.focus();

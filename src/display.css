@@ -632,6 +632,10 @@ button.tfAreaIcon{cursor:pointer}
 .tfBoardMenu .tfHeightTabs button:disabled{opacity:.35}
 .tfWidth{padding-top:0}
 .tfWidth .tfHeightTabs{grid-template-columns:repeat(3,auto)}
+/* the Rain radar's sources as rows, the chosen one filled (Matt, 16 Nov) */
+.tfSourceList{display:grid;gap:2px}
+.tfBoardMenu .tfSourceList button[aria-checked="true"]{background:var(--bright);color:var(--on-bright)}
+.tfBoardMenu .tfSourceList button[aria-checked="true"]:hover{background:var(--bright)}
 .tfBoardMenu .tfWidth .tfHeightTabs button{white-space:nowrap}
 /* what each height shows (Matt, 2 Nov): a smaller one shows fewer of the same things, never part of one. At XS
    (one row, 60) every element is one tile: 10 in, its icon, name and line, no title and no controls */

@@ -139,6 +139,19 @@
 .wbRadarRing{position:absolute;left:50%;top:50%;width:64%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;box-shadow:0 0 0 1px color-mix(in srgb,var(--text) 20%,transparent)}
 .wbRadarRing::after{content:"";position:absolute;inset:25%;border-radius:50%;box-shadow:0 0 0 1px color-mix(in srgb,var(--text) 14%,transparent)}
 .wbRadarHome{position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:var(--primary);box-shadow:0 0 0 3px var(--tile)}
+/* the radar's map (Matt, 16 Nov): CARTO's tiles for the area, the rain's frames over them, the time at the foot */
+.wbRadarMap,.wbRadarCam{background-image:none}
+.wbRadarLayer{position:absolute;inset:0;overflow:hidden}
+.wbRadarLayer img{position:absolute;width:256px;height:256px;max-width:none;pointer-events:none}
+.wbRadarLayer[hidden]{display:none}
+.wbRadarRain{opacity:.85}
+.wbRadarMap .wbRadarHome{z-index:2}
+.wbRadarTime,.wbRadarCredit{position:absolute;z-index:2;white-space:nowrap}
+.wbRadarTime{left:8px;bottom:6px;padding:1px 6px;border-radius:8px;background:color-mix(in srgb,var(--tile) 78%,transparent);color:var(--text);font:600 11px/16px var(--font-tile)}
+.wbRadarTime:empty{display:none}
+.wbRadarCredit{right:6px;top:4px;max-width:calc(100% - 12px);overflow:hidden;text-overflow:ellipsis;color:var(--muted);font:400 9px/12px var(--font)}
+.wbRadarNote{position:absolute;inset:0;z-index:2;display:grid;place-items:center;padding:0 12px;text-align:center;color:var(--muted);font:400 13px/1.4 var(--font)}
+.wbRadarCam img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 /* Line (Matt, 1 Nov: a style to try): an outline drawing on the tile colour, in the text colour */
 .wbWx.wbLineIcon{display:grid;place-items:center;background:var(--tile);color:var(--text)}
 .wbWx.wbLineIcon>svg{width:64%;height:64%}

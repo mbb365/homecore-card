@@ -110,8 +110,34 @@ const T={
   highsLastDays:'Highs of the last {days} days',openPage:'Open the weather page',todayVsAverage:'Today {today} · average {average}',
   airQuality:'Air quality',pollen:'Pollen',rainRadar:'Rain radar',noAir:'No air quality sensor yet',noPollen:'No pollen sensor yet',
   rainFrom:'Rain from {time}',noRain12:'No rain in the next 12 hours',fineParticles:'fine particles',
+  noLocation:'Set your home location in Home Assistant',radarOff:'Radar not available',cameraOff:'Camera not available',forecastTag:'forecast',
   aqLevel:{good:'Good',fair:'Fair',moderate:'Moderate',poor:'Poor',very_poor:'Very poor',extremely_poor:'Extremely poor'}
 };
+/* ---- Rain radar (Matt, 16 Nov: a list of sources, then choose one). RainViewer's radar, free and worldwide, with no
+   key: the last hour in six frames and the next half hour in three, as tiles over CARTO's map of the area round home
+   (OpenStreetMap's data), so the rain moves. One list of frames for every bento, fetched again after five minutes */
+const RADAR_ZOOM=7,RADAR_TILE=256,RADAR_PAST=6,RADAR_NEXT=3,RADAR_STEP=700,RADAR_HOLD=1800,RADAR_REFRESH=5*MINUTE;
+let rvFrames=null,rvAt=0,rvPending=null;
+function rainviewerFrames(){
+  if(rvFrames&&Date.now()-rvAt<RADAR_REFRESH)return Promise.resolve(rvFrames);
+  if(rvPending)return rvPending;
+  rvPending=fetch('https://api.rainviewer.com/public/weather-maps.json').then(r=>r.ok?r.json():Promise.reject(new Error(String(r.status)))).then(j=>{
+    const past=(j.radar?.past||[]).slice(-RADAR_PAST),next=(j.radar?.nowcast||[]).slice(0,RADAR_NEXT);
+    rvFrames={host:j.host,frames:[...past.map(f=>({...f,past:true})),...next]};rvAt=Date.now();return rvFrames;
+  }).finally(()=>{rvPending=null});
+  return rvPending;
+}
+// the map's tiles for a box W × H centred on home at the radar's zoom: which tile, and where its corner sits in the box
+function radarTiles(lat,lon,W,H){
+  const z=RADAR_ZOOM,n=2**z,r=lat*Math.PI/180;
+  const cx=(lon+180)/360*n*RADAR_TILE,cy=(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n*RADAR_TILE,x0=cx-W/2,y0=cy-H/2;
+  const out=[];
+  for(let tx=Math.floor(x0/RADAR_TILE);tx<=Math.floor((x0+W-1)/RADAR_TILE);tx++)for(let ty=Math.floor(y0/RADAR_TILE);ty<=Math.floor((y0+H-1)/RADAR_TILE);ty++){
+    if(ty<0||ty>=n)continue;
+    out.push({x:((tx%n)+n)%n,y:ty,left:tx*RADAR_TILE-x0,top:ty*RADAR_TILE-y0});
+  }
+  return out;
+}
 // Condition names as Home Assistant shows them, when hass can't format the state itself
 const CONDITIONS={'clear-night':'Clear, night',cloudy:'Cloudy',exceptional:'Exceptional',fog:'Fog',hail:'Hail',lightning:'Lightning','lightning-rainy':'Lightning, rainy',
   partlycloudy:'Partly cloudy',pouring:'Pouring',rainy:'Rainy',snowy:'Snowy','snowy-rainy':'Snowy, rainy',sunny:'Sunny',windy:'Windy','windy-variant':'Windy, cloudy'};
@@ -404,7 +430,7 @@ let mounts=0;
 
 // cards: only these cards (the dashboard places the weather card, Compared to average and Humidity on their own);
 // onOpen: the weather card's Now becomes a button that calls it (the dashboard opens its Weather page)
-export function mountWeatherBento(container,{getHass,entityId,style='bitmap',motion=true,cards,onOpen,hoursWindow}={}){
+export function mountWeatherBento(container,{getHass,entityId,style='bitmap',motion=true,cards,onOpen,hoursWindow,radarSource}={}){
   const P='wb'+(++mounts)+'-';   // SVG ids, unique in the shadow root
   const root=document.createElement('div');
   root.className='wb';
@@ -1205,8 +1231,19 @@ export function mountWeatherBento(container,{getHass,entityId,style='bitmap',mot
     const now=Date.now(),hours=forecast('hourly').filter(e=>{const t=new Date(e.datetime).getTime();return t>now-HOUR&&t<now+12*HOUR});
     const wet=hours.find(e=>(e.precipitation_probability??0)>=50||(e.precipitation??0)>=.2);
     const sub=wet?fill(T.rainFrom,{time:fmtTime(new Date(Math.max(now,new Date(wet.datetime).getTime())),h)}):hours.length?T.noRain12:undefined;
-    // where the radar's map goes: home in the middle, rings round it
-    return tile({icon:I.radar,name:T.rainRadar,sub,cls:'wbBase',visual:'<div class="wbRadar" aria-hidden="true"><i class="wbRadarRing"></i><i class="wbRadarHome"></i></div>'});
+    // the map: RainViewer's radar over the area round home (built once the box has its size), or a camera's picture
+    const source=radarSource?.()||'rainviewer';
+    let map;
+    if(source.startsWith('camera:')){
+      const st=h.states[source.slice(7)],pic=st&&st.state!=='unavailable'&&st.attributes?.entity_picture;
+      map=pic?'<div class="wbRadar wbRadarCam" aria-hidden="true"><img class="wbRadarImg" src="'+esc(pic)+'" data-src="'+esc(pic)+'" alt=""></div>'
+        :'<div class="wbRadar" aria-hidden="true"><span class="wbRadarNote">'+esc(T.cameraOff)+'</span></div>';
+    }else{
+      const at=home(h);
+      map=at?'<div class="wbRadar wbRadarMap" aria-hidden="true" data-lat="'+at.lat+'" data-lon="'+at.lon+'"><i class="wbRadarHome"></i></div>'
+        :'<div class="wbRadar" aria-hidden="true"><i class="wbRadarRing"></i><i class="wbRadarHome"></i><span class="wbRadarNote">'+esc(T.noLocation)+'</span></div>';
+    }
+    return tile({icon:I.radar,name:T.rainRadar,sub,cls:'wbBase wbRadarTile',visual:map});
   }
   const RENDER={current:renderCurrent,hourly:renderHourly,sun:renderSun,moon:renderMoon,wind:renderWind,uv_index:renderUv,
     compared_to_average:renderCompared,humidity:renderHumidity,pressure:renderPressure,precipitation:renderPrecipitation,visibility:renderVisibility,air_quality:renderAirQuality,
@@ -1349,6 +1386,7 @@ export function mountWeatherBento(container,{getHass,entityId,style='bitmap',mot
       if(focused&&!focusAfter)pop.querySelector('[data-wb-focus="'+focused+'"]')?.focus({preventScroll:true});
     }
     drawSunTracks();
+    root.querySelectorAll('.wbRadarMap').forEach(el=>{if(!el._tiles)buildRadarMap(el)});
     if(focusAfter){(root.querySelector('[data-wb-focus="'+focusAfter+'"]')||pop.querySelector('[data-wb-focus="'+focusAfter+'"]'))?.focus({preventScroll:true});focusAfter=null} // without scrolling the page (Matt, 9 Nov: no jump)
     // Matt's rows (9 Nov) start where he said, at the dashboard's own column widths (more columns leave space at the
     // end, fewer wrap): the first of Moon and what follows it starts row 2, and the first shorter card starts row 3
@@ -1544,6 +1582,52 @@ export function mountWeatherBento(container,{getHass,entityId,style='bitmap',mot
   // Sizes change (phone and desktop, or the page comes into view): repaint the art at its new size
   const resize=typeof ResizeObserver==='function'?new ResizeObserver(()=>paint(performance.now())):null;
   resize?.observe(root);
+
+  /* ---- the Rain radar's map: CARTO's tiles for the area, the radar's frames over them, home in the middle ---- */
+  const radarResize=typeof ResizeObserver==='function'?new ResizeObserver(es=>es.forEach(e=>{const el=e.target;if(el._tiles&&(el.clientWidth!==el._w||el.clientHeight!==el._h))buildRadarMap(el)})):null;
+  function buildRadarMap(el){
+    const W=el.clientWidth,H=el.clientHeight;
+    if(!W||!H||destroyed)return;
+    const tiles=radarTiles(Number(el.dataset.lat),Number(el.dataset.lon),W,H),light=!!root.closest('#app')?.classList.contains('light');
+    const at=t=>' style="left:'+t.left+'px;top:'+t.top+'px"';
+    el._tiles=tiles;el._w=W;el._h=H;el._frames=null;el._built=Date.now();
+    el.innerHTML='<div class="wbRadarLayer wbRadarBase">'+tiles.map(t=>'<img src="https://'+'abcd'[(t.x+t.y)%4]+'.basemaps.cartocdn.com/'+(light?'light_all':'dark_all')+'/'+RADAR_ZOOM+'/'+t.x+'/'+t.y+'.png"'+at(t)+' alt="">').join('')+'</div>'+
+      '<div class="wbRadarFrames"></div><i class="wbRadarHome"></i><span class="wbRadarTime"></span><span class="wbRadarCredit">© OpenStreetMap · CARTO · RainViewer</span>';
+    radarResize?.observe(el);
+    rainviewerFrames().then(rv=>{
+      if(!el.isConnected||destroyed||el._tiles!==tiles)return;
+      el.querySelector('.wbRadarFrames').innerHTML=rv.frames.map((f,i)=>'<div class="wbRadarLayer wbRadarRain" data-i="'+i+'" hidden>'+
+        tiles.map(t=>'<img src="'+rv.host+f.path+'/'+RADAR_TILE+'/'+RADAR_ZOOM+'/'+t.x+'/'+t.y+'/2/1_1.png"'+at(t)+' alt="">').join('')+'</div>').join('');
+      el._frames=rv.frames;el._hold=0;
+      showRadarFrame(el,rv.frames.findLastIndex(f=>f.past));   // now first; the loop goes on from here
+    }).catch(()=>{if(el.isConnected)el.querySelector('.wbRadarTime').textContent=T.radarOff});
+  }
+  function showRadarFrame(el,i){
+    const fs=el._frames;
+    if(!fs?.length)return;
+    el._i=i;
+    el.querySelectorAll('.wbRadarRain').forEach(l=>{l.hidden=Number(l.dataset.i)!==i});
+    const f=fs[i];
+    el.querySelector('.wbRadarTime').textContent=fmtTime(new Date(f.time*1000),getHass?.())+(f.past?'':' · '+T.forecastTag);
+  }
+  // the frames play on, holding on now and on the last; with motion reduced the map stays on now
+  function radarTick(){
+    root.querySelectorAll('.wbRadarMap').forEach(el=>{
+      if(!el._frames)return;
+      if(Date.now()-el._built>RADAR_REFRESH){buildRadarMap(el);return}
+      if(motionQuery?.matches)return;
+      if(el._hold>0){el._hold-=RADAR_STEP;return}
+      const last=el._frames.length-1,now=el._frames.findLastIndex(f=>f.past),next=el._i>=last?0:el._i+1;
+      showRadarFrame(el,next);
+      if(next===now||next===last)el._hold=RADAR_HOLD;
+    });
+  }
+  // a camera's picture again every minute
+  const cameraTick=()=>root.querySelectorAll('.wbRadarImg').forEach(img=>{const b=img.dataset.src;img.src=b+(b.includes('?')?'&':'?')+'hc='+Date.now()});
+  // the base map follows the theme
+  const themeWatch=typeof MutationObserver==='function'?new MutationObserver(()=>root.querySelectorAll('.wbRadarMap').forEach(el=>{if(el._tiles)buildRadarMap(el)})):null;
+  const appEl=root.closest('#app');
+  if(appEl)themeWatch?.observe(appEl,{attributes:true,attributeFilter:['class']});
   const motionQuery=window.matchMedia?.('(prefers-reduced-motion: reduce)');
   const onMotionChange=()=>{wake();paint(performance.now())};
   motionQuery?.addEventListener?.('change',onMotionChange);
@@ -1551,7 +1635,9 @@ export function mountWeatherBento(container,{getHass,entityId,style='bitmap',mot
   const timers=[
     setInterval(()=>{sunNow=new Date();render(true)},SUN_TICK),
     setInterval(()=>{moonNow=new Date();render(true)},MOON_TICK),
-    setInterval(fetchTiles,REFRESH)
+    setInterval(fetchTiles,REFRESH),
+    setInterval(radarTick,RADAR_STEP),
+    setInterval(cameraTick,MINUTE)
   ];
 
   render(true);
@@ -1572,7 +1658,7 @@ export function mountWeatherBento(container,{getHass,entityId,style='bitmap',mot
       timers.forEach(clearInterval);
       if(raf)cancelAnimationFrame(raf);
       raf=0;
-      resize?.disconnect();
+      resize?.disconnect();radarResize?.disconnect();themeWatch?.disconnect();
       motionQuery?.removeEventListener?.('change',onMotionChange);
       onMouseUp();
       root.removeEventListener('click',onClick);root.removeEventListener('change',onRangeInput);
