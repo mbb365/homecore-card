@@ -1025,11 +1025,10 @@ button.tfAreaIcon{cursor:pointer}
 #app.tfOverview.tfDash #homeView .tfRoomTile{padding:18px;gap:0;border-radius:28px}
 #app.tfOverview.tfDash #homeView .tfRoomTile>.tfActionHead{margin-bottom:0}
 #app.tfOverview.tfDash #homeView .tfRoomTile .tfActionHead .activityRowMeta{display:none}
-#app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomReading{margin-top:35px;gap:0}
-#app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomSub{display:block;margin-top:-7px;font:400 16px/19px var(--font)}
-#app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomDevices{display:flex;justify-content:space-between;min-height:0;margin-top:auto;padding-top:16px}
+#app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomReading{margin-top:auto;padding-top:14px;gap:4px}
+#app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomSub{display:block;font:400 16px/19px var(--font-tile)}
+#app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomDevices{display:flex;justify-content:flex-start;gap:12px;min-height:0;margin-top:14px;padding-top:0}
 #app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomHeads{display:none}
-#app.tfOverview.tfDash #homeView .tfRoomTile:not(:has(.tfRoomDevices :nth-child(4))) .tfRoomDevices{justify-content:flex-start;gap:18.67px}
 #app.light.tfOverview.tfDash #homeView .tfRoomTile .tfRoomIcon{background-color:#acacac;color:#ffffff}
 /* the summaries as wide as their own tiles (Edit Home page → Width: Fit the summaries) */
 #app.tfOverview.hcSumsFit.tfDash #homeView .card.tfDash-bar{width:max-content;max-width:100%}
@@ -1055,21 +1054,19 @@ button.tfAreaIcon{cursor:pointer}
    gives up to 15% on a smaller screen (--hc-k), its reading with it. A card shows what fits: its devices one row, the
    ones that don't fit left off */
 #app.tfOverview.tfDash #homeView .tfRoomTile{overflow:hidden}
-#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaL .tfRoomReading{margin-top:calc(35px * var(--hc-k,1))}
-#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaM .tfRoomReading{margin-top:calc(14px * var(--hc-k,1))}
-#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaM .tfRoomSub{margin-top:-6px}
-#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaS{padding:12px}
-#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaS .tfRoomReading{margin-top:calc(8px * var(--hc-k,1))}
-#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaS .tfRoomSub{display:none}
-#app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaM,.hcAreaS) .tfRoomDevices,
-#app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaM,.hcAreaS):not(:has(.tfRoomDevices :nth-child(4))) .tfRoomDevices{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:0 8px;height:var(--chip-size);overflow:hidden;padding-top:0;margin-top:auto}
-#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaS .tfRoomReading{flex:none}
-#app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomReading{margin-bottom:12px} /* the devices at least 12 under it (on a phone the card is only as tall as it needs) */
-/* Bento's big area (two by two): the reading as Large's, its devices by name, two to a row, as the custom dashboard's wide area tile */
-#app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaS,.hcAreaM,.hcAreaL).hcAreaBig .tfRoomReading{margin-top:calc(35px * var(--hc-k,1))}
-#app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaS,.hcAreaM,.hcAreaL).hcAreaBig .tfRoomSub{display:block}
-#app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaS,.hcAreaM,.hcAreaL).hcAreaBig .tfRoomDevices{display:none!important}
-#app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaS,.hcAreaM,.hcAreaL).hcAreaBig .tfRoomHeads{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:auto}
+/* the type and the lines as the Source of truth's Tile · Room (954:6297, 17 Nov): Geist Medium on its own size, 46 at
+   Small and Medium, 52 at Large, 64 two by two; 18 in at every size, so the title sits at 70 and the reading at 18;
+   the reading, its second line 4 under it and the devices 14 under that sit on the bottom edge. The second line only
+   at Large and two by two, as drawn. The reading gives up with the card (--hc-k) */
+#app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomBig{font:500 calc(46px * var(--hc-k,1))/1 var(--font-tile);letter-spacing:calc(-.92px * var(--hc-k,1))}
+#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaL .tfRoomBig{font-size:calc(52px * var(--hc-k,1));letter-spacing:calc(-1.92px * var(--hc-k,1))}
+#app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaS,.hcAreaM) .tfRoomSub{display:none}
+#app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaS,.hcAreaM) .tfRoomDevices{flex-wrap:wrap;height:var(--chip-size);overflow:hidden}
+/* Bento's big area (two by two): the XL reading, its devices by name, two to a row, as the custom dashboard's wide area tile */
+#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaBig .tfRoomBig{font-size:calc(64px * var(--hc-k,1));letter-spacing:calc(-1.92px * var(--hc-k,1))}
+#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaBig .tfRoomSub{display:block}
+#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaBig .tfRoomDevices{display:none!important}
+#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaBig .tfRoomHeads{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:14px}
 /* Edit Home page open: Favourites moves by dragging, as the custom dashboard's cards do; the areas keep the areas
    page's order (the leadership demo, Matt, 12 Nov) */
 #app.hcHomeEditing.tfOverview #homeView .tfBoardItem.tfRoomTile{cursor:default;outline:0}
