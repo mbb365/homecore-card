@@ -3696,13 +3696,17 @@ export function mountTestFocus(root, { config, getHass }) {
     if (more) more.pages = pages.length;
     const page = more?.page || 0, mode = more?.mode || '';
     // the tabs: a page's own (a colour light's Colour and Controls, one page in two modes), else the page; then Info
-    const tabs = pages.flatMap((pg, i) => (pg.tabs || [{ name: pg.name, svg: pg.svg }]).map((t) => ({ ...t, page: i })));
+    // a light's Info is its own (i) at the foot's right end, not a tab (Matt, 17 Nov); its pill holds only its views
+    const infoAt = pages.length - 1, infoOwn = Boolean(pop?.infoButton);
+    const tabs = pages.flatMap((pg, i) => (infoOwn && i === infoAt ? [] : pg.tabs || [{ name: pg.name, svg: pg.svg }]).map((t) => ({ ...t, page: i })));
     const picked = (t) => t.page === page && (t.mode == null || t.mode === mode);
     return [
       moreHead(id, s, head),
-      '<div class="tfMorePages' + (pop ? ' tfMorePop' : '') + (mode === 'colour' && page === 0 ? ' tfMoreHold' : '') + '" data-more-pages>' + pages.map((pg) => '<section class="tfMorePage" aria-label="' + pg.name + '" data-mode="' + mode + '">' + pg.html + '</section>').join('') + '</div>',
+      '<div class="tfMorePages' + (pop ? ' tfMorePop' : '') + (mode && page === 0 ? ' tfMoreHold' : '') + '" data-more-pages>' + pages.map((pg) => '<section class="tfMorePage" aria-label="' + pg.name + '" data-mode="' + mode + '">' + pg.html + '</section>').join('') + '</div>',
       // the pages' icons in place of their dots (Matt, 12 Nov): Control's sliders and Info's (i); a light's Colour its palette first
-      '<div class="tfMoreDots tfMorePageIcons" role="tablist" aria-label="Pages">' + tabs.map((t) => '<button type="button" role="tab" aria-selected="' + picked(t) + '" aria-label="' + t.name + '" title="' + t.name + '" data-more-page="' + t.page + '"' + (t.mode != null ? ' data-more-mode="' + t.mode + '"' : '') + (picked(t) ? '' : ' tabindex="-1"') + '>' + t.svg + '</button>').join('') + '</div>',
+      (infoOwn ? '<div class="tfMoreFoot"><span class="tfMoreFootGap"></span>' : '') +
+      (tabs.length ? '<div class="tfMoreDots tfMorePageIcons" role="tablist" aria-label="' + (infoOwn ? 'Views' : 'Pages') + '">' + tabs.map((t) => '<button type="button" role="tab" aria-selected="' + picked(t) + '" aria-label="' + t.name + '" title="' + t.name + '" data-more-page="' + t.page + '"' + (t.mode != null ? ' data-more-mode="' + t.mode + '"' : '') + (picked(t) ? '' : ' tabindex="-1"') + '>' + t.svg + '</button>').join('') + '</div>' : '') +
+      (infoOwn ? '<button class="tfMoreInfoBtn" type="button" aria-label="Info" title="Info" aria-pressed="' + (page === infoAt) + '" data-more-page="' + infoAt + '" data-more-toggle>' + INFO_SVG + '</button></div>' : ''),
     ];
   }
   // under the name, as the drawings have it (17 Nov): its area and its state in a word or a number; a light its value
@@ -3760,6 +3764,7 @@ export function mountTestFocus(root, { config, getHass }) {
      it, and the tabs stay at the foot. A row after the first is named above it in a muted 14 where the drawing names it.
      A kind not drawn yet (a media player, a vacuum, a plant, a reading) keeps its popup as it was */
   const PALETTE_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5,12A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 17.5,9A1.5,1.5 0 0,1 19,10.5A1.5,1.5 0 0,1 17.5,12M14.5,8A1.5,1.5 0 0,1 13,6.5A1.5,1.5 0 0,1 14.5,5A1.5,1.5 0 0,1 16,6.5A1.5,1.5 0 0,1 14.5,8M9.5,8A1.5,1.5 0 0,1 8,6.5A1.5,1.5 0 0,1 9.5,5A1.5,1.5 0 0,1 11,6.5A1.5,1.5 0 0,1 9.5,8M6.5,12A1.5,1.5 0 0,1 5,10.5A1.5,1.5 0 0,1 6.5,9A1.5,1.5 0 0,1 8,10.5A1.5,1.5 0 0,1 6.5,12M12,3A9,9 0 0,0 3,12A9,9 0 0,0 12,21A1.5,1.5 0 0,0 13.5,19.5C13.5,19.11 13.35,18.76 13.11,18.5C12.88,18.23 12.73,17.88 12.73,17.5A1.5,1.5 0 0,1 14.23,16H16A5,5 0 0,0 21,11C21,6.58 16.97,3 12,3Z"/></svg>';
+  const DAC_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="4"/></svg>';
   const POP_DOMAINS = ['light', 'climate', 'fan', 'humidifier', 'water_heater', 'alarm_control_panel', 'cover', 'lock', 'valve', 'switch', 'input_boolean'];
   const popField = (label, html) => '<div class="tfMoreField"><div class="tfMoreLabel">' + esc(label) + '</div>' + html + '</div>';
   const popSeg = (label, items) => buttons('tfSeg', label, items);
@@ -3785,18 +3790,25 @@ export function mountTestFocus(root, { config, getHass }) {
     if (!POP_DOMAINS.includes(d)) return null;
     const s = ACTION_DOMAINS.includes(d) || TOGGLES.includes(d) ? specFor(id) : quickSpec(id);
     if (d === 'light') {
+      /* the light, as Home Assistant's more-info has it (Matt, 17 Nov; Figma Popup · Light 1187:5847): the space is two
+         vertical sliders, Brightness and Warmth, each named above; the pill picks the view: Sliders, Colour (the
+         spectrum in Warmth's place, Brightness staying where it is) and the Dual Axis Controller's pad over the whole
+         space. Shapes and controls only for now: no values. The head's icon is still its switch */
       const on = st.state === 'on', modes = modesOf(id), [kMin, kMax] = kelvinRange(id), b = held('bright', id, on ? brightnessOf(st) : 0);
       const k = held('ctf', id, on && a.color_mode === 'color_temp' ? a.color_temp_kelvin : null);
-      const hue = held('hue', id, on && COLOUR_MODES.includes(a.color_mode) && a.hs_color ? a.hs_color[0] : null);
-      const bright = dimmable(id) && popLevel('bright', id, b, nameOf(id) + ' brightness', b + '%', 'mdi:white-balance-sunny');
-      const warm = modes.includes('color_temp') && popMarker('ctf', id, k == null ? null : Math.round(((kMax - k) / (kMax - kMin)) * 1000) / 10, nameOf(id) + ' warmth', k == null ? '' : Math.round(k).toLocaleString() + 'k');
-      const colour = modes.some((m) => COLOUR_MODES.includes(m)) && popMarker('hue', id, hue == null ? null : Math.round((hue / 360) * 1000) / 10, nameOf(id) + ' colour', '');
-      // a light with the pad (the Dual Axis Controller) has it full width; one without, its big switch
-      const space = dacFor(id) ? '<div class="tfMoreSpace tfMoreFill tfMorePad"><div class="tfDacPad" data-dac="more:' + esc(id) + '"></div></div>' : popSwitch(id, s);
-      // Controls and Colour are one page (Matt, 17 Nov: "dynamic changing"): the switch or pad and the brightness stay
-      // where they are, and only the second track changes, warmth to colour and back, in place
-      return { pages: [{ name: 'Control', svg: TUNE_SVG, space, rows: [bright, colour ? '<div class="tfMoreSwap">' + (warm || '') + colour + '</div>' : warm],
-        tabs: colour ? [{ name: 'Colour', svg: PALETTE_SVG, mode: 'colour' }, { name: 'Controls', svg: TUNE_SVG, mode: '' }] : null }] };
+      const hue = held('huev', id, on && COLOUR_MODES.includes(a.color_mode) && a.hs_color ? a.hs_color[0] : null);
+      const warmOk = modes.includes('color_temp'), colourOk = modes.some((m) => COLOUR_MODES.includes(m)), padOk = dacFor(id);
+      const vbar = (kind, label, now, inner) => '<div class="tfBar tfVBar ' + kind + '" data-axis="y" role="slider" tabindex="0" aria-orientation="vertical" aria-label="' + esc(nameOf(id) + ' ' + label.toLowerCase()) + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(now) + '" data-drag="' + kind + '|' + esc(id) + '">' + inner + '</div>';
+      // no names above them (Matt, 17 Nov): each slider says what it is to a screen reader only
+      const col = (label, html, cls = '') => '<div class="tfVCol' + cls + '">' + html + '</div>';
+      const brightCol = col('Brightness', vbar('bright', 'Brightness', b, '<i style="height:' + b + '%"></i><span class="tfBarIcon"' + iconSlot('', 'mdi:white-balance-sunny', 'Brightness') + '></span>'));
+      const warmF = k == null ? null : (kMax - k) / (kMax - kMin); // warm at the top
+      const warmCol = warmOk ? col('Warmth', vbar('ctf', 'Warmth', warmF == null ? 0 : warmF * 100, warmF == null ? '' : '<b style="top:' + Math.round((1 - warmF) * 1000) / 10 + '%"></b>'), ' tfVWarm') : '';
+      const colourCol = colourOk ? col('Colour', vbar('huev', 'Colour', hue == null ? 0 : (1 - hue / 360) * 100, hue == null ? '' : '<b style="top:' + Math.round((hue / 360) * 1000) / 10 + '%"></b>'), ' tfVColour') : '';
+      const cols = '<div class="tfVCols">' + brightCol + (warmCol || colourCol ? '<div class="tfVSwap">' + warmCol + colourCol + '</div>' : '') + '</div>';
+      const pad = padOk ? '<div class="tfLightPad"><div class="tfDacPad" data-dac="more:' + esc(id) + '"></div></div>' : '';
+      const views = [colourOk && { name: 'Colour', svg: PALETTE_SVG, mode: 'colour' }, padOk && { name: 'Dual Axis Controller', svg: DAC_SVG, mode: 'dac' }, { name: 'Sliders', svg: TUNE_SVG, mode: '' }].filter(Boolean);
+      return { infoButton: true, pages: [{ name: 'Control', svg: TUNE_SVG, space: '<div class="tfMoreSpace tfLightSpace">' + cols + pad + '</div>', rows: [], tabs: views.length > 1 ? views : [] }] };
     }
     if (d === 'climate') {
       const step = a.target_temp_step || 0.5, t = Number(a.temperature), lo = Number(a.target_temp_low), hi = Number(a.target_temp_high), set = (data) => act('climate', 'set_temperature', id, data);
@@ -3998,9 +4010,13 @@ export function mountTestFocus(root, { config, getHass }) {
   }
   function markPage() {
     const page = more?.page || 0;
-    sheet.querySelectorAll('[data-more-page]').forEach((b) => { const on = Number(b.dataset.morePage) === page && (b.dataset.moreMode == null || b.dataset.moreMode === (more.mode || '')); b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+    sheet.querySelectorAll('[data-more-page]').forEach((b) => {
+      const on = Number(b.dataset.morePage) === page && (b.dataset.moreMode == null || b.dataset.moreMode === (more.mode || ''));
+      if (b.hasAttribute('data-more-toggle')) { b.setAttribute('aria-pressed', String(on)); return; } // the light's (i)
+      b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1;
+    });
     // a colour light's Colour mode keeps its page still: a swipe changes the mode, not the page
-    sheet.querySelector('[data-more-pages]')?.classList.toggle('tfMoreHold', more.mode === 'colour' && page === 0);
+    sheet.querySelector('[data-more-pages]')?.classList.toggle('tfMoreHold', Boolean(more.mode) && page === 0);
   }
   function turnPage(page, focus) {
     const track = sheet.querySelector('[data-more-pages]');
@@ -4028,8 +4044,10 @@ export function mountTestFocus(root, { config, getHass }) {
     const t = ev.changedTouches[0], dx = t.clientX - swipe.x, dy = t.clientY - swipe.y;
     swipe = null;
     if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    if (dx > 0 && more.mode !== 'colour') pickTab(0, 'colour');
-    else if (dx < 0 && more.mode === 'colour') pickTab(0, '');
+    // a view along, in the pill's order (Colour, the pad, Sliders); from Sliders, left is the strip's own turn to Info
+    const views = [...sheet.querySelectorAll('.tfMoreDots [data-more-mode]')].map((b) => b.dataset.moreMode), at = views.indexOf(more.mode || '');
+    if (dx > 0 && at > 0) pickTab(0, views[at - 1]);
+    else if (dx < 0 && more.mode && at < views.length - 1) pickTab(0, views[at + 1]);
   }, { passive: true });
   let pageTimer = 0;
   sheet.addEventListener('scroll', (ev) => {
@@ -4387,6 +4405,8 @@ export function mountTestFocus(root, { config, getHass }) {
     fan: { value: (id, f) => { const st = attr(id).percentage_step || 1; return Math.round((f * 100) / st) * st; }, text: (id, v) => Math.round(v) + '%', send: (id, v) => ['fan', 'set_percentage', { percentage: Math.round(v) }] },
     valve: { value: (id, f) => Math.round(f * 100), text: (id, v) => v + '%', send: (id, v) => ['valve', 'set_valve_position', { position: v }] },
     tiltp: { value: (id, f) => Math.round(f * 100), text: (id, v) => v + '%', send: (id, v) => ['cover', 'set_cover_tilt_position', { tilt_position: v }] },
+    // the light popup's vertical colour (17 Nov): red at the top, through the spectrum, to red at the bottom
+    huev: { value: (id, f) => Math.round((1 - f) * 360), text: () => 'Colour', send: (id, v) => ['light', 'turn_on', { hs_color: [v, Math.max(60, attr(id).hs_color?.[1] || 100)] }] },
   };
   function showDrag(bar, kind, id, f) {
     const v = DRAG[kind].value(id, f);
@@ -4402,6 +4422,10 @@ export function mountTestFocus(root, { config, getHass }) {
       units.delete(id);
       moreParts = moreParts.map(() => '');
       artsOf(id).forEach((art) => art.update(coverView(id)));
+    } else if (bar.dataset.axis === 'y') {
+      // a vertical slider (the light's popup, 17 Nov): its level rises from the bottom; its handle sits as high as it's set
+      if (i) i.style.height = pct;
+      else { let b = bar.querySelector('b'); if (!b) { b = document.createElement('b'); bar.appendChild(b); } b.style.top = Math.round((1 - f) * 1000) / 10 + '%'; }
     } else if (i) i.style.width = pct;
     else { let b = bar.querySelector('b'); if (!b) { b = document.createElement('b'); bar.appendChild(b); } b.style.left = pct; }
     bar.setAttribute('aria-valuenow', String(Math.round(f * 100)));
@@ -4437,7 +4461,7 @@ export function mountTestFocus(root, { config, getHass }) {
       else if (t.dataset.acts) JSON.parse(t.dataset.acts).forEach(([domain, service, id, data]) => send(domain, service, id, data).catch(() => {}));
       else if (t.dataset.more) openMore(t.dataset.more, t);
       else if (t.hasAttribute('data-more-close')) closeMore();
-      else if (t.dataset.morePage) pickTab(Number(t.dataset.morePage), t.dataset.moreMode ?? null, true);
+      else if (t.dataset.morePage) pickTab(t.hasAttribute('data-more-toggle') && (more?.page || 0) === Number(t.dataset.morePage) ? 0 : Number(t.dataset.morePage), t.dataset.moreMode ?? null, true); // the (i) again: back
       else if (t.dataset.path) go(t.dataset.path);
       else if (t.dataset.go) openArea('room:' + t.dataset.go);
       else if (t.hasAttribute('data-area-back')) closeArea();
@@ -4486,8 +4510,9 @@ export function mountTestFocus(root, { config, getHass }) {
       if (fixed && !finger) { run(act('light', 'toggle', id)); return; }
       const off = kind === 'bright' && states[id]?.state !== 'on';
       const inset = kind === 'tilt' ? 4 : 0; // the tilt bar's fill sits 4 in
-      const span = () => bar.getBoundingClientRect().width - inset * 2;
-      const at = (e2) => { const r = bar.getBoundingClientRect(); return Math.max(0, Math.min(1, (e2.clientX - r.left - inset) / span())); };
+      const up_down = bar.dataset.axis === 'y'; // a vertical slider: up is more
+      const span = () => (up_down ? bar.getBoundingClientRect().height : bar.getBoundingClientRect().width - inset * 2);
+      const at = (e2) => { const r = bar.getBoundingClientRect(); return Math.max(0, Math.min(1, up_down ? 1 - (e2.clientY - r.top) / span() : (e2.clientX - r.left - inset) / span())); };
       // waiting: a finger that may yet be a tap, a slide or a scroll; pressed: a mouse on a light that's off, which may
       // yet be a click; sliding: a finger moving the bar from where it was; dragging: a mouse moving it to the pointer
       let mode = finger ? 'waiting' : off ? 'pressed' : 'dragging', from = 0;
@@ -4506,9 +4531,9 @@ export function mountTestFocus(root, { config, getHass }) {
       const move = (e2) => {
         // sideways, the bar takes the finger; up or down, the page does (and the bar hears no more of it)
         if (mode === 'waiting' && moved(e2, BAR_SLOP)) {
-          if (!fixed && Math.abs(e2.clientX - x0) > Math.abs(e2.clientY - y0)) slide(); else mode = 'gone';
+          if (!fixed && (up_down ? Math.abs(e2.clientY - y0) > Math.abs(e2.clientX - x0) : Math.abs(e2.clientX - x0) > Math.abs(e2.clientY - y0))) slide(); else mode = 'gone';
         } else if (mode === 'pressed' && moved(e2, 4)) mode = 'dragging';
-        if (mode === 'sliding') showDrag(bar, kind, id, Math.max(0, Math.min(1, from + (e2.clientX - x0) / span())));
+        if (mode === 'sliding') showDrag(bar, kind, id, Math.max(0, Math.min(1, from + (up_down ? y0 - e2.clientY : e2.clientX - x0) / span())));
         else if (mode === 'dragging') showDrag(bar, kind, id, at(e2));
       };
       const up = (e2) => {

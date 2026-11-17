@@ -1196,6 +1196,51 @@ button.tfAreaIcon{cursor:pointer}
 .tfMorePage:not([data-mode="colour"]) .tfMoreSwap>.hue{opacity:0;translate:-28px 0;visibility:hidden;pointer-events:none}
 @media(prefers-reduced-motion:reduce){#app .tfMoreSwap>.tfBar{transition:none}}
 #app .tfMorePages.tfMoreHold{overflow-x:hidden}
+/* ---------- the light, as Home Assistant's more-info has it (Matt, 17 Nov; Figma Popup · Light 1187:5847): the space is
+   two vertical sliders 16 apart, each named above in the muted 14, filling its height, corner 24; the pill picks the view
+   (Colour, the pad, Sliders) and the (i) sits apart at the foot's right end. Shapes and controls only: no values yet ---------- */
+#app .tfMoreBackdrop:not(.wide) .tfMorePop>.tfMorePage>.tfMoreSpace.tfLightSpace{position:relative;flex:1 0 224px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:0;background:none;overflow:visible}
+/* the sliders 30% smaller than the space, centred in it (Matt, 17 Nov: 134 by 319 each on the desktop's), 16 apart */
+.tfVCols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;width:calc((100% - 16px) * .7 + 16px);height:70%;transition:opacity .22s ease,visibility .22s}
+.tfVCols:has(>:only-child){width:calc((100% - 16px) * .35)} /* one slider (a plain dimmer): the same width, centred */
+.tfVCols:has(>:only-child){grid-template-columns:minmax(0,1fr)}
+.tfVCol,.tfVSwap>*{display:flex;flex-direction:column;gap:8px;min-height:0}
+.tfVSwap{display:grid;min-height:0}
+.tfVSwap>*{grid-area:1/1}
+#app .tfVBar{flex:1;height:auto;min-height:0;border-radius:24px;touch-action:none;box-shadow:var(--hc-hair-all)}
+/* Brightness: the tile colour with its hairline, its sun top left in the text colour, the amber level rising from the
+   bottom (Matt, 17 Nov: in each mode's own colours) */
+#app .tfVBar.bright{background:var(--tile)}
+#app .tfVBar.bright i{inset:auto 0 0 0;width:auto;background:linear-gradient(180deg,#ffc247,#ffaa00)}
+.tfVBar .tfBarIcon{position:absolute;left:14px;top:14px;width:22px;height:22px;color:var(--text);pointer-events:none;--mdc-icon-size:22px}
+.tfVBar .tfBarIcon>*{width:22px;height:22px}
+/* Warmth: warm at the top to cold at the bottom; Colour: red at the top through the spectrum to red at the bottom */
+#app .tfVBar.ctf{background:linear-gradient(180deg,#ffaa00,#ffc247 25%,#fff7ee 55%,#d7e7ff)}
+#app .tfVBar.huev{background:linear-gradient(180deg,#ff0000,#ffff00 17%,#00ff00 33%,#00ffff 50%,#0000ff 67%,#ff00ff 83%,#ff0000)}
+/* the handle: across, 30 by 4, white with the slider's shadow */
+#app .tfVBar b{left:50%;right:auto;bottom:auto;width:30px;height:4px;margin:-2px 0 0 -15px;border-radius:2px}
+/* Sliders and Colour: Brightness stays where it is and the second slider changes in place. The one going fades away; the
+   one coming fades in where it sits with a small pulse, up and settling, landing in place (Matt, 17 Nov: "fade, pulse
+   and land in place… rather than sliding in"; the Motion Lab's land) */
+#app .tfVSwap>*{transition:opacity .18s ease,visibility .18s}
+.tfMorePage[data-mode="colour"] .tfVSwap>.tfVWarm{opacity:0;visibility:hidden;pointer-events:none}
+.tfMorePage:not([data-mode="colour"]) .tfVSwap>.tfVColour{opacity:0;visibility:hidden;pointer-events:none}
+@keyframes tfVLand{from{opacity:0;scale:.94}55%{opacity:1;scale:1.035}to{opacity:1;scale:1}}
+.tfMorePage[data-mode="colour"] .tfVSwap>.tfVColour,.tfMorePage:not([data-mode="colour"]):not([data-mode="dac"]) .tfVSwap>.tfVWarm,
+.tfMorePage[data-mode="dac"] .tfLightPad,.tfMorePage:not([data-mode="dac"]) .tfVCols{animation:tfVLand .42s cubic-bezier(.34,1.46,.64,1) backwards} /* (not held at its end, so the next change can fade it away) */
+.tfVSwap>.tfVColour:only-child{opacity:1!important;translate:0 0!important;visibility:visible!important;pointer-events:auto!important} /* colour without warmth */
+/* the pad (the Dual Axis Controller) fills the whole space, corner 24 */
+.tfLightPad{position:absolute;inset:0;border-radius:24px;overflow:hidden;--tf-dac-pad:100cqh;--tf-dac-max:none;container-type:size;transition:opacity .22s ease,visibility .22s}
+.tfLightPad>.tfDacPad{width:100%;height:100%}
+.tfMorePage:not([data-mode="dac"]) .tfLightPad,.tfMorePage[data-mode="dac"] .tfVCols{opacity:0;visibility:hidden;pointer-events:none}
+@media(prefers-reduced-motion:reduce){#app .tfVSwap>*,.tfVCols,.tfLightPad{transition:none;animation:none!important}}
+/* the foot: a 40 gap, the pill centred, the (i) at the right end */
+.tfMoreFoot{display:flex;flex:none;align-items:center;justify-content:space-between;height:40px}
+.tfMoreFootGap{flex:none;width:40px}
+.tfMoreFoot .tfMoreDots{margin:0}
+#app .tfMoreInfoBtn{display:grid;place-items:center;flex:none;width:40px;height:40px;min-height:0;padding:0;border:0;border-radius:20px;background:none;color:var(--muted);cursor:pointer}
+.tfMoreInfoBtn svg{width:20px;height:20px;fill:currentColor}
+#app .tfMoreInfoBtn[aria-pressed="true"]{background:var(--tile);color:var(--text)}
 .tfMoreCtl>*{flex:none}
 /* a row named above it: the muted 14 name, 6 over its control */
 .tfMoreField{display:flex;flex-direction:column;gap:6px}
