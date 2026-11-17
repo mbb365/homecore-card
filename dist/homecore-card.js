@@ -4695,7 +4695,7 @@ function V0(n, { config: r, getHass: d }) {
   }
   const xo = { row: 337, nameGap: 16, sumsGap: 16, full: 1336, floorTop: 12, floorHead: 24, floorGap: 16 }, wc = { s: { w: 252, h: 136, rows: 2 }, m: { w: 252, h: 212, rows: 3 }, l: { w: 252, h: 288, rows: 4 } }, vc = () => {
     var t;
-    return wc[(t = mt.home) == null ? void 0 : t.areaSize] ? mt.home.areaSize : window.innerWidth <= 620 ? "l" : "s";
+    return wc[(t = mt.home) == null ? void 0 : t.areaSize] ? mt.home.areaSize : "s";
   }, Ds = () => {
     var t;
     return ["rows", "columns", "bento"].includes((t = mt.home) == null ? void 0 : t.areaLayout) ? mt.home.areaLayout : "bento";
@@ -4792,7 +4792,7 @@ function V0(n, { config: r, getHass: d }) {
       }
       k(pt, { x: A, y: f, w: R, h: Nt }), A += R + l, rt = Math.max(rt, Nt);
     }), B.length && !z && (f += rt + l);
-    const Rt = z ? R + l : 0, Pt = z ? e - R - l : e, le = vc(), At = wc[le], Bt = Ds(), ve = Mo("byFloor"), Ce = c.w, He = At.h, Oe = a ? 2 : Math.max(1, Math.floor((Pt + l) / (Ce + l))), Qn = new Map(i.filter((pt) => h(pt.key)).map((pt) => [pt.key, pt])), Ba = (ve ? ju() : [{ id: "", name: "", icon: "", rooms: Je }]).map((pt) => ({ ...pt, cards: pt.rooms.map((Nt) => Qn.get("room:" + Nt.id)).filter(Boolean) })).filter((pt) => pt.cards.length), Ni = Bt === "bento", Oi = Ni && Mo("bentoMixed"), Yf = Ni && ve && Mo("bentoBoxes"), Zf = Bt === "columns" && ve && !a, Lo = 12, yd = (pt) => pt.name ? xo.floorHead + xo.floorGap : 0, Or = (pt, Nt, Ae) => {
+    const Rt = z ? R + l : 0, Pt = z ? e - R - l : e, le = a ? "l" : vc(), At = wc[le], Bt = Ds(), ve = Mo("byFloor"), Ce = c.w, He = At.h, Oe = a ? 2 : Math.max(1, Math.floor((Pt + l) / (Ce + l))), Qn = new Map(i.filter((pt) => h(pt.key)).map((pt) => [pt.key, pt])), Ba = (ve ? ju() : [{ id: "", name: "", icon: "", rooms: Je }]).map((pt) => ({ ...pt, cards: pt.rooms.map((Nt) => Qn.get("room:" + Nt.id)).filter(Boolean) })).filter((pt) => pt.cards.length), Ni = Bt === "bento", Oi = Ni && Mo("bentoMixed"), Yf = Ni && ve && Mo("bentoBoxes"), Zf = Bt === "columns" && ve && !a, Lo = 12, yd = (pt) => pt.name ? xo.floorHead + xo.floorGap : 0, Or = (pt, Nt, Ae) => {
       const Yt = /* @__PURE__ */ new Set(), ie = [];
       pt.cards.forEach((Xt, lo) => {
         const an = Oi && lo === 0 && Nt >= 2 && pt.cards.length > 1, Ve = an ? 2 : 1, Do = an && !a ? 2 : 1;
@@ -6680,7 +6680,7 @@ function V0(n, { config: r, getHass: d }) {
     }
   };
 }
-const j0 = "0.13.0";
+const j0 = "0.13.1";
 function z0() {
   if (document.getElementById("homecore-fonts")) return;
   const n = document.createElement("link");
