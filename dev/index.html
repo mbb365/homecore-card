@@ -29,7 +29,7 @@ function stateIconName(st) {
   if (byClass[dc]) return byClass[dc];
   return ({ light: on ? "mdi:lightbulb" : "mdi:lightbulb-off", switch: on ? "mdi:toggle-switch-variant" : "mdi:toggle-switch-variant-off", media_player: s === "off" ? "mdi:cast-off" : "mdi:cast",
     lock: s === "locked" ? "mdi:lock" : s === "jammed" ? "mdi:lock-alert" : "mdi:lock-open-variant", climate: "mdi:thermostat", vacuum: "mdi:robot-vacuum", humidifier: on ? "mdi:air-humidifier" : "mdi:air-humidifier-off",
-    alarm_control_panel: s === "disarmed" ? "mdi:shield-off" : s === "triggered" ? "mdi:shield-alert" : "mdi:shield-home", valve: "mdi:valve", plant: "mdi:flower", person: "mdi:account", weather: "mdi:weather-partly-cloudy",
+    alarm_control_panel: s === "disarmed" ? "mdi:shield-off" : s === "triggered" ? "mdi:shield-alert" : "mdi:shield-home", valve: "mdi:valve", fan: on ? "mdi:fan" : "mdi:fan-off", water_heater: s === "off" ? "mdi:water-boiler-off" : "mdi:water-boiler", plant: "mdi:flower", person: "mdi:account", weather: "mdi:weather-partly-cloudy",
     sensor: "mdi:gauge", binary_sensor: on ? "mdi:alert-circle" : "mdi:home" })[d] || "mdi:circle-medium";
 }
 customElements.define("ha-icon", class extends HTMLElement {

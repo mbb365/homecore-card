@@ -107,7 +107,7 @@ const COLOUR_MODES = ['hs', 'xy', 'rgb', 'rgbw', 'rgbww'];
 const OPEN_CLASSES = ['door', 'window', 'garage_door', 'opening'];
 // alarms Activity keeps for the day, in red (Matt, 29 Oct): what it detected, and what it says once it's cleared
 const ALARM_CLASSES = { moisture: ['detected water', 'dry'], smoke: ['detected smoke', 'clear'], gas: ['detected gas', 'clear'], carbon_monoxide: ['detected carbon monoxide', 'clear'], safety: ['became unsafe', 'safe'] };
-const ACTION_DOMAINS = ['light', 'climate', 'cover', 'humidifier', 'media_player', 'vacuum', 'lock', 'alarm_control_panel', 'valve'];
+const ACTION_DOMAINS = ['light', 'climate', 'cover', 'humidifier', 'media_player', 'vacuum', 'lock', 'alarm_control_panel', 'valve', 'water_heater'];
 // The dashboard (Matt, 27 Oct): what its activity card follows, how many changes and favourites it shows, and its
 // energy's icons
 const ACTIVITY_DOMAINS = ['light', 'switch', 'fan', 'lock', 'cover', 'climate', 'humidifier', 'media_player', 'alarm_control_panel', 'vacuum', 'valve', 'binary_sensor'];
@@ -917,7 +917,9 @@ export function mountTestFocus(root, { config, getHass }) {
   // its text is this page's grey (Matt, 28 Oct: #d9d9d9; the card's own is #f1f1f1)
   const DAC_PAD = 'ha-card,.hc.hcTile{padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important}' +
     '.hcTileHead{display:none!important}.hc--dark{--hc-text:var(--color-text-primary,#f1f1f1)}' +
-    '.halo.is-size-tile .halo__pad-shell{height:var(--tf-dac-pad,198px)!important;transition:height .25s cubic-bezier(.2,.7,.3,1)}';
+    '.halo.is-size-tile .halo__pad-shell{height:var(--tf-dac-pad,198px)!important;transition:height .25s cubic-bezier(.2,.7,.3,1)}' +
+    // its frame is 280 at most; a popup's pad is full width (17 Nov), so the popup can lift that
+    '.hc.hcTile{max-width:var(--tf-dac-max,280px)!important}';
   const dressDac = (el) => {
     if (!el.shadowRoot || el.shadowRoot.querySelector('style[data-tf]')) return;
     el.shadowRoot.appendChild(Object.assign(document.createElement('style'), { textContent: DAC_PAD })).dataset.tf = '';
@@ -1045,6 +1047,14 @@ export function mountTestFocus(root, { config, getHass }) {
           { label: 'Open', act: act('valve', 'open_valve', id), pressed: isOpen },
           { label: 'Close', act: act('valve', 'close_valve', id), pressed: !isOpen },
         ]),
+      ] };
+    }
+    if (d === 'water_heater') {
+      // its target, then its modes (made up, 17 Nov, so its popup can be seen)
+      const t = Number(a.temperature), step = a.target_temp_step || 1, on = st.state !== 'off';
+      return { on, tone: 'heat', icon: 'mdi:water-boiler', button: { act: act('water_heater', on ? 'turn_off' : 'turn_on', id), label: 'Turn ' + nameOf(id) + (on ? ' off' : ' on') }, parts: ['step', 'modes'], sections: [
+        Number.isFinite(t) && stepper('Target temperature', t + ' °C', act('water_heater', 'set_temperature', id, { temperature: t - step }), act('water_heater', 'set_temperature', id, { temperature: t + step })),
+        a.operation_list?.length && buttons('tfSeg', 'Mode', a.operation_list.map((m) => ({ label: cap(m), act: act('water_heater', 'set_operation_mode', id, { operation_mode: m }), pressed: (a.operation_mode || st.state) === m }))),
       ] };
     }
     // a switch, plug, input boolean or fan: a tile of its own, its icon the switch (Matt, 12 Nov: plugs as tiles on the
@@ -3474,7 +3484,9 @@ export function mountTestFocus(root, { config, getHass }) {
     vacuum: (a) => [['Battery', a.battery_level + '%'], ['Fan speed', cap(a.fan_speed)], ['Rooms', (a.rooms || []).join(', ') || null]],
     lock: (a) => [['Changed by', a.changed_by]],
     alarm_control_panel: (a) => [['Changed by', a.changed_by]],
-    valve: () => [],
+    valve: (a) => [['Position', a.current_position != null ? a.current_position + '% open' : null]],
+    fan: (a) => [['Speed', a.percentage != null ? a.percentage + '%' : null], ['Oscillating', a.oscillating != null ? (a.oscillating ? 'Yes' : 'No') : null], ['Direction', a.direction && cap(a.direction)]],
+    water_heater: (a) => [['Current temperature', a.current_temperature != null ? a.current_temperature + ' °C' : null], ['Target', a.temperature != null ? a.temperature + ' °C' : null], ['Mode', a.operation_mode && cap(a.operation_mode)], ['Away', a.away_mode && cap(a.away_mode)]],
     plant: (a) => [['Moisture', a.moisture + '%'], ['Light', Number(a.brightness).toLocaleString() + ' lx'], ['Temperature', num(a.temperature) + ' °C'], ['Fertility', a.conductivity + ' µS/cm'], ['Problems', a.problem === 'none' ? 'None' : cap(a.problem)]],
     weather: (a) => [['Temperature', a.temperature != null ? a.temperature + ' ' + (a.temperature_unit || '°C') : null], ['Humidity', a.humidity != null ? a.humidity + '%' : null], ['Wind', a.wind_speed != null ? a.wind_speed + ' ' + (a.wind_speed_unit || 'km/h') : null], ['Pressure', a.pressure != null ? a.pressure + ' ' + (a.pressure_unit || 'hPa') : null]],
   };
@@ -3628,17 +3640,29 @@ export function mountTestFocus(root, { config, getHass }) {
        Controller; a cover's drawing; a media player's artwork) and the tile's controls; Info, its details, when it
        changed, its area, entity, device and integration, and its device page */
     const d = id.split('.')[0], st = states[id];
-    const s = ACTION_DOMAINS.includes(d) ? specFor(id) : quickSpec(id);
+    const s = ACTION_DOMAINS.includes(d) || TOGGLES.includes(d) ? specFor(id) : quickSpec(id);
+    const pop = popOf(id);
+    // its pages: the drawn ones (a light's Colour and Control) or Control as it was, then Info
+    const pages = [...(pop ? pop.pages.map((pg) => ({ name: pg.name, svg: pg.svg, html: pg.space + '<div class="tfMoreCtl"' + lightAttrs(id).replace(' data-light', '') + '>' + pg.rows.filter(Boolean).join('') + '</div>' }))
+      : [{ name: 'Control', svg: TUNE_SVG, html: moreSpace(id) + (d === 'plant' ? plantProblems(id).join('') : '') + s.sections.filter(Boolean).join('') }]), { name: 'Info', svg: INFO_SVG, html: infoOf(id) }];
+    if (more && more.page == null) more.page = pop?.start || 0; // a light opens on its Control page, after Colour
+    if (more) more.pages = pages.length;
     const page = more?.page || 0;
     return [
       moreHead(id, s, head),
-      '<div class="tfMorePages" data-more-pages>' +
-        '<section class="tfMorePage" aria-label="Control">' + moreSpace(id) + (d === 'plant' ? plantProblems(id).join('') : '') + s.sections.filter(Boolean).join('') + '</section>' +
-        '<section class="tfMorePage" aria-label="Info">' + infoOf(id) + '</section></div>',
-      // the pages' icons in place of their dots (Matt, 12 Nov): Control's sliders and Info's (i), a small segmented pair
-      '<div class="tfMoreDots tfMorePageIcons" role="tablist" aria-label="Pages">' + [['Control', TUNE_SVG], ['Info', INFO_SVG]].map(([n, svg], i) => '<button type="button" role="tab" aria-selected="' + (i === page) + '" aria-label="' + n + '" title="' + n + '" data-more-page="' + i + '"' + (i === page ? '' : ' tabindex="-1"') + '>' + svg + '</button>').join('') + '</div>',
+      '<div class="tfMorePages' + (pop ? ' tfMorePop' : '') + '" data-more-pages>' + pages.map((pg) => '<section class="tfMorePage" aria-label="' + pg.name + '">' + pg.html + '</section>').join('') + '</div>',
+      // the pages' icons in place of their dots (Matt, 12 Nov): Control's sliders and Info's (i); a light's Colour its palette first
+      '<div class="tfMoreDots tfMorePageIcons" role="tablist" aria-label="Pages">' + pages.map((pg, i) => '<button type="button" role="tab" aria-selected="' + (i === page) + '" aria-label="' + pg.name + '" title="' + pg.name + '" data-more-page="' + i + '"' + (i === page ? '' : ' tabindex="-1"') + '>' + pg.svg + '</button>').join('') + '</div>',
     ];
   }
+  // under the name, as the drawings have it (17 Nov): its area and its state in a word or a number; a light its value
+  const headLine = (id, areaName) => {
+    const d = id.split('.')[0], st = states[id], a = st.attributes;
+    if (d === 'light') return valueOf(id);
+    const word = d === 'climate' ? cap(a.hvac_action || st.state) : d === 'humidifier' ? cap(a.action || st.state) : d === 'water_heater' ? cap(a.operation_mode || st.state)
+      : d === 'fan' && st.state === 'on' && a.percentage != null ? a.percentage + '%' : (d === 'valve' || d === 'cover') && a.current_position != null && st.state !== 'closed' ? a.current_position + '%' : valueOf(id);
+    return [areaName, word].filter(Boolean).join(' · ');
+  };
   // the popup's head is the tile's: Back where it was opened from inside a popup, the icon (its button), the name
   // over the area, and Close
   function moreHead(id, s, head) {
@@ -3646,7 +3670,7 @@ export function mountTestFocus(root, { config, getHass }) {
     const icon = s.button ? iconButton(id, s) : '<div class="tfIcon"' + iconSlot(id, s.icon) + '></div>';
     return '<div class="tfMoreHead tfMoreTileHead' + (s.on ? ' on' : '') + '"' + (s.tone ? ' data-tone="' + s.tone + '"' : '') + lightAttrs(id) + '>' +
       (more?.back ? '<button class="tfBack" type="button" data-more-back aria-label="Back">' + ARROW + '</button>' : '') + icon +
-      '<div class="tfName"><span class="activityRowName" id="tfMoreTitle">' + esc(nameOf(id)) + '</span>' + (areaName ? '<span class="activityRowMeta">' + esc(areaName) + '</span>' : '') + '</div>' +
+      '<div class="tfName"><span class="activityRowName" id="tfMoreTitle">' + esc(nameOf(id)) + '</span><span class="activityRowMeta">' + esc(headLine(id, areaName)) + '</span></div>' +
       '<button class="tfBack" type="button" data-more-close aria-label="Close">' + CLOSE + '</button></div>';
   }
   // the big space (Matt, 10 Nov: the data and action space is left largely undefined, for contributors to design;
@@ -3679,6 +3703,125 @@ export function mountTestFocus(root, { config, getHass }) {
     const { big, lines } = bigOf(id);
     return '<div class="tfMoreSpace"><div class="tfMoreBig' + (held('pos', id) != null ? ' live' : '') + '"><span class="tfMoreNum">' + esc(big[0]) + '</span>' + (big[1] ? '<span class="tfMoreUnit">' + esc(big[1]) + '</span>' : '') + '</div>' +
       '<div class="tfMoreFacts">' + lines.map(([k, v]) => '<div class="tfMoreFact"><span>' + esc(k) + '</span><span>' + esc(v) + '</span></div>').join('') + '</div></div>';
+  }
+  /* the redrawn popups (Matt, 17 Nov; Figma "HomeCore · Source of truth · 2", the More info band 1144:1380): one set
+     per kind, each the same 604.4 tall. The space at the top (a pad, the device's data, its big switch, the alarm's
+     keypad) is 224 at least and takes what the rows under it leave; rows that don't fit scroll in their own block under
+     it, and the tabs stay at the foot. A row after the first is named above it in a muted 14 where the drawing names it.
+     A kind not drawn yet (a media player, a vacuum, a plant, a reading) keeps its popup as it was */
+  const PALETTE_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5,12A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 17.5,9A1.5,1.5 0 0,1 19,10.5A1.5,1.5 0 0,1 17.5,12M14.5,8A1.5,1.5 0 0,1 13,6.5A1.5,1.5 0 0,1 14.5,5A1.5,1.5 0 0,1 16,6.5A1.5,1.5 0 0,1 14.5,8M9.5,8A1.5,1.5 0 0,1 8,6.5A1.5,1.5 0 0,1 9.5,5A1.5,1.5 0 0,1 11,6.5A1.5,1.5 0 0,1 9.5,8M6.5,12A1.5,1.5 0 0,1 5,10.5A1.5,1.5 0 0,1 6.5,9A1.5,1.5 0 0,1 8,10.5A1.5,1.5 0 0,1 6.5,12M12,3A9,9 0 0,0 3,12A9,9 0 0,0 12,21A1.5,1.5 0 0,0 13.5,19.5C13.5,19.11 13.35,18.76 13.11,18.5C12.88,18.23 12.73,17.88 12.73,17.5A1.5,1.5 0 0,1 14.23,16H16A5,5 0 0,0 21,11C21,6.58 16.97,3 12,3Z"/></svg>';
+  const POP_DOMAINS = ['light', 'climate', 'fan', 'humidifier', 'water_heater', 'alarm_control_panel', 'cover', 'lock', 'valve', 'switch', 'input_boolean'];
+  const popField = (label, html) => '<div class="tfMoreField"><div class="tfMoreLabel">' + esc(label) + '</div>' + html + '</div>';
+  const popSeg = (label, items) => buttons('tfSeg', label, items);
+  // a track with its icon inside at the left and its value inside the level at its right end (brightness, a fan's
+  // speed, a valve's position, a cover's tilt)
+  const popLevel = (kind, id, pct, label, text, icon) => '<div class="tfBar tfPopBar ' + kind + '" role="slider" tabindex="0" aria-label="' + esc(label) + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(pct) + '" aria-valuetext="' + esc(text) + '" data-drag="' + esc(kind + '|' + id) + '">' +
+    '<i style="width:' + Math.max(0, Math.min(100, pct)) + '%"><output class="tfBarVal">' + esc(text) + '</output></i>' + (icon ? '<span class="tfBarIcon"' + iconSlot('', icon, label) + '></span>' : '') + '</div>';
+  // a track with a handle (warmth, flipped: cold at the left, warm at the right; colour's spectrum), its value centred
+  const popMarker = (kind, id, pct, label, text) => '<div class="tfBar tfPopBar ' + kind + '" role="slider" tabindex="0" aria-label="' + esc(label) + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(pct ?? 0) + '"' + (text ? ' aria-valuetext="' + esc(text) + '"' : '') + ' data-drag="' + esc(kind + '|' + id) + '">' +
+    (text ? '<output class="tfBarVal mid">' + esc(text) + '</output>' : '') + (pct == null ? '' : '<b style="left:' + pct + '%"></b>') + '</div>';
+  // the big switch: the tile's icon button, 224 (an off one the tile's chip with its hairline, its glyph in the text colour)
+  const popSwitch = (id, s) => '<div class="tfMoreSpace tfMoreSwitch' + (s.on ? ' on' : '') + '"' + (s.tone ? ' data-tone="' + s.tone + '"' : '') + lightAttrs(id) + '>' + iconButton(id, s) + '</div>';
+  // the data: the main number and its unit at the top, its facts spread under it
+  const popData = (big, unit, facts) => '<div class="tfMoreSpace"><div class="tfMoreBig"><span class="tfMoreNum">' + esc(big) + '</span>' + (unit ? '<span class="tfMoreUnit">' + esc(unit) + '</span>' : '') + '</div>' +
+    '<div class="tfMoreFacts">' + facts.filter(([, v]) => v != null && v !== '').map(([k, v]) => '<div class="tfMoreFact"><span>' + esc(k) + '</span><span>' + esc(v) + '</span></div>').join('') + '</div></div>';
+  const codeField = () => '<input class="tfMoreCode" type="password" inputmode="numeric" autocomplete="off" placeholder="Code" aria-label="Code" data-code value="' + esc(more?.code || '') + '">';
+  // a button that sends its code too, when one's typed (a lock's, the alarm's)
+  const coded = (domain, service, id, label, pressed) => ({ label, pressed, html: null, coded: [domain, service, id].join('|') });
+  const codedSeg = (label, items) => '<div class="tfSeg" role="group" aria-label="' + esc(label) + '">' + items.map((it) => '<button type="button" data-coded="' + esc(it.coded) + '" aria-pressed="' + Boolean(it.pressed) + '">' + esc(it.label) + '</button>').join('') + '</div>';
+  const onOff = (id, d, on) => popSeg(nameOf(id), [{ label: 'Off', act: act(d, 'turn_off', id), pressed: !on }, { label: 'On', act: act(d, 'turn_on', id), pressed: on }]);
+  function popOf(id) {
+    const d = id.split('.')[0], st = states[id], a = st.attributes;
+    if (!POP_DOMAINS.includes(d)) return null;
+    const s = ACTION_DOMAINS.includes(d) || TOGGLES.includes(d) ? specFor(id) : quickSpec(id);
+    if (d === 'light') {
+      const on = st.state === 'on', modes = modesOf(id), [kMin, kMax] = kelvinRange(id), b = held('bright', id, on ? brightnessOf(st) : 0);
+      const k = held('ctf', id, on && a.color_mode === 'color_temp' ? a.color_temp_kelvin : null);
+      const hue = held('hue', id, on && COLOUR_MODES.includes(a.color_mode) && a.hs_color ? a.hs_color[0] : null);
+      const bright = dimmable(id) && popLevel('bright', id, b, nameOf(id) + ' brightness', b + '%', 'mdi:white-balance-sunny');
+      const warm = modes.includes('color_temp') && popMarker('ctf', id, k == null ? null : Math.round(((kMax - k) / (kMax - kMin)) * 1000) / 10, nameOf(id) + ' warmth', k == null ? '' : Math.round(k).toLocaleString() + 'k');
+      const colour = modes.some((m) => COLOUR_MODES.includes(m)) && popMarker('hue', id, hue == null ? null : Math.round((hue / 360) * 1000) / 10, nameOf(id) + ' colour', '');
+      // a light with the pad (the Dual Axis Controller) has it full width; one without, its big switch
+      const space = (key) => (dacFor(id) ? '<div class="tfMoreSpace tfMoreFill tfMorePad"><div class="tfDacPad" data-dac="' + key + ':' + esc(id) + '"></div></div>' : popSwitch(id, s));
+      return { pages: [
+        colour && { name: 'Colour', svg: PALETTE_SVG, space: space('more2'), rows: [bright, colour] },
+        { name: 'Control', svg: TUNE_SVG, space: space('more'), rows: [bright, warm] },
+      ].filter(Boolean), start: colour ? 1 : 0 };
+    }
+    if (d === 'climate') {
+      const step = a.target_temp_step || 0.5, t = Number(a.temperature), lo = Number(a.target_temp_low), hi = Number(a.target_temp_high), set = (data) => act('climate', 'set_temperature', id, data);
+      const modesRow = (label, list, key, service, field) => list?.length && popField(label, popSeg(label, list.map((m) => ({ label: cap(m), act: act('climate', service, id, { [field]: m }), pressed: (key === 'state' ? st.state : a[key]) === m }))));
+      const range = Number.isFinite(lo) && Number.isFinite(hi) && popField('Range', '<div class="tfMoreRange">' +
+        stepper('Low', num(lo) + ' °C', set({ target_temp_low: lo - step, target_temp_high: hi }), set({ target_temp_low: lo + step, target_temp_high: hi })) +
+        stepper('High', num(hi) + ' °C', set({ target_temp_low: lo, target_temp_high: hi - step }), set({ target_temp_low: lo, target_temp_high: hi + step })) + '</div>');
+      const hum = Number(a.humidity);
+      return { pages: [{ name: 'Control', svg: TUNE_SVG,
+        space: popData(num(a.current_temperature), '°C', [['Target', Number.isFinite(t) ? num(t) + ' °C' : null], ['Humidity', a.current_humidity != null ? a.current_humidity + '%' : null], ['Action', a.hvac_action && cap(a.hvac_action)]]),
+        rows: [
+          Number.isFinite(t) && stepper('Target temperature', num(t) + ' °C', set({ temperature: t - step }), set({ temperature: t + step })),
+          range,
+          modesRow('Mode', a.hvac_modes, 'state', 'set_hvac_mode', 'hvac_mode'),
+          modesRow('Fan', a.fan_modes, 'fan_mode', 'set_fan_mode', 'fan_mode'),
+          modesRow('Swing', a.swing_modes, 'swing_mode', 'set_swing_mode', 'swing_mode'),
+          modesRow('Preset', a.preset_modes, 'preset_mode', 'set_preset_mode', 'preset_mode'),
+          Number.isFinite(hum) && a.min_humidity != null && popField('Humidity', stepper('Target humidity', hum + '%', act('climate', 'set_humidity', id, { humidity: hum - 1 }), act('climate', 'set_humidity', id, { humidity: hum + 1 }))),
+        ] }] };
+    }
+    if (d === 'fan') {
+      const on = st.state === 'on', pct = held('fan', id, on ? Number(a.percentage) || 0 : 0), speed = a.percentage != null;
+      return { pages: [{ name: 'Control', svg: TUNE_SVG, space: popSwitch(id, s), rows: speed ? [
+        popLevel('fan', id, pct, nameOf(id) + ' speed', pct + '%', 'mdi:fan'),
+        a.oscillating != null && popField('Oscillate', popSeg('Oscillate', [{ label: 'Off', act: act('fan', 'oscillate', id, { oscillating: false }), pressed: !a.oscillating }, { label: 'On', act: act('fan', 'oscillate', id, { oscillating: true }), pressed: Boolean(a.oscillating) }])),
+        a.direction && popField('Direction', popSeg('Direction', [['forward', 'Forward'], ['reverse', 'Reverse']].map(([v, l]) => ({ label: l, act: act('fan', 'set_direction', id, { direction: v }), pressed: a.direction === v })))),
+        a.preset_modes?.length && popField('Preset', popSeg('Preset', a.preset_modes.map((m) => ({ label: cap(m), act: act('fan', 'set_preset_mode', id, { preset_mode: m }), pressed: a.preset_mode === m })))),
+      ] : [onOff(id, 'fan', on)] }] };
+    }
+    if (d === 'humidifier') {
+      const h = Number(a.humidity);
+      return { pages: [{ name: 'Control', svg: TUNE_SVG, space: popData(String(a.current_humidity), '%', [['Target', Number.isFinite(h) ? h + '%' : null], ['Action', a.action && cap(a.action)]]), rows: [
+        Number.isFinite(h) && stepper('Target humidity', h + '%', act('humidifier', 'set_humidity', id, { humidity: h - 1 }), act('humidifier', 'set_humidity', id, { humidity: h + 1 })),
+        a.available_modes?.length && popField('Mode', popSeg('Mode', a.available_modes.map((m) => ({ label: cap(m), act: act('humidifier', 'set_mode', id, { mode: m }), pressed: a.mode === m })))),
+      ] }] };
+    }
+    if (d === 'water_heater') {
+      const t = Number(a.temperature), step = a.target_temp_step || 1;
+      return { pages: [{ name: 'Control', svg: TUNE_SVG, space: popData(num(a.current_temperature).replace(/\.0$/, ''), '°C', [['Target', Number.isFinite(t) ? String(t).replace(/\.0$/, '') + ' °C' : null], ['Mode', cap(a.operation_mode || st.state)]]), rows: [
+        Number.isFinite(t) && stepper('Target temperature', t + ' °C', act('water_heater', 'set_temperature', id, { temperature: t - step }), act('water_heater', 'set_temperature', id, { temperature: t + step })),
+        a.operation_list?.length && popField('Mode', popSeg('Mode', a.operation_list.map((m) => ({ label: cap(m), act: act('water_heater', 'set_operation_mode', id, { operation_mode: m }), pressed: (a.operation_mode || st.state) === m })))),
+        a.away_mode != null && popField('Away', popSeg('Away', [{ label: 'Off', act: act('water_heater', 'set_away_mode', id, { away_mode: false }), pressed: a.away_mode !== 'on' }, { label: 'On', act: act('water_heater', 'set_away_mode', id, { away_mode: true }), pressed: a.away_mode === 'on' }])),
+      ] }] };
+    }
+    if (d === 'alarm_control_panel') {
+      const modes = [...ALARM_MODES, ['armed_vacation', 'Vacation', 'alarm_arm_vacation', 32]].filter(([, , , bit]) => !bit || has(id, bit));
+      const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'back'];
+      const keypad = '<div class="tfMoreSpace tfMoreKeypad">' + codeField() + '<div class="tfKeypad">' + keys.map((k) => '<button type="button" data-key="' + k + '"' + (k === 'back' ? ' aria-label="Delete"' : '') + '>' +
+        (k === 'clear' ? 'Clear' : k === 'back' ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22,3H7C6.31,3 5.77,3.35 5.41,3.88L0,12L5.41,20.11C5.77,20.64 6.31,21 7,21H22A2,2 0 0,0 24,19V5A2,2 0 0,0 22,3M22,19H7.07L2.4,12L7.06,5H22V19M10.41,17L14,13.41L17.59,17L19,15.59L15.41,12L19,8.41L17.59,7L14,10.59L10.41,7L9,8.41L12.59,12L9,15.59L10.41,17Z"/></svg>' : k) + '</button>').join('') + '</div></div>';
+      return { pages: [{ name: 'Control', svg: TUNE_SVG, space: keypad, rows: [codedSeg(nameOf(id), modes.map(([state, label, service]) => coded('alarm_control_panel', service, id, label, st.state === state)))] }] };
+    }
+    if (d === 'cover') {
+      if (a.current_position == null) return { pages: [{ name: 'Control', svg: TUNE_SVG, space: popSwitch(id, s), rows: [popSeg(nameOf(id), [{ label: 'Open', act: act('cover', 'open_cover', id), pressed: st.state !== 'closed' }, { label: 'Close', act: act('cover', 'close_cover', id), pressed: st.state === 'closed' }])] }] };
+      const moving = st.state === 'opening' || st.state === 'closing', v = coverValue(id), tilt = tiltOf(id);
+      return { pages: [{ name: 'Control', svg: TUNE_SVG, space: '<div class="tfMoreSpace tfMoreArt"><div data-cover-art="' + esc(id) + '"></div></div>', rows: [
+        has(id, SET_POSITION) && blocks(id, v),
+        tilt != null && popField('Tilt', popLevel('tiltp', id, held('tiltp', id, tilt), nameOf(id) + ' tilt', Math.round(held('tiltp', id, tilt)) + '%')),
+        popSeg(nameOf(id), [has(id, OPEN) && { label: 'Open', act: act('cover', 'open_cover', id), disabled: v >= 100 && !moving }, has(id, STOP) && { label: 'Stop', act: act('cover', 'stop_cover', id) }, has(id, CLOSE_COVER) && { label: 'Close', act: act('cover', 'close_cover', id), disabled: v <= 0 && !moving }]),
+      ] }] };
+    }
+    if (d === 'lock') {
+      return { pages: [{ name: 'Control', svg: TUNE_SVG, space: popSwitch(id, s), rows: [codeField(),
+        codedSeg(nameOf(id), [coded('lock', 'lock', id, 'Lock', st.state === 'locked'), coded('lock', 'unlock', id, 'Unlock', st.state === 'unlocked'), has(id, LOCK_OPEN) && coded('lock', 'open', id, 'Open', st.state === 'open')].filter(Boolean))] }] };
+    }
+    if (d === 'valve') {
+      const isOpen = st.state === 'open';
+      if (a.current_position == null) return { pages: [{ name: 'Control', svg: TUNE_SVG, space: popSwitch(id, s), rows: [popSeg(nameOf(id), [{ label: 'Open', act: act('valve', 'open_valve', id), pressed: isOpen }, { label: 'Close', act: act('valve', 'close_valve', id), pressed: !isOpen }])] }] };
+      const pos = held('valve', id, Number(a.current_position) || 0);
+      return { pages: [{ name: 'Control', svg: TUNE_SVG, space: popSwitch(id, s), rows: [
+        popLevel('valve', id, pos, nameOf(id) + ' position', Math.round(pos) + '%', 'mdi:valve'),
+        popSeg(nameOf(id), [{ label: 'Open', act: act('valve', 'open_valve', id) }, has(id, 8) && { label: 'Stop', act: act('valve', 'stop_valve', id) }, { label: 'Close', act: act('valve', 'close_valve', id) }]),
+      ] }] };
+    }
+    // a switch, a plug, an input boolean: its big switch, then Off and On
+    return { pages: [{ name: 'Control', svg: TUNE_SVG, space: popSwitch(id, s), rows: [onOff(id, d, st.state === 'on')] }] };
   }
   function bigOf(id) {
     const st = states[id], a = attr(id), d = id.split('.')[0];
@@ -3806,7 +3949,7 @@ export function mountTestFocus(root, { config, getHass }) {
   function turnPage(page, focus) {
     const track = sheet.querySelector('[data-more-pages]');
     if (!track || !more) return;
-    more.page = Math.max(0, Math.min(1, page));
+    more.page = Math.max(0, Math.min((more.pages || 2) - 1, page));
     track.scrollTo({ left: more.page * track.clientWidth, behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
     markPage();
     fitPage(track);
@@ -3819,6 +3962,24 @@ export function mountTestFocus(root, { config, getHass }) {
     clearTimeout(pageTimer);
     pageTimer = setTimeout(() => { if (!more) return; /* closed meanwhile */ const page = Math.round(track.scrollLeft / Math.max(1, track.clientWidth)); if (page !== (more.page || 0)) { more.page = page; markPage(); fitPage(track); } }, 80);
   }, true);
+  // the alarm's keypad types into its code; a lock's or the alarm's buttons send that code with them (17 Nov). The code
+  // is kept on the popup, so a redraw doesn't lose it
+  sheet.addEventListener('input', (ev) => { if (ev.target.matches?.('[data-code]') && more) more.code = ev.target.value; });
+  sheet.addEventListener('click', (ev) => {
+    const key = ev.target.closest('[data-key]'), send1 = ev.target.closest('[data-coded]');
+    if (!more || !(key || send1)) return;
+    const field = sheet.querySelector('[data-code]');
+    if (key) {
+      const k = key.dataset.key, code = more.code || '';
+      more.code = k === 'clear' ? '' : k === 'back' ? code.slice(0, -1) : (code + k).slice(0, 12);
+      if (field) field.value = more.code;
+      return;
+    }
+    const [domain, service, id] = send1.dataset.coded.split('|'), code = more.code;
+    more.code = ''; // cleared first: the popup redraws as the state changes
+    if (field) field.value = '';
+    send(domain, service, id, code ? { code } : null).catch(() => {});
+  });
   // "5 minutes ago" moves on while it's open
   setInterval(() => { if (more) renderMore(); }, 15 * 1000);
   function openMore(id, opener) {
@@ -3865,7 +4026,7 @@ export function mountTestFocus(root, { config, getHass }) {
     const opener = more?.opener, parked = more?.under;
     more = null;
     arts.forEach((art, k) => { if (sheet.contains(art.el)) { art.destroy(); arts.delete(k); } });
-    dacs.forEach((el, k) => { if (k.startsWith('more:')) dacs.delete(k); });
+    dacs.forEach((el, k) => { if (/^more2?:/.test(k)) dacs.delete(k); });
     sheet.hidden = true;
     sheet.innerHTML = '';
     const quiet = { preventScroll: true };
@@ -4143,6 +4304,12 @@ export function mountTestFocus(root, { config, getHass }) {
     pos: { value: (id, f) => Math.round(f * 100), text: (id, v) => Math.round(v) + '%', send: (id, v) => ['cover', 'set_cover_position', { position: Math.round(v) }] },
     tilt: { value: (id, f) => Math.round(f * 100), text: (id, v) => 'Tilt ' + v + '%', send: (id, v) => ['cover', 'set_cover_tilt_position', { tilt_position: v }] },
     vol: { value: (id, f) => Math.round(f * 100) / 100, text: (id, v) => Math.round(v * 100) + '%', send: (id, v) => ['media_player', 'volume_set', { volume_level: v }] },
+    // the redrawn popups' tracks (17 Nov): warmth flipped (cold at the left), a fan's speed, a valve's position, a
+    // cover's tilt as a level
+    ctf: { value: (id, f) => { const [lo, hi] = kelvinRange(id); return Math.round(hi - f * (hi - lo)); }, text: (id, v) => v.toLocaleString() + 'k', send: (id, v) => ['light', 'turn_on', { color_temp_kelvin: v }] },
+    fan: { value: (id, f) => { const st = attr(id).percentage_step || 1; return Math.round((f * 100) / st) * st; }, text: (id, v) => Math.round(v) + '%', send: (id, v) => ['fan', 'set_percentage', { percentage: Math.round(v) }] },
+    valve: { value: (id, f) => Math.round(f * 100), text: (id, v) => v + '%', send: (id, v) => ['valve', 'set_valve_position', { position: v }] },
+    tiltp: { value: (id, f) => Math.round(f * 100), text: (id, v) => v + '%', send: (id, v) => ['cover', 'set_cover_tilt_position', { tilt_position: v }] },
   };
   function showDrag(bar, kind, id, f) {
     const v = DRAG[kind].value(id, f);
@@ -4161,7 +4328,9 @@ export function mountTestFocus(root, { config, getHass }) {
     } else if (i) i.style.width = pct;
     else { let b = bar.querySelector('b'); if (!b) { b = document.createElement('b'); bar.appendChild(b); } b.style.left = pct; }
     bar.setAttribute('aria-valuenow', String(Math.round(f * 100)));
-    const meta = (bar.closest('.tfAction') || bar.closest('.tfMore'))?.querySelector('.tfName .activityRowMeta, .tfMoreState');
+    const val = bar.querySelector('.tfBarVal'); // a redrawn popup's track says its value inside it
+    if (val) val.textContent = DRAG[kind].text(id, v);
+    const meta = bar.closest('.tfMore') ? bar.closest('.tfMore').querySelector('.tfMoreState') : bar.closest('.tfAction')?.querySelector('.tfName .activityRowMeta');
     if (meta) meta.textContent = DRAG[kind].text(id, v);
   }
   function commit(kind, id) {

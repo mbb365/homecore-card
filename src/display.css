@@ -1184,3 +1184,66 @@ button.tfAreaIcon{cursor:pointer}
   #app .tfMoreBackdrop .tfMore::before{content:"";display:block;position:sticky;top:10px;z-index:2;flex:none;width:36px;height:5px;margin:0 auto;border-radius:3px;background:var(--line)}
   #app .tfMoreBackdrop .tfMore [data-more-close]{display:none}
 }
+
+/* ---------- the redrawn popups (Matt, 17 Nov; Figma "Source of truth · 2", More info 1144:1380): every one 604.4 tall,
+   the phone's sheet too; the space at the top 224 at least, taking what its rows leave; rows that don't fit scroll in
+   their own block under it, and the tabs stay at the foot. Turning to another page never changes its height ---------- */
+#app .tfMoreBackdrop:not(.wide) .tfMore{height:min(604.4px,calc(100dvh - 32px))}
+#app .tfMoreBackdrop:not(.wide) .tfMorePages{transition:none}
+#app .tfMoreBackdrop:not(.wide) .tfMorePop>.tfMorePage:not([aria-label="Info"]){display:flex;flex-direction:column;gap:14px;overflow:hidden}
+#app .tfMoreBackdrop:not(.wide) .tfMorePop>.tfMorePage>.tfMoreSpace{flex:1 0 224px;min-height:224px;margin-top:0}
+.tfMoreCtl{display:flex;flex-direction:column;gap:14px;flex:0 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.tfMoreCtl::-webkit-scrollbar{display:none}
+.tfMoreCtl:empty{display:none}
+/* the sliders' glow and hold (the Motion Lab's slider glow) reach out past a track: the pages and the rows' block keep 12
+   of room round what they hold (the held glow reaches 13), so nothing clips it, without moving anything (17 Nov: "the
+   highlighting… is broken"); the pages are 28 apart, so each is still a page's width (with its room) along */
+#app .tfMoreBackdrop:not(.wide) .tfMorePages{margin:-14px;padding:14px;gap:28px;scroll-padding-inline:14px}
+#app .tfMoreBackdrop:not(.wide) .tfMorePop>.tfMorePage:not([aria-label="Info"]){overflow:visible}
+#app .tfMoreBackdrop:not(.wide) :is(.tfMorePages:not(.tfMorePop)>.tfMorePage,.tfMorePop>.tfMorePage[aria-label="Info"]){margin:-14px;padding:14px}
+.tfMoreCtl{margin:-14px;padding:14px}
+.tfMoreCtl>*{flex:none}
+/* a row named above it: the muted 14 name, 6 over its control */
+.tfMoreField{display:flex;flex-direction:column;gap:6px}
+.tfMoreLabel{color:var(--muted);font:400 14px/20px var(--font)}
+/* a climate's range: a low and a high stepper side by side (stacked on a phone) */
+.tfMoreRange{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media(max-width:620px){.tfMoreRange{grid-template-columns:1fr;gap:14px}}
+/* the tracks: brightness, a fan's speed, a valve's position, a tilt (icon inside at the left, the value inside its level
+   at its right end); warmth flipped, cold at the left, warm at the right in the brightness bar's amber; colour's spectrum */
+.tfPopBar{box-shadow:var(--hc-hair-all)}
+.tfPopBar i{overflow:visible}
+.tfPopBar .tfBarVal{position:absolute;right:14px;top:50%;translate:0 -50%;color:#26221e;font:600 15px/20px var(--font-tile);font-variant-numeric:tabular-nums;white-space:nowrap;pointer-events:none}
+.tfPopBar .tfBarVal.mid{left:50%;right:auto;translate:-50% -50%;z-index:1}
+/* the tracks are light in either theme, so their words and icons are the dark ink, as drawn */
+.tfPopBar .tfBarIcon{position:absolute;left:13px;top:12px;width:22px;height:22px;color:#26221e;pointer-events:none;--mdc-icon-size:22px}
+.tfPopBar .tfBarIcon>*{width:22px;height:22px}
+.tfPopBar.fan i{background:linear-gradient(90deg,#4dd4ec,#00b2d6)}
+.tfPopBar.valve i{background:linear-gradient(90deg,#4aa8ff,#1a7fe6)}
+.tfPopBar.tiltp i{background:linear-gradient(90deg,#c9a7ef,#8e5cd9)}
+.tfPopBar.ctf{background:linear-gradient(90deg,#d7e7ff,#fff7ee 45%,#ffc247 75%,#ffaa00)}
+.tfPopBar.hue{background:linear-gradient(90deg,#ff0000,#ffff00 17%,#00ff00 33%,#00ffff 50%,#0000ff 67%,#ff00ff 83%,#ff0000)}
+/* the big switch: 224 (an off one the tile's chip with its hairline, its glyph in the text colour) */
+.tfMoreSwitch .tfIcon{width:min(224px,100%);height:min(224px,100%);--mdc-icon-size:190px}
+.tfMoreSwitch:not(.on) .tfIcon{box-shadow:var(--hc-hair-all);color:var(--text)}
+/* the pad (the Dual Axis Controller) full width with the popup's padding, as tall as its space */
+.tfMorePad{--tf-dac-pad:337px;--tf-dac-max:none}
+/* and full width on a room's light card too (Matt, 17 Nov) */
+.tfAction.tfDac{--tf-dac-max:none}
+/* a cover's drawing in its 224 space */
+.tfMoreSpace.tfMoreArt{justify-content:center;align-items:center;padding:8px;container-type:size}
+.tfMoreArt>.tfCoverArt{width:min(100%,100cqh);height:auto;max-width:none} /* the drawing is square: as tall as its space lets it */
+/* a code: a field as tall as a control */
+#app .tfMoreCode{width:100%;height:46px;padding:0 16px;border:0;border-radius:16px!important;background:var(--tile);color:var(--text);box-shadow:var(--hc-hair-all);font:400 16px/20px var(--font);box-sizing:border-box}
+#app .tfMoreCode::placeholder{color:var(--muted);opacity:1}
+#app .tfMoreCode:focus{outline:2px solid var(--primary);outline-offset:-1px}
+/* the alarm's keypad, in its space under its code */
+.tfMoreSpace.tfMoreKeypad{justify-content:flex-start;gap:8px;padding:12px}
+.tfMoreKeypad .tfMoreCode{flex:none;background:var(--card)}
+.tfKeypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tfKeypad button{height:46px;min-height:0;padding:0;border:0;border-radius:12px;background:var(--card);color:var(--text);box-shadow:var(--hc-hair-all);font:500 18px/1 var(--font-tile);cursor:pointer}
+.tfKeypad button[data-key="clear"]{color:var(--muted);font:400 14px/1 var(--font)}
+.tfKeypad svg{display:block;width:22px;height:22px;margin:auto;fill:currentColor}
+.tfKeypad button:active{scale:.96}
+/* the alarm's modes wrap to two lines on a phone */
+@media(max-width:620px){.tfMorePop .tfSeg:has(> :nth-child(5)){flex-wrap:wrap;height:auto}.tfMorePop .tfSeg:has(> :nth-child(5)) button{flex:0 0 auto;height:38px;padding:0 14px}}

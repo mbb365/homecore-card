@@ -11,10 +11,10 @@ const SKIP_AREAS = new Set(['roaming', 'test_area']);
 const MADE_UP = {
   living_room: { climate: true, cover: ['Curtains', 'curtain', 62], temperature: 20.5, humidity: 44, motion: 'Living room motion', plant: ['Monstera', 32, 4200, 21.4, 580] },
   kitchen: { temperature: 21.2, humidity: 48, door: 'Back door', plant: ['Basil', 55, 900, 22.1, 910] },
-  balcony: { solar: true, door: 'Balcony door', doorOpen: true, valve: 'Watering', plant: ['Tomatoes', 61, 18500, 14.2, 1240] },
-  bedroom: { cover: ['Roller blind', 'shade', 0], humidifier: true, temperature: 18.9, humidity: 38, window: 'Bedroom window' },
+  balcony: { solar: true, door: 'Balcony door', doorOpen: true, valve: 'Watering', valvePos: ['Garden valve', 40], plant: ['Tomatoes', 61, 18500, 14.2, 1240] },
+  bedroom: { cover: ['Roller blind', 'shade', 0], humidifier: true, temperature: 18.9, humidity: 38, window: 'Bedroom window', fan: ['Ceiling fan', 60] },
   office: { cover: ['Blinds', 'blind', 60, 45], vacuum: true, temperature: 21.8, humidity: 41, plant: ['Pothos', 47, 2600, 21.6, 640] },
-  bathroom: { temperature: 22.4, humidity: 62 },
+  bathroom: { temperature: 22.4, humidity: 62, fan: ['Extractor fan'], waterHeater: true, valvePos: ['Water valve', null] },
 };
 // What a plant wants (as Home Assistant's plant integration checks it)
 export const PLANT_RANGE = { moisture: [40, 70], light: [1500, 60000], temperature: [10, 32], fertility: [350, 2000] };
@@ -55,7 +55,16 @@ export function createHouse({ onChange }) {
     if (m.temperature != null) add('sensor.' + PREFIX + a + '_temperature', a, String(m.temperature), { friendly_name: 'Temperature', device_class: 'temperature', state_class: 'measurement', unit_of_measurement: '°C' });
     if (m.humidity != null) add('sensor.' + PREFIX + a + '_humidity', a, String(m.humidity), { friendly_name: 'Humidity', device_class: 'humidity', state_class: 'measurement', unit_of_measurement: '%' });
     if (m.vacuum) add('vacuum.' + PREFIX + 'robot', a, 'docked', { friendly_name: 'Robot vacuum', battery_level: 100, fan_speed: 'standard', rooms: [] });
-    if (m.climate) add('climate.' + PREFIX + a, a, 'heat', { friendly_name: 'Thermostat', hvac_modes: ['off', 'heat', 'cool', 'auto'], hvac_action: 'heating', current_temperature: m.temperature, temperature: 21, min_temp: 7, max_temp: 30, target_temp_step: 0.5 });
+    // the thermostat has every row its popup can show (Matt, 17 Nov): a range, fan, swing, preset and humidity too
+    if (m.climate) add('climate.' + PREFIX + a, a, 'heat', { friendly_name: 'Thermostat', hvac_modes: ['off', 'heat', 'cool', 'auto'], hvac_action: 'heating', current_temperature: m.temperature, temperature: 21, min_temp: 7, max_temp: 30, target_temp_step: 0.5,
+      target_temp_low: 19, target_temp_high: 23, fan_mode: 'auto', fan_modes: ['auto', 'low', 'medium', 'high'], swing_mode: 'off', swing_modes: ['off', 'on'], preset_mode: 'home', preset_modes: ['home', 'away', 'eco', 'boost'],
+      current_humidity: m.humidity, humidity: 45, min_humidity: 30, max_humidity: 70 });
+    // a fan: [name, speed %] (with a speed it oscillates and turns either way); [name] is only on and off
+    if (m.fan) { const [name, pct] = m.fan; add('fan.' + PREFIX + a + '_' + slug(name), a, 'on', pct != null ? { friendly_name: name, percentage: pct, percentage_step: 10, oscillating: true, direction: 'forward', supported_features: 1 | 2 | 4 | 16 | 32 } : { friendly_name: name, supported_features: 16 | 32 }); }
+    if (m.waterHeater) add('water_heater.' + PREFIX + a, a, 'eco', { friendly_name: 'Water heater', current_temperature: 55, temperature: 60, min_temp: 40, max_temp: 75, target_temp_step: 1, operation_mode: 'eco', operation_list: ['off', 'eco', 'electric', 'gas'], away_mode: 'off' });
+    // a valve with a position (set_position, 4), or [name, null] only open and closed
+    if (m.valvePos) { const [name, pos] = m.valvePos; add('valve.' + PREFIX + a + '_' + slug(name), a, pos == null ? 'open' : pos ? 'open' : 'closed', { friendly_name: name, device_class: 'water', supported_features: 1 | 2 | (pos == null ? 0 : 4 | 8), ...(pos == null ? {} : { current_position: pos }) }); }
+    if (m.garage) add('cover.' + PREFIX + a + '_' + slug(m.garage), a, 'closed', { friendly_name: m.garage, device_class: 'garage', supported_features: 1 | 2 });
     if (m.cover) {
       const [name, cls, position, tilt] = m.cover;
       add('cover.' + PREFIX + a + '_' + slug(name), a, position ? 'open' : 'closed', { friendly_name: name, device_class: cls, current_position: position, ...(tilt != null ? { current_tilt_position: tilt } : {}) });
@@ -81,7 +90,8 @@ export function createHouse({ onChange }) {
     }
   });
   // the whole house
-  add('alarm_control_panel.' + PREFIX + 'house', null, 'disarmed', { friendly_name: 'Alarm', supported_features: 1 | 2 | 4, code_format: null, changed_by: 'Matt' });
+  // its code on a keypad (any code does here), and Vacation (Matt, 17 Nov)
+  add('alarm_control_panel.' + PREFIX + 'house', null, 'disarmed', { friendly_name: 'Alarm', supported_features: 1 | 2 | 4 | 32, code_format: 'number', code_arm_required: false, changed_by: 'Matt' });
   opening(null, 'Front door', 'door', false);
   opening(null, 'Smoke alarm', 'smoke', false);
   add('sensor.' + PREFIX + 'doorbell', null, '', { friendly_name: 'Doorbell', device_class: 'timestamp', rang: Date.now() - 47 * 60 * 1000 });
@@ -153,14 +163,32 @@ export function createHouse({ onChange }) {
     const s = fake[id], a = s.attributes;
     const set = (state, attrs) => put(id, state, attrs);
     if (domain === 'climate') {
-      if (service === 'set_temperature') set(null, { temperature: Math.max(a.min_temp, Math.min(a.max_temp, data.temperature)) });
+      if (service === 'set_temperature' && data.temperature != null) set(null, { temperature: Math.max(a.min_temp, Math.min(a.max_temp, data.temperature)) });
       if (service === 'set_hvac_mode') set(data.hvac_mode, data.hvac_mode === 'off' ? { hvac_action: 'off' } : {});
       if (service === 'toggle') set(s.state === 'off' ? 'heat' : 'off', s.state === 'off' ? {} : { hvac_action: 'off' });
+      if (service === 'set_temperature' && data.target_temp_low != null) set(null, { target_temp_low: data.target_temp_low, target_temp_high: data.target_temp_high });
+      if (service === 'set_fan_mode') set(null, { fan_mode: data.fan_mode });
+      if (service === 'set_swing_mode') set(null, { swing_mode: data.swing_mode });
+      if (service === 'set_preset_mode') set(null, { preset_mode: data.preset_mode });
+      if (service === 'set_humidity') set(null, { humidity: Math.max(a.min_humidity, Math.min(a.max_humidity, data.humidity)) });
+    }
+    if (domain === 'fan') {
+      if (service === 'set_percentage') set(data.percentage > 0 ? 'on' : 'off', { percentage: data.percentage });
+      if (service === 'oscillate') set(null, { oscillating: data.oscillating });
+      if (service === 'set_direction') set(null, { direction: data.direction });
+      if (service === 'turn_on' || service === 'turn_off' || service === 'toggle') set(service === 'turn_on' || (service === 'toggle' && s.state !== 'on') ? 'on' : 'off');
+    }
+    if (domain === 'water_heater') {
+      if (service === 'set_temperature') set(null, { temperature: Math.max(a.min_temp, Math.min(a.max_temp, data.temperature)) });
+      if (service === 'set_operation_mode') set(data.operation_mode, { operation_mode: data.operation_mode });
+      if (service === 'set_away_mode') set(null, { away_mode: data.away_mode ? 'on' : 'off' });
+      if (service === 'turn_on' || service === 'turn_off' || service === 'toggle') { const on = service === 'turn_on' || (service === 'toggle' && s.state === 'off'); set(on ? 'eco' : 'off', { operation_mode: on ? 'eco' : 'off' }); }
     }
     if (domain === 'cover') {
       const to = service === 'open_cover' ? 100 : service === 'close_cover' ? 0 : service === 'set_cover_position' ? data.position : service === 'toggle' ? (a.current_position > 0 ? 0 : 100) : null;
       if (service === 'stop_cover') { delete target[id]; delete tiltTarget[id]; set(a.current_position === 0 ? 'closed' : 'open'); }
-      if (to != null && to !== a.current_position) { target[id] = to; set(to > a.current_position ? 'opening' : 'closing'); }
+      if (to != null && a.current_position == null) set(to > 0 ? 'open' : 'closed'); // no position (a garage door): open or closed outright
+      else if (to != null && to !== a.current_position) { target[id] = to; set(to > a.current_position ? 'opening' : 'closing'); }
       const tilt = service === 'open_cover_tilt' ? 100 : service === 'close_cover_tilt' ? 0 : service === 'set_cover_tilt_position' ? data.tilt_position : null;
       if (service === 'stop_cover_tilt') delete tiltTarget[id];
       if (tilt != null && a.current_tilt_position != null && tilt !== a.current_tilt_position) tiltTarget[id] = tilt;
@@ -182,11 +210,12 @@ export function createHouse({ onChange }) {
     }
     if (domain === 'valve') {
       const open = service === 'open_valve' || (service === 'toggle' && s.state !== 'open');
-      if (['open_valve', 'close_valve', 'toggle'].includes(service)) set(open ? 'open' : 'closed');
+      if (['open_valve', 'close_valve', 'toggle'].includes(service)) set(open ? 'open' : 'closed', a.current_position != null ? { current_position: open ? 100 : 0 } : {});
+      if (service === 'set_valve_position') set(data.position > 0 ? 'open' : 'closed', { current_position: data.position });
     }
     if (domain === 'alarm_control_panel') {
       if (service === 'alarm_disarm') { arming = null; set('disarmed', { changed_by: 'Matt' }); }
-      const mode = { alarm_arm_home: 'home', alarm_arm_away: 'away', alarm_arm_night: 'night' }[service];
+      const mode = { alarm_arm_home: 'home', alarm_arm_away: 'away', alarm_arm_night: 'night', alarm_arm_vacation: 'vacation' }[service];
       if (mode) { arming = { mode, at: Date.now() }; set('arming', { changed_by: 'Matt' }); }
     }
     onChange();
@@ -227,7 +256,8 @@ export function createHouse({ onChange }) {
         power: power.length ? power.reduce((sum, id) => sum + Number(states[id].state) * (states[id].attributes.unit_of_measurement === 'kW' ? 1000 : 1), 0) : null,
         plugs: of('switch'),
         lights: of('light'),
-        actions: [...of('light'), ...pick(of('climate'), (id) => id.startsWith('climate.')), ...pick(of('cover'), (id) => id.startsWith('cover.')), ...pick(of('humidifier'), (id) => id.startsWith('humidifier.')), ...pick(of('valve'), (id) => id.startsWith('valve.')), ...of('media_player'), ...of('vacuum'), ...(realVacuums.length ? [] : mine((id) => id.startsWith('vacuum.')))],
+        actions: [...of('light'), ...pick(of('climate'), (id) => id.startsWith('climate.')), ...pick(of('cover'), (id) => id.startsWith('cover.')), ...pick(of('humidifier'), (id) => id.startsWith('humidifier.')), ...pick(of('valve'), (id) => id.startsWith('valve.')), ...of('media_player'), ...of('vacuum'), ...(realVacuums.length ? [] : mine((id) => id.startsWith('vacuum.'))),
+          ...of('fan'), ...mine((id) => id.startsWith('fan.')), ...of('water_heater'), ...mine((id) => id.startsWith('water_heater.'))],
         solar: mine((id) => id.includes('_solar_')),
         plants,
         openings,
