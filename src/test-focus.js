@@ -1118,9 +1118,6 @@ export function mountTestFocus(root, { config, getHass }) {
     return ({ lights: r.lights, covers: of(/^cover\./), climate: of(/^climate\./).slice(0, 1), humidifier: of(/^humidifier\./).slice(0, 1), plugs: r.plugs,
       media: (() => { const players = of(/^media_player\./); return [players.find((id) => states[id]?.state === 'playing') || players.find((id) => states[id]?.state === 'paused') || players[0]].filter(Boolean); })() })[key] || [];
   };
-  const keyButton = (k, cls, inner) => '<button class="' + cls + (k.on ? ' on' : '') + '" type="button" data-tone="' + k.tone + '" data-acts="' + acts(k.acts) + '" aria-label="' + esc(k.aria) + '" aria-pressed="' + k.on + '">' + inner + '</button>';
-  // the room's name opens its page (Matt, 28 Oct: the title is the link; there's no Go any more)
-  const areaTitle = (r) => '<button class="tfAName" type="button" data-go="' + esc(r.id) + '" aria-label="Open ' + esc(r.name) + '">' + esc(r.name) + '</button>';
   // the room's own icon (its area's in Home Assistant, else Home Assistant's own area icon), the button for its lights
   // (Matt, 28 Oct, Figma "Area card accordions v04" 521:9673), always grey for now. A room without lights, and a folded
   // card, only show it
@@ -1132,7 +1129,6 @@ export function mountTestFocus(root, { config, getHass }) {
     if (folded || !k) return '<span class="tfIcon tfAreaIcon' + (on ? ' on' : '') + '"' + lit + ' aria-hidden="true">' + glyph + '</span>';
     return '<button class="tfIcon tfAreaIcon' + (on ? ' on' : '') + '" type="button"' + lit + ' data-acts="' + acts(k.acts) + '" aria-label="' + esc(k.aria) + '" aria-pressed="' + on + '">' + glyph + '</button>';
   }
-  const alertTags = (keys) => keys.filter((k) => k.kind === 'alert' || k.kind === 'note').map((k) => '<span class="sourceTag">' + esc(k.label) + '</span>').join(' ');
   // a room's main: its temperature, else its first reading, else its first device
   const mainOf = (r) => r.readings.find((id) => attr(id).device_class === 'temperature') || [...r.readings, ...r.solar, ...r.openings, ...r.actions, ...r.plugs].find((id) => states[id]) || null;
   // a name without its room's ("Living room humidity" in the living room is "Humidity")
@@ -1157,26 +1153,13 @@ export function mountTestFocus(root, { config, getHass }) {
   // what it's doing in place of the room's temperature, so there aren't two temperatures
   const mainSub = (r, id, keys) => {
     const t = keys.find((k) => k.key === 'temp'), h = keys.find((k) => k.key === 'hum'), a = attr(id), off = states[id].state === 'off';
-    if (id.startsWith('climate.')) return [inRoom(r, id), off ? 'Off' : cap(a.hvac_action || states[id].state) + (a.temperature != null ? ' · ' + deg(a.temperature) : ''), h && h.value + ' humidity'].filter(Boolean).join(' · ');
-    return [!(t && t.id === id) && inRoom(r, id), t && t.id !== id && t.value, h && h.id !== id && h.value + ' humidity'].filter(Boolean).join(' · ');
+    // a percentage beside a temperature is the humidity without saying so (Matt, 17 Nov: "remove the term 'humidity'"); on
+    // its own it still says
+    if (id.startsWith('climate.')) return [inRoom(r, id), off ? 'Off' : cap(a.hvac_action || states[id].state) + (a.temperature != null ? ' · ' + deg(a.temperature) : ''), h && h.value].filter(Boolean).join(' · ');
+    return [!(t && t.id === id) && inRoom(r, id), t && t.id !== id && t.value, h && h.id !== id && h.value + (t ? '' : ' humidity')].filter(Boolean).join(' · ');
   };
-  // the open card: the room's icon (its lights) and name (its page), with any alerts; the main, which opens its
-  // more-info; up to four controls as tiles, the icon the button
-  function areaBody(r, keys, main) {
-    const h = main && headline(main), sub = main ? mainSub(r, main, keys) : '';
-    // the icon is the button; the name and value open what the tile stands for: a room's lights, covers or plugs as a
-    // group, one device as its own more-info (Matt, 27 Oct)
-    const opens = (k) => { const ids = groupIds(r, k.key); return ids.length === 1 ? ids[0] : 'group:' + r.id + ':' + k.key; };
-    const tiles = keys.filter((k) => k.kind === 'control').slice(0, 4).map((k) => '<div class="tfATile' + (k.on ? ' on' : '') + '" data-tone="' + k.tone + '"' + (k.light ? ' data-light style="' + k.light + '"' : '') + '>' + keyButton(k, 'tfIcon', k.icon) +
-      '<button class="tfName" type="button" data-more="' + esc(opens(k)) + '" aria-label="' + esc(r.name + ' ' + k.label.toLowerCase() + ', ' + k.value + '. Open') + '"><span class="activityRowName">' + esc(k.label) + '</span><span class="activityRowMeta">' + esc(k.value) + '</span></button></div>');
-    // its notes (an open door, a leak) sit in the card's top right corner, so they never push the reading down (Matt, 8 Nov)
-    const tags = alertTags(keys);
-    return '<div class="hcAreaPanelTop">' + areaIcon(r, keys) + '<div class="tfATitle">' + areaTitle(r) + '</div>' + (tags ? '<div class="tfATags">' + tags + '</div>' : '') + '</div>' +
-      (main ? '<button class="tfABig" type="button" data-more="' + esc(main) + '" aria-label="' + esc(nameOf(main) + ', ' + valueOf(main) + '. More info') + '">' +
-        '<span class="tfABigMain' + (h.text.length > 7 ? ' long' : '') + '">' + esc(h.text) + (h.unit ? '<span class="tfABigUnit">' + esc(h.unit) + '</span>' : '') + '</span>' +
-        (sub ? '<span class="tfABigSub">' + esc(sub) + '</span>' : '') + '</button>' : '') +
-      (tiles.length ? '<div class="tfATiles">' + tiles.join('') + '</div>' : '');
-  }
+  /* the open area is the area card itself (Tile · Room at Wide, two columns; Matt, 17 Nov: "the only difference is they
+     come pre-grouped with defined behaviour"), as tall as the Areas card */
   function areaPanel(r) {
     const isActive = r.id === activeArea, keys = roomKeys(r), main = mainOf(r), h = main && headline(main);
     // a folded card's content can't be reached until it's open. Folded (Matt's Figma "Area card accordions v04" 521:9673,
@@ -1184,7 +1167,7 @@ export function mountTestFocus(root, { config, getHass }) {
     // icons two by two (an alert after them, in red; an open door or window plain); tapping anywhere opens it
     const chips = [...keys.filter((k) => k.kind === 'control'), ...keys.filter((k) => k.kind !== 'control' && k.kind !== 'reading')].slice(0, 4);
     return '<article class="hcAreaPanel tfAreaPanel' + (isActive ? ' active' : '') + '" data-area="' + esc(r.id) + '" tabindex="0" aria-expanded="' + isActive + '" aria-label="' + esc(r.name) + '">' +
-      '<div class="panelExpanded"' + (isActive ? '' : ' inert') + '>' + areaBody(r, keys, main) + '</div>' +
+      '<div class="panelExpanded"' + (isActive ? '' : ' inert') + '>' + roomTile(r, null, ' data-cols="2" data-rows="' + sizeOf('areas') + '"') + '</div>' +
       '<div class="panelCollapsed tfACollapsed"><div class="tfACTop">' + areaIcon(r, keys, true) + '<span class="tfACName">' + esc(r.name) + '</span></div>' +
       '<span class="tfACMain">' + (h ? esc(h.text + (h.unit ? ' ' + h.unit : '')) : '') + '</span>' +
       '<span class="tfACTiles" aria-hidden="true">' + chips.map((k) => '<span class="tfACTile"><span class="tfIcon' + (k.kind === 'alert' ? ' alert' : '') + '"' + (k.on && k.light ? ' data-light style="' + k.light + '"' : '') + '>' + k.icon + '</span></span>').join('') + '</span></div></article>';
@@ -1204,25 +1187,33 @@ export function mountTestFocus(root, { config, getHass }) {
   /* one room on its own (Tile · Room, Matt, 6 Nov; Figma 954:6176): a tile added from the edit tray instead of the Areas
      card, keyed room:<area>. The head is the room's icon and name; XS its reading in the head, S the reading big, M its
      devices too (up to four), L and XL the reading bigger with its second under it. It never opens out: the tile opens
-     the room's page, and each device button that device's control (one device its own, a room's lights or covers as a
-     group) */
+     the room's page. Its interactions are the Areas card's open area's (Matt, 17 Nov: "bring them all"): the room's
+     icon turns its lights on and off, a device's icon turns it on and off, its name opens its control (one device its
+     own, a room's lights or covers as a group), the reading opens its more-info, and the edge lights up */
   const isRoomKey = (key) => key.startsWith('room:');
   const roomOf = (key) => areaRooms.find((r) => 'room:' + r.id === key);
-  function roomTile(r, key) {
+  function roomTile(r, key, attrs = '') {
     const keys = roomKeys(r), main = mainOf(r), h = main && headline(main), sub = main ? mainSub(r, main, keys) : '';
     const big = h ? h.text + (h.unit ? ' ' + h.unit : '') : '';
     const opens = (k) => { const ids = groupIds(r, k.key); return ids.length === 1 ? ids[0] : 'group:' + r.id + ':' + k.key; };
     const controls = keys.filter((k) => k.kind === 'control').slice(0, 4), lit = (k) => (k.on && k.light ? ' data-light style="' + k.light + '"' : '');
-    const devices = controls.map((k) => '<button class="tfIcon' + (k.on ? ' on' : '') + '" type="button" data-tone="' + k.tone + '"' + lit(k) +
-      ' data-more="' + esc(opens(k)) + '" aria-label="' + esc(k.label + ', ' + k.value + '. Open its controls') + '">' + k.icon + '</button>');
-    // wide, the same devices as heads (icon, name, state), as the open room shows them (Matt, 6 Nov; Figma 954:6297)
-    const heads = controls.map((k) => '<button class="tfRoomDev" type="button" data-more="' + esc(opens(k)) + '" aria-label="' + esc(k.label + ', ' + k.value + '. Open its controls') + '">' +
-      '<span class="tfIcon' + (k.on ? ' on' : '') + '" data-tone="' + k.tone + '"' + lit(k) + '>' + k.icon + '</span><span class="tfRoomDevName"><span class="activityRowName">' + esc(k.label) + '</span><span class="activityRowMeta">' + esc(k.value) + '</span></span></button>');
-    return '<div class="tfAction tfRoomTile" data-k="' + esc(key) + '" data-go="' + esc(r.id) + '">' +
-      '<div class="tfActionHead"><span class="tfIcon tfRoomIcon" aria-hidden="true"><span class="tfAreaGlyph"' + iconSlot('area:' + r.id, r.icon || 'mdi:texture-box', r.name) + '></span></span>' +
+    // the icon is the button: it turns the device on and off
+    const toggle = (k) => '<button class="tfIcon' + (k.on ? ' on' : '') + '" type="button" data-tone="' + k.tone + '"' + lit(k) + ' data-acts="' + acts(k.acts) + '" aria-label="' + esc(k.aria) + '" aria-pressed="' + k.on + '">' + k.icon + '</button>';
+    const devices = controls.map(toggle);
+    // wide, the same devices as heads (icon, name, state), as the open room shows them (Matt, 6 Nov; Figma 954:6297): the
+    // name opens its control
+    const heads = controls.map((k) => '<div class="tfRoomDev' + (k.on ? ' on' : '') + '">' + toggle(k) +
+      '<button class="tfName tfRoomDevName" type="button" data-more="' + esc(opens(k)) + '" aria-label="' + esc(r.name + ' ' + k.label.toLowerCase() + ', ' + k.value + '. Open') + '"><span class="activityRowName">' + esc(k.label) + '</span><span class="activityRowMeta">' + esc(k.value) + '</span></button></div>');
+    // the room's icon turns its lights on and off (always grey for now); a room without lights only shows it
+    const lights = keys.find((k) => k.key === 'lights'), glyph = '<span class="tfAreaGlyph"' + iconSlot('area:' + r.id, r.icon || 'mdi:texture-box', r.name) + '></span>';
+    const roomIcon = lights ? '<button class="tfIcon tfRoomIcon" type="button" data-acts="' + acts(lights.acts) + '" aria-label="' + esc(lights.aria) + '" aria-pressed="' + Boolean(lights.on) + '">' + glyph + '</button>'
+      : '<span class="tfIcon tfRoomIcon" aria-hidden="true">' + glyph + '</span>';
+    return '<div class="tfAction tfRoomTile"' + (key ? ' data-k="' + esc(key) + '"' : '') + attrs + ' data-go="' + esc(r.id) + '">' +
+      '<div class="tfActionHead">' + roomIcon +
       '<button class="tfName" type="button" data-go="' + esc(r.id) + '" aria-label="Open ' + esc(r.name) + '"><span class="activityRowName">' + esc(r.name) + '</span>' +
       (big || sub ? '<span class="activityRowMeta">' + (big ? '<span class="tfRoomInline">' + esc(big) + (sub ? ' · ' : '') + '</span>' : '') + esc(sub) + '</span>' : '') + '</button></div>' +
-      (big ? '<div class="tfRoomReading" aria-hidden="true"><span class="tfRoomBig">' + esc(big) + '</span>' + (sub ? '<span class="tfRoomSub">' + esc(sub) + '</span>' : '') + '</div>' : '') +
+      // the reading opens its more-info (the thermometer's, say)
+      (big ? '<button class="tfRoomReading" type="button" data-more="' + esc(main) + '" aria-label="' + esc(nameOf(main) + ', ' + valueOf(main) + '. More info') + '"><span class="tfRoomBig">' + esc(big) + '</span>' + (sub ? '<span class="tfRoomSub">' + esc(sub) + '</span>' : '') + '</button>' : '') +
       (devices.length ? '<div class="tfRoomDevices">' + devices.join('') + '</div><div class="tfRoomHeads">' + heads.join('') + '</div>' : '') + '</div>';
   }
 
@@ -1756,7 +1747,7 @@ export function mountTestFocus(root, { config, getHass }) {
   // a card of tiles fills its height (Matt, 2 Nov): as many rows as fit at 56 or taller, every row the same height
   const FILL_MIN = 56;
   const boardName = (key) => BOARD_NAMES[key] || (key.startsWith('room:') ? areaRooms.find((r) => 'room:' + r.id === key)?.name || 'Area' : nameOf(key));
-  const AREA_OPEN = 409, AREA_FOLDED = 128;
+  const AREA_FOLDED = 128;
   let editing = false, drag = null, boardOpen = null, fitQueued = false, lastPlaced = new Map(), boardRows = 0, boardTop = 0;
   // the page's header, above the grid at its own size (the cards' rules: padding 10, tiles 60, so a bar of summaries is
   // 80 or 140 and never fits the grid's rows; Matt, 27 Oct: "we have rules to follow")
@@ -1798,7 +1789,10 @@ export function mountTestFocus(root, { config, getHass }) {
     // the areas: as wide as they need (Matt, 11 Nov: no width of their own to pick), so as wide as their rooms, up to the
     // board's edge from where they sit; the rooms that don't fit scroll
     if (it.span === 'areas') {
-      const need = Math.ceil((AREA_OPEN + Math.max(0, areasShown().length - 1) * (AREA_FOLDED + PEG_GAP) + PEG_GAP) / (w + PEG_GAP));
+      // the open area two columns wide, whatever the card's width (Matt, 17 Nov: it took all the spare room, 2.7 wide)
+      const open = 2 * w + PEG_GAP;
+      it.el.style.setProperty('--area-open', open + 'px');
+      const need = Math.ceil((open + Math.max(0, areasShown().length - 1) * (AREA_FOLDED + PEG_GAP) + PEG_GAP) / (w + PEG_GAP));
       return Math.max(Math.min(n, 2), Math.min(need, n - (dashPrefs().cells.areas?.col || 0)));
     }
     return Math.min(n, dashPrefs().spans[it.key] ?? it.span);
@@ -1890,7 +1884,16 @@ export function mountTestFocus(root, { config, getHass }) {
   // saves where every card is, with the board's width in pegs so a phone can read them in the same order
   const saveCells = (dash, cells) => saveDash({ ...dash, cells, pegs: pegsFor(grid.clientWidth).n });
   // lays the board out on its cells: the name and the summaries first, then the cards (placeCards)
+  // the Areas card shows all of its open area: scrolled just enough when it's cut off at an edge (Matt, 17 Nov)
+  function showOpenArea(smooth) {
+    const gal = grid?.querySelector('.tfAreas[data-k="areas"] .tfAreaGallery'), on = gal?.querySelector('.tfAreaPanel.active');
+    if (!on || gal.scrollWidth <= gal.clientWidth) return;
+    const g = gal.getBoundingClientRect(), o = on.getBoundingClientRect();
+    const by = o.right > g.right ? o.right - g.right : o.left < g.left ? o.left - g.left : 0;
+    if (by) gal.scrollBy({ left: by, behavior: smooth ? 'smooth' : 'auto' });
+  }
   function layoutBoard() {
+    requestAnimationFrame(() => showOpenArea(false)); setTimeout(() => showOpenArea(false), 360); // and once its width has eased in
     if (!testFocus || !grid) return;
     // a phone is the same board two columns wide (Matt, 1 Nov: one rule everywhere, so Smalls stack beside a Medium
     // there too), its cards in the phone's order and not edited there
@@ -1960,6 +1963,8 @@ export function mountTestFocus(root, { config, getHass }) {
       it.el.style.height = p.h + 'px';
       // a phone shows the weather card whole, its sentence and days, whatever its size on the big board (Matt, 9 Nov)
       it.el.dataset.rows = phone && it.key === 'wx' ? 5 : sizeOf(it.key);
+      // the Areas card's open area is an area card as tall as it
+      if (it.key === 'areas') it.el.querySelectorAll('.tfAreaPanel .tfRoomTile').forEach((t) => { t.dataset.rows = it.el.dataset.rows; });
       // one column wide on a board of more (not a phone's single column): the card's narrow version (Matt, 6 Nov)
       it.el.toggleAttribute('data-narrow', !phone && p.cols === 1 && n > 1);
       it.el.dataset.cols = p.cols; // how many columns it spans (a room's tile lays out by it)
@@ -2003,7 +2008,7 @@ export function mountTestFocus(root, { config, getHass }) {
   /* the areas (the leadership demo, Matt, 12 Nov): grouped by floor or not, laid out as Rows, Columns or Bento, and their
      cards Small, Medium or Large (Large his Figma card), each giving up to 15% on a smaller screen. To start with: by
      floor, in Bento, each floor a box, every card Small ("push this grouping style as default") */
-  const AREA_SIZES = { s: { w: 160, h: 192 }, m: { w: 200, h: 240 }, l: { w: 252, h: 337 } };
+  const AREA_SIZES = { s: { w: 252, h: 136, rows: 2 }, m: { w: 252, h: 212, rows: 3 }, l: { w: 252, h: 288, rows: 4 } };
   const areaSize = () => (AREA_SIZES[prefs.home?.areaSize] ? prefs.home.areaSize : 's');
   const areaLayout = () => (['rows', 'columns', 'bento'].includes(prefs.home?.areaLayout) ? prefs.home.areaLayout : 'bento');
   // the cards that aren't areas: Stacked down the left beside the areas (the start), or in Rows across the top over them
@@ -2078,11 +2083,12 @@ export function mountTestFocus(root, { config, getHass }) {
     const hidden = new Set(dashPrefs().hidden);
     items.forEach((it) => it.el.classList.toggle('tfBoardHidden', hidden.has(it.key)));
     const shown = items.filter((it) => !hidden.has(it.key) && getComputedStyle(it.el).display !== 'none');
-    const gap = phone ? HOME.phoneGap : HOME.gap;
-    // the summaries (and Favourites as a strip) as wide as five of the Figma's columns, or the page where it's narrower
+    // the dashboard's columns and gap (Matt, 17 Nov: Home's cards as wide as the custom dashboard's): as many columns as fit
+    // at 200 or more, stretched to fill the page, 16 apart; two across on a phone
+    const gap = PEG_GAP, cols = phone ? { n: 2, w: Math.floor((W - gap) / 2) } : pegsFor(W);
+    // the summaries (and Favourites as a strip) as wide as five of Matt's columns, or the page where it's narrower
     const gridW = Math.min(W, HOME.full);
     let top = 0;
-    // Edit Home page's choices: the summaries as wide as their own tiles, Favourites as a strip under them
     const strip = favsStrip();
     app.classList.toggle('hcSumsFit', sumsFit());
     app.classList.toggle('hcFavStrip', strip);
@@ -2095,21 +2101,15 @@ export function mountTestFocus(root, { config, getHass }) {
       // a bar's tiles in one row while they fit, else in even rows (halves, thirds…)
       const bar = it.key !== 'title' && (it.el.querySelector('.tfDash-bar>.activityRows') || (it.key === 'favs' && it.el.querySelector(':scope>.activityRows'))), count = bar ? bar.children.length : 0;
       if (bar) {
-        bar.classList.remove('hcBarRows'); // a phone has its own two columns
+        bar.classList.remove('hcBarRows'); // a phone has its own two columns (a window narrowed to one lost the wider rows' columns)
         if (!phone && bar.scrollWidth > bar.clientWidth + 1) for (let rows = 2; rows <= count; rows++) { bar.classList.add('hcBarRows'); bar.style.setProperty('--bar-cols', String(Math.ceil(count / rows))); if (bar.scrollWidth <= bar.clientWidth + 1) break; }
       }
       top += it.el.offsetHeight + (it.key === 'title' ? HOME.nameGap : HOME.sumsGap);
     });
-    /* Favourites (as a card) above the areas, 520 wide as drawn and as tall as its favourites need: whole rows of
-       tiles, two across, so one favourite is one row and nine are five, with nothing to fade or scroll (Matt, 12 Nov;
-       was 337 whatever the count). On a phone the whole width. The cards that aren't areas (Favourites as a card for
-       now) go Stacked (the start) down the left, a column 520 wide, one under another, the areas to their right in
-       whichever layout, the page as tall as the taller side; or in Rows across the top, the areas under them. Then
-       the areas: grouped by floor or not, laid out as Rows (each floor's name, then its areas a row at a time),
-       Columns (a column per floor, side by side) or Bento, where each floor can be a box, the boxes fitting
-       together, and each floor's first area can be big (two by two, its devices by name). Everything gives up to 15%
-       on a smaller screen */
-    const k = phone ? 1 : Math.max(0.85, Math.min(1, W / HOME.full));
+    /* the cards above the floors (Matt, 12 Nov: Favourites and Schedule "above the floors"), a row at a time in the
+       order you dragged them into, 520 and 337 as drawn; on a phone each the whole width and as tall as it needs. Then
+       each floor: its name, then its areas at the size picked, as many to a row as fit (two on a phone, as tall as they
+       need). Everything gives up to 15% on a smaller screen */
     const own = ['favs', 'wx', 'energy'];
     const saved = homeDrag?.order || prefs.home?.order;
     const order = saved ? [...saved.filter((x) => own.includes(x)), ...own.filter((x) => !saved.includes(x))] : own;
@@ -2123,30 +2123,37 @@ export function mountTestFocus(root, { config, getHass }) {
       if (homeDrag?.on && homeDrag.key === it.key) { homeLand(box); return; }
       Object.assign(it.el.style, { left: box.x + 'px', top: box.y + 'px' });
     };
-    const tw = phone ? W : Math.round((2 * HOME.col + HOME.inner) * k), th = Math.round(HOME.row * k);
-    const size = areaSize(), dims = AREA_SIZES[size], lay = areaLayout(), byFloor = homeFlag('byFloor');
-    // Stacked: the cards down the left and the areas beside them (with nothing but areas, or on a phone, as Rows)
+    const tw = phone ? W : 2 * cols.w + gap, th = HOME.row; // two columns, 337 as drawn
+    /* the cards that aren't areas (Favourites as a card, Schedule, Weather, Energy): Stacked (the start) down the left,
+       a column 520 wide, one under another, the areas to their right in whichever layout (Matt, 12 Nov, his Figma "Home
+       (overview)": the weather under Favourites, the areas beside them), the page as tall as the taller side; or Rows,
+       across the top a row at a time, the areas under them. On a phone everything runs down the page */
     const side = cardsAs() === 'stacked' && !phone && tops.length > 0;
     let x = 0, rowH = 0, colB = top;
     tops.forEach((it) => {
       it.el.classList.add('tfBoardItem');
       it.el.dataset.rows = 5; it.el.dataset.cols = 2; it.el.toggleAttribute('data-narrow', false);
-      // Favourites as tall as its favourites need; the weather and Energy today 337 as drawn (on a phone each as tall
-      // as it needs)
+      if (!side && x && x + tw > W) { top += rowH + gap; x = 0; rowH = 0; }
+      // Favourites (as a card) is as tall as its favourites need: whole rows of tiles, two across, so one is one row and
+      // nine are five, nothing to fade or scroll (Matt, 12 Nov; it was 337 whatever the count).
+      // The others 337 as drawn; on a phone each as tall as it needs
       let h = th;
       if (phone || it.key === 'favs') { Object.assign(it.el.style, { width: tw + 'px', height: '' }); h = it.el.offsetHeight; }
       if (side) { put(it, { x: 0, y: colB, w: tw, h }); colB += h + gap; return; }
-      if (x && x + tw > W) { top += rowH + gap; x = 0; rowH = 0; }
       put(it, { x, y: top, w: tw, h });
       x += tw + gap; rowH = Math.max(rowH, h);
     });
     if (tops.length && !side) top += rowH + gap;
-    // the areas' part of the page: all of it, or when the cards are stacked what's right of the column
+    // the areas' part of the page: what's right of the column (all of it on a phone)
     const aX = side ? tw + gap : 0, aW = side ? W - tw - gap : W;
-    const cw = phone ? Math.floor((W - gap) / 2) : Math.round(dims.w * k), ch = Math.round(dims.h * k);
+    /* the areas (Edit Home page, Matt, 12 Nov): grouped by floor or not, laid out as Rows (each floor's name, then its
+       areas a row at a time), Columns (a column per floor, side by side) or Bento, where each floor can be a box the
+       boxes fitting together, and each floor's first area can be big (two by two, its devices by name) */
+    const size = areaSize(), dims = AREA_SIZES[size], lay = areaLayout(), byFloor = homeFlag('byFloor');
+    const cw = cols.w, ch = dims.h; // a column wide, the dashboard's height for the size
     const n = phone ? 2 : Math.max(1, Math.floor((aW + gap) / (cw + gap)));
     const roomEls = new Map(shown.filter((it) => isRoomKey(it.key)).map((it) => [it.key, it]));
-    const groupsAll = byFloor ? floorGroups() : [{ id: '', name: '', rooms: areaRooms }];
+    const groupsAll = byFloor ? floorGroups() : [{ id: '', name: '', icon: '', rooms: areaRooms }];
     const floors = groupsAll.map((f) => ({ ...f, cards: f.rooms.map((r) => roomEls.get('room:' + r.id)).filter(Boolean) })).filter((f) => f.cards.length);
     const bento = lay === 'bento', mixed = bento && homeFlag('bentoMixed'), boxes = bento && byFloor && homeFlag('bentoBoxes');
     const columns = lay === 'columns' && byFloor && !phone;
@@ -2157,15 +2164,9 @@ export function mountTestFocus(root, { config, getHass }) {
     const pack = (f, c, w) => {
       const taken = new Set(), at = [];
       f.cards.forEach((it, i) => {
-        // beside the stacked cards (Matt, 16 Nov: match the weather card) the big area is wide, not tall: two columns in
-        // the row that's the cards' height
-        const big = mixed && i === 0 && c >= 2 && f.cards.length > 1, sc = big ? 2 : 1, sr = big && !phone && !side ? 2 : 1;
-        it.el.classList.remove('hcAreaS', 'hcAreaM', 'hcAreaL', 'hcAreaBig');
-        it.el.classList.add('hcArea' + size.toUpperCase());
-        it.el.classList.toggle('hcAreaBig', big);
-        it.el.style.setProperty('--hc-k', String(k));
+        const big = mixed && i === 0 && c >= 2 && f.cards.length > 1, sc = big ? 2 : 1, sr = big && !phone ? 2 : 1;
         it.el.classList.add('tfBoardItem');
-        it.el.dataset.rows = sr > 1 ? 10 : 5; it.el.dataset.cols = sc; it.el.toggleAttribute('data-narrow', false);
+        it.el.dataset.cols = sc; it.el.toggleAttribute('data-narrow', false);
         for (let r = 0; ; r++) {
           const c0 = [...Array(Math.max(0, c - sc + 1)).keys()].find((x0) => [...Array(sc).keys()].every((dx) => [...Array(sr).keys()].every((dy) => !taken.has((r + dy) + ',' + (x0 + dx)))));
           if (c0 != null) { [...Array(sc).keys()].forEach((dx) => [...Array(sr).keys()].forEach((dy) => taken.add((r + dy) + ',' + (c0 + dx)))); at.push({ it, r, c: c0, sc, sr }); break; }
@@ -2174,73 +2175,97 @@ export function mountTestFocus(root, { config, getHass }) {
       const rowsN = Math.max(0, ...at.map((p) => p.r + p.sr));
       // in Bento a card with nothing under it grows down to the group's foot, so the box has no hole (not on a phone,
       // where each row is as tall as it needs)
-      // not beside the stacked cards, where nothing grows past the card beside it (Matt, 16 Nov)
-      if (bento && !phone && !side) at.forEach((p) => { while (p.r + p.sr < rowsN && !taken.has((p.r + p.sr) + ',' + p.c) && p.sc === 1) { taken.add((p.r + p.sr) + ',' + p.c); p.sr++; } });
-      at.forEach((p) => Object.assign(p.it.el.style, { width: (p.sc * w + (p.sc - 1) * gap) + 'px', height: phone ? '' : (p.sr * ch + (p.sr - 1) * gap) + 'px' }));
-      // a phone's row as tall as its tallest card, measured once they've all let go of their old height; beside the
-      // stacked cards the first row is their height, the weather card's (Matt, 16 Nov: "match the size of the weather card")
-      const rowHs = [...Array(rowsN)].map((_, r) => (phone ? 0 : side && r === 0 ? th : ch));
-      if (phone) at.forEach((p) => { rowHs[p.r] = Math.max(rowHs[p.r], p.it.el.offsetHeight); });
-      else at.forEach((p) => { p.it.el.style.height = (rowHs.slice(p.r, p.r + p.sr).reduce((a2, b2) => a2 + b2, 0) + (p.sr - 1) * gap) + 'px'; });
+      if (bento && !phone) at.forEach((p) => { while (p.r + p.sr < rowsN && !taken.has((p.r + p.sr) + ',' + p.c) && p.sc === 1) { taken.add((p.r + p.sr) + ',' + p.c); p.sr++; } });
+      // its rows as the dashboard counts them (a big one, or one grown down in Bento, more), so it shows what the dashboard's
+      // area card shows at that size
+      at.forEach((p) => { p.it.el.dataset.rows = Math.min(5, p.sr * dims.rows); Object.assign(p.it.el.style, { width: (p.sc * w + (p.sc - 1) * gap) + 'px', height: (p.sr * ch + (p.sr - 1) * gap) + 'px' }); });
+      // a phone's row as tall as its tallest card, measured once they've all let go of their old height
+      const rowH = [...Array(rowsN)].map(() => ch);
       const rowY = []; let y = headH(f);
-      rowHs.forEach((h, r) => { rowY[r] = y; y += h + gap; });
-      return { h: y - (rowsN ? gap : 0), places: at.map((p) => ({ it: p.it, x: p.c * (w + gap), y: rowY[p.r], w: p.sc * w + (p.sc - 1) * gap, h: rowHs.slice(p.r, p.r + p.sr).reduce((a2, b2) => a2 + b2, 0) + (p.sr - 1) * gap })) };
+      rowH.forEach((h, r) => { rowY[r] = y; y += h + gap; });
+      return { h: y - (rowsN ? gap : 0), places: at.map((p) => ({ it: p.it, x: p.c * (w + gap), y: rowY[p.r], w: p.sc * w + (p.sc - 1) * gap, h: rowH.slice(p.r, p.r + p.sr).reduce((a, b) => a + b, 0) + (p.sr - 1) * gap })) };
     };
     const oldHeads = new Map([...grid.querySelectorAll(':scope > .hcFloor')].map((el) => [el.dataset.floor, el]));
     const oldBoxes = new Map([...grid.querySelectorAll(':scope > .hcFloorBox')].map((el) => [el.dataset.floor, el]));
     const floorHeads = [];
-    const headAt = (f, x0, y0, w) => {
+    const headAt = (f, x, y, w) => {
       if (!f.name) return;
       let head = oldHeads.get(f.id);
       oldHeads.delete(f.id);
       if (!head) { head = Object.assign(document.createElement('div'), { className: 'hcFloor' }); head.dataset.floor = f.id; grid.appendChild(head); }
-      // the floor's name on its own (no icon)
+      // the floor's name on its own (Matt, 12 Nov: "remove the icon")
       if (head.dataset.sig !== f.name) { head.dataset.sig = f.name; head.innerHTML = '<h2 class="hcFloorName">' + esc(f.name) + '</h2>'; }
-      Object.assign(head.style, { left: x0 + 'px', top: y0 + 'px', width: w + 'px' });
+      Object.assign(head.style, { left: x + 'px', top: y + 'px', width: w + 'px' });
       floorHeads.push(head);
     };
-    const boxAt = (f, x0, y0, w, h) => {
+    const boxAt = (f, x, y, w, h) => {
       let box = oldBoxes.get(f.id);
       oldBoxes.delete(f.id);
       if (!box) { box = Object.assign(document.createElement('div'), { className: 'hcFloorBox' }); box.dataset.floor = f.id; box.setAttribute('aria-hidden', 'true'); grid.prepend(box); }
-      Object.assign(box.style, { left: x0 + 'px', top: y0 + 'px', width: w + 'px', height: h + 'px' });
+      Object.assign(box.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
     };
-    // in a floor's box its name starts where its areas' icons do, the cards' own padding in
+    // in a floor's box its name starts where its areas' icons do (Matt, 12 Nov), the cards' own padding in
     const cardPad = (f) => parseFloat(getComputedStyle(f.cards[0].el).paddingLeft) || 0;
     const place = (f, g, x0, y0, indent = 0) => { headAt(f, x0 + indent, y0, (g.w ?? W) - indent); g.places.forEach((p) => put(p.it, { x: x0 + p.x, y: y0 + p.y, w: p.w, h: p.h })); };
     if (floors.length && tops.length && !side) top += HOME.floorTop;
     if (columns) {
       // a column per floor, as wide as a card, side by side; more floors than fit go on under the tallest
-      let cx = 0, rowB = top;
+      let x = 0, rowB = top;
       floors.forEach((f) => {
         const g = { ...pack(f, 1, cw), w: cw };
-        if (cx && cx + cw > aW) { top = rowB + gap + HOME.floorTop; cx = 0; }
-        place(f, g, aX + cx, top);
-        rowB = Math.max(rowB, top + g.h); cx += cw + gap;
+        if (x && x + cw > aW) { top = rowB + gap + HOME.floorTop; x = 0; }
+        place(f, g, aX + x, top);
+        rowB = Math.max(rowB, top + g.h); x += cw + gap;
       });
       top = rowB + gap;
     } else if (boxes) {
-      // each floor a box, as many cards wide as suits it (two rows for more than three), the boxes fitting together:
-      // each where it sits highest, from the left
-      const colTop = Array(n).fill(top);
+      // each floor a box, as many cards wide as suits it (two rows for more than three), its 12 round the cards (Matt, 17 Nov:
+      // the cards a column wide in a box too, not 12 narrower), the boxes fitting together: each where it sits highest, from
+      // the left, by their own widths
+      let sky = [{ x0: 0, x1: aW, t: top }];
+      const topOver = (x0, x1) => Math.max(...sky.filter((g) => g.x1 > x0 && g.x0 < x1).map((g) => g.t));
+      const raise = (x0, x1, t) => {
+        const out = [];
+        sky.forEach((g) => { if (g.x1 <= x0 || g.x0 >= x1) out.push(g); else { if (g.x0 < x0) out.push({ x0: g.x0, x1: x0, t: g.t }); if (g.x1 > x1) out.push({ x0: x1, x1: g.x1, t: g.t }); } });
+        out.push({ x0, x1, t });
+        sky = out.sort((a, b) => a.x0 - b.x0);
+      };
       floors.forEach((f) => {
         const cells = f.cards.length + (mixed && f.cards.length > 1 ? 3 : 0);
-        const c = phone ? 2 : Math.min(n, Math.max(mixed && f.cards.length > 1 ? 2 : 1, cells <= 3 ? cells : Math.ceil(cells / 2)));
-        const outer = c * (cw + gap) - gap, inner = Math.floor((outer - 2 * BOX - (c - 1) * gap) / c);
-        const g = { ...pack(f, c, inner), w: outer - 2 * BOX };
-        let s0 = 0, best = Infinity;
-        for (let s1 = 0; s1 + c <= n; s1++) { const t = Math.max(...colTop.slice(s1, s1 + c)); if (t < best) { best = t; s0 = s1; } }
-        const bx = aX + s0 * (cw + gap), h = g.h + 2 * BOX;
-        boxAt(f, bx, best, outer, h);
-        place(f, g, bx + BOX, best + BOX, cardPad(f));
-        for (let s1 = s0; s1 < s0 + c; s1++) colTop[s1] = best + h + gap;
+        let c = phone ? 2 : Math.min(n, Math.max(mixed && f.cards.length > 1 ? 2 : 1, cells <= 3 ? cells : Math.ceil(cells / 2)));
+        while (!phone && c > 1 && c * cw + (c - 1) * gap + 2 * BOX > aW) c--; // a phone keeps two, a little narrower
+        // its box as many cards wide as suits it, or fewer when that lets it sit higher, beside another box; a card a column
+        // wide, unless even one in its box can't be (a phone, or one column beside the stack)
+        let pick = null;
+        for (let cc = c; cc >= (phone ? c : 1); cc--) {
+          const inner = Math.min(cw, Math.floor((aW - 2 * BOX - (cc - 1) * gap) / cc));
+          const g = { ...pack(f, cc, inner), w: cc * inner + (cc - 1) * gap }, bw = g.w + 2 * BOX, h = g.h + 2 * BOX;
+          sky.map((s2) => s2.x0).filter((x0) => x0 + bw <= aW + 0.5).forEach((x0) => { const t = topOver(x0, x0 + bw); if (!pick || t < pick.t - 0.5) pick = { cc, inner, bw, h, t, x: x0 }; });
+        }
+        if (!pick) { const inner = Math.min(cw, aW - 2 * BOX), g0 = pack(f, 1, inner); pick = { cc: 1, inner, bw: inner + 2 * BOX, h: g0.h + 2 * BOX, t: topOver(0, aW), x: 0 }; }
+        const g = { ...pack(f, pick.cc, pick.inner), w: pick.cc * pick.inner + (pick.cc - 1) * gap }, bw = pick.bw, h = pick.h, bx = pick.x, best = pick.t;
+        boxAt(f, aX + bx, best, bw, h);
+        place(f, g, aX + bx + BOX, best + BOX, cardPad(f));
+        raise(bx, Math.min(aW, bx + bw + gap), best + h + gap);
       });
-      top = Math.max(top, ...colTop);
+      top = Math.max(...sky.map((g) => g.t));
     } else {
-      // Rows: each floor's name, then its areas a row at a time (Bento's big first area too)
+      // Rows: each floor's name, then its areas a row at a time (Bento's big first area too). Fit together (Matt, 17 Nov:
+      // "make more rows for the cards, so the width the group takes up is smaller"): the fewest columns that keep the areas
+      // no taller than the cards stacked beside them (with none beside them, about as tall as they're wide), leaving no
+      // gap, or in Bento one a card grows down into; the width left over stays empty
+      const fitCols = (f) => {
+        if (!prefs.home?.fitTogether || phone) return n;
+        const besideH = side ? colB - gap - top : null;
+        const shape = (c) => { const cells = f.cards.length + (mixed && f.cards.length > 1 && c >= 2 ? 3 : 0), rows = Math.ceil(cells / c); return { holes: rows * c - cells, rows, h: headH(f) + rows * ch + (rows - 1) * gap, w: c * cw + (c - 1) * gap }; };
+        const neat = (x) => x.holes === 0 || (bento && x.holes === 1 && x.rows > 1);
+        for (let c = 1; c <= n; c++) { const x = shape(c); if (neat(x) && x.h <= (besideH ?? x.w)) return c; }
+        for (let c = 1; c <= n; c++) { const x = shape(c); if (x.h <= (besideH ?? x.w)) return c; }
+        return n;
+      };
       floors.forEach((f, i) => {
         if (i) top += HOME.floorTop;
-        const g = pack(f, n, cw);
+        const g = pack(f, fitCols(f), cw);
         place(f, { ...g, w: aW }, aX, top);
         top += g.h + gap;
       });
@@ -2326,7 +2351,7 @@ export function mountTestFocus(root, { config, getHass }) {
     editing = on;
     if (!on) { drag = null; trayPicking = tilePicking = false; closeBoardMenu(); }
     layoutBoard();
-    if (on) editStart = JSON.stringify(prefs);
+    if (on) { editStart = JSON.stringify(prefs); trayPage(tray, 'Edit custom dashboard', null); } // a phone starts at the list
     else if (editStart && JSON.stringify(prefs) !== editStart) toast('Changes saved');
   }
   // a card's ⋯: its height (XS to XL), its width (a tile or a card), a cell left, right, up or down, Energy today's
@@ -2592,6 +2617,17 @@ export function mountTestFocus(root, { config, getHass }) {
   // the tray in tabs instead of one long scroll (Matt, 12 Nov): Page, Cards, Areas and Favourites, HomeCore settings' tabs
   const TRAY_TABS = [['page', 'Page'], ['cards', 'Cards'], ['areas', 'Areas'], ['favs', 'Favourites']];
   let trayTab = 'page';
+  /* on a phone a tray's tabs are a list, each opening its own page with ‹ back to the list, as HomeCore settings and
+     Settings (Matt, 17 Nov: "the trays too"); wider, the tabs as they were */
+  const trayListHtml = (tabs, attr) => '<section class="hcRowsCard hcTrayList">' + tabs.map(([k, t]) => '<button class="hcRow hcConfigRow" type="button" ' + attr + '="' + k + '">' +
+    '<span class="hcRowText"><span class="hcRowName">' + esc(t) + '</span></span><span class="hcRowEnd">' + CHEVRON + '</span></button>').join('') + '</section>';
+  // which of its pages a phone shows: the list (null) or a tab's; its head says which, with ‹ back to the list
+  const trayPage = (el, title, k, name) => {
+    el.classList.toggle('hcTrayIn', Boolean(k));
+    el.querySelector('.tfTrayHead .activityTitle').textContent = k ? name : title;
+    el.querySelector('.tfTrayInner').scrollTop = 0;
+  };
+  const TRAY_BACK = '<button class="back hcTrayBack" type="button" data-tray-back aria-label="Back">' + BACK + '</button>';
   // which tab each of the tray's sections sits under
   const trayTabOf = (sec) => (sec.matches('[data-tray="welcome"],[data-tray="phone"]') ? 'page'
     : sec.querySelector('[data-room-add]') ? 'areas' : sec.querySelector('[data-tray="favs"]') ? 'favs' : 'cards');
@@ -2620,9 +2656,10 @@ export function mountTestFocus(root, { config, getHass }) {
     '<div class="tfTrayPick" data-pick="tiles" hidden><input class="addInput" type="search" placeholder="Search devices" aria-label="Search devices" autocomplete="off" data-tile-search>' +
     '<ul class="tfTrayList" data-tray="tilepick"></ul></div></section>' +
     '<section class="tfTraySection"><div class="sectionLabel">Areas</div><p class="tfTrayNote">Which areas the Areas card shows. Drag to change their order, here and on Home.</p>' +
-    '<ul class="tfTrayList hcHeList" data-tray="areas"></ul>' +
+    // Add area first, where it's seen, then the list (Matt, 17 Nov: under all the areas it was out of sight)
     '<button class="pill tfTrayAdd hcAddBtn" type="button" data-room-add aria-expanded="false">' + PLUS + '<span>Add area</span></button>' +
-    '<ul class="tfTrayList" data-tray="roompick" hidden></ul></section>' +
+    '<ul class="tfTrayList" data-tray="roompick" hidden></ul>' +
+    '<ul class="tfTrayList hcHeList" data-tray="areas"></ul></section>' +
     '<section class="tfTraySection" data-tray="phone"></section>' +
     '<section class="tfTraySection"><div class="sectionLabel">Favourites</div><ul class="tfTrayList" data-tray="favs"></ul>' +
     '<button class="pill tfTrayAdd hcAddBtn" type="button" data-fav-add aria-expanded="false">' + PLUS + '<span>Add favourite</span></button>' +
@@ -2716,7 +2753,9 @@ export function mountTestFocus(root, { config, getHass }) {
         homeSeg('Layout', 'data-he-area-layout', areaLayout(), [['rows', 'Rows'], ['columns', 'Columns'], ['bento', 'Bento']]) +
         (areaLayout() === 'bento' ? '<div class="hcHeLine"><span class="activityRowName">Floors as boxes</span>' + sw(homeFlag('bentoBoxes'), 'Floors as boxes', 'data-he-flag="bentoBoxes"') + '</div>' +
           '<div class="hcHeLine"><span class="activityRowName">Mixed sizes</span>' + sw(homeFlag('bentoMixed'), 'Mixed sizes', 'data-he-flag="bentoMixed"') + '</div>' : '') +
-        homeSeg('Area cards', 'data-he-area-size', areaSize(), [['s', 'Small'], ['m', 'Medium'], ['l', 'Large']]),
+        homeSeg('Area cards', 'data-he-area-size', areaSize(), [['s', 'Small'], ['m', 'Medium'], ['l', 'Large']]) +
+        // Fit together (Matt, 17 Nov): the areas as a neat block, not spread over every column that fits
+        '<div class="hcHeLine"><span class="activityRowName">Fit together</span>' + sw(!!prefs.home?.fitTogether, 'Fit together', 'data-he-fit') + '</div>',
       favs: '<div class="hcHeLine"><span class="activityRowName">Show favourites</span>' + sw(prefs.home?.favs !== false, 'Show favourites', 'data-he-card="favs"') + '</div>' +
         '<hr class="hcHeRule">' +
         '<div class="hcHeLabel"><span class="activityRowName">Favourite entities</span>' + infoBtn('favs') + '</div>' +
@@ -2740,6 +2779,7 @@ export function mountTestFocus(root, { config, getHass }) {
       '<p class="tfTrayNote hcHeAreasNote">You can rearrange your floors and areas in the order that best represents your house on the <button type="button" class="hcHeLink" data-path="/config/areas/dashboard">areas page</button>.</p>' +
       '<div class="tabs rubberTabs hcTrayTabs" role="tablist" aria-label="Edit Home page"><div class="rubberIndicator" aria-hidden="true"></div>' +
         tabs.map(([k, t]) => '<button class="tab segBtn' + (k === homeTab ? ' active' : '') + '" type="button" role="tab" aria-selected="' + (k === homeTab) + '" data-he-tab="' + k + '">' + t + '</button>').join('') + '</div>' +
+      trayListHtml(tabs, 'data-he-go') +
       '<div class="hcHeTabBody" role="tabpanel">' + bodies[homeTab] + '</div>';
     placeHomeMark(false);
     fillIcons(homeTray);
@@ -2758,10 +2798,10 @@ export function mountTestFocus(root, { config, getHass }) {
     if (pen && on) { penHome = pen.parentElement; head.appendChild(pen); }
     if (pen && !on && penHome) penHome.appendChild(pen);
     if (pen) { pen.classList.toggle('active', on); pen.setAttribute('aria-pressed', String(on)); pen.setAttribute('aria-label', on ? 'Done editing Home' : 'Edit Home page'); pen.title = on ? 'Done' : 'Edit'; pen.innerHTML = on ? TICK : PENCIL; }
-    if (on) { homeStart = JSON.stringify(prefs); drawHomeTray(); }
+    if (on) { homeStart = JSON.stringify(prefs); drawHomeTray(); trayPage(homeTray, 'Edit Home page', null); } // a phone starts at the list
     else if (homeStart && JSON.stringify(prefs) !== homeStart) toast('Changes saved');
   }
-  homeTray.innerHTML = '<div class="tfTrayInner"><div class="tfTrayHead"><div class="activityTitle">Edit Home page</div></div><div class="hcHeBody" data-he-body></div></div>';
+  homeTray.innerHTML = '<div class="tfTrayInner"><div class="tfTrayHead">' + TRAY_BACK + '<div class="activityTitle">Edit Home page</div></div><div class="hcHeBody" data-he-body></div></div>';
   app.appendChild(homeTray);
   // the (i)'s popover: what the setting does, and Learn more; closes on a tap outside it or Escape
   let infoFor = null;
@@ -2807,6 +2847,9 @@ export function mountTestFocus(root, { config, getHass }) {
   homeTray.addEventListener('click', (ev) => {
     const t = ev.target;
     const info = t.closest('[data-info]'); if (info) { openInfo(info); return; }
+    const heGo = t.closest('[data-he-go]');
+    if (heGo) { homeTab = heGo.dataset.heGo; homePicking = false; closeInfo(); drawHomeTray(); trayPage(homeTray, 'Edit Home page', homeTab, heGo.textContent); return; }
+    if (t.closest('[data-tray-back]')) { closeInfo(); trayPage(homeTray, 'Edit Home page', null); return; }
     const tabBtn = t.closest('[data-he-tab]');
     if (tabBtn) { const m = homeTray.querySelector('.hcTrayTabs .rubberIndicator'), from = { left: m.offsetLeft, width: m.offsetWidth }; homeTab = tabBtn.dataset.heTab; homePicking = false; closeInfo(); drawHomeTray(); placeHomeMark(true, from); homeTray.querySelector('.tfTrayInner').scrollTop = 0; return; }
     if (t.closest('[data-he-welcome]')) { homePrefs({ welcome: !welcomeOn() }); return; }
@@ -2815,6 +2858,7 @@ export function mountTestFocus(root, { config, getHass }) {
     const sw2 = t.closest('[data-he-sums-width]'); if (sw2) { homePrefs({ sumsWidth: sw2.dataset.heSumsWidth }); return; }
     const as = t.closest('[data-he-area-size]'); if (as) { homePrefs({ areaSize: as.dataset.heAreaSize }); return; }
     const al = t.closest('[data-he-area-layout]'); if (al) { homePrefs({ areaLayout: al.dataset.heAreaLayout }); return; }
+    if (t.closest('[data-he-fit]')) { homePrefs({ fitTogether: !prefs.home?.fitTogether }); return; }
     const ca = t.closest('[data-he-cards-as]'); if (ca) { homePrefs({ cardsAs: ca.dataset.heCardsAs }); return; }
     const fl = t.closest('[data-he-flag]'); if (fl) { const key = fl.dataset.heFlag; homePrefs({ [key]: !homeFlag(key) }); if (key === 'favsTitle') render(); return; } // the card's wrapper is drawn again only by a full render
     if (t.closest('[data-he-suggest]')) { homeSave({ suggest: !suggestOn() }); return; }
@@ -2898,6 +2942,8 @@ export function mountTestFocus(root, { config, getHass }) {
     const t = ev.target.closest('button');
     if (!t) return;
     if (t.hasAttribute('data-tray-tab')) { trayTab = t.dataset.trayTab; showTrayTab(true); tray.querySelector('.tfTrayInner').scrollTop = 0; return; }
+    if (t.hasAttribute('data-tray-go')) { trayTab = t.dataset.trayGo; showTrayTab(false); trayPage(tray, 'Edit custom dashboard', trayTab, TRAY_TABS.find(([k]) => k === trayTab)[1]); return; }
+    if (t.hasAttribute('data-tray-back')) { trayPage(tray, 'Edit custom dashboard', null); return; }
     if (t.hasAttribute('data-tray-done')) setEditing(false);
     else if (t.hasAttribute('data-info')) openInfo(t);
     else if (t.hasAttribute('data-dash-sums')) { saveDash({ ...boardPrefs(), hidden: boardPrefs().hidden.filter((k) => k !== 'sums'), sumsOff: !prefs.dash?.sumsOff }); refresh(); renderTray(); }
@@ -3643,16 +3689,19 @@ export function mountTestFocus(root, { config, getHass }) {
     const s = ACTION_DOMAINS.includes(d) || TOGGLES.includes(d) ? specFor(id) : quickSpec(id);
     const pop = popOf(id);
     // its pages: the drawn ones (a light's Colour and Control) or Control as it was, then Info
-    const pages = [...(pop ? pop.pages.map((pg) => ({ name: pg.name, svg: pg.svg, html: pg.space + '<div class="tfMoreCtl"' + lightAttrs(id).replace(' data-light', '') + '>' + pg.rows.filter(Boolean).join('') + '</div>' }))
+    const pages = [...(pop ? pop.pages.map((pg) => ({ name: pg.name, svg: pg.svg, tabs: pg.tabs, html: pg.space + '<div class="tfMoreCtl"' + lightAttrs(id).replace(' data-light', '') + '>' + pg.rows.filter(Boolean).join('') + '</div>' }))
       : [{ name: 'Control', svg: TUNE_SVG, html: moreSpace(id) + (d === 'plant' ? plantProblems(id).join('') : '') + s.sections.filter(Boolean).join('') }]), { name: 'Info', svg: INFO_SVG, html: infoOf(id) }];
-    if (more && more.page == null) more.page = pop?.start || 0; // a light opens on its Control page, after Colour
+    if (more && more.page == null) more.page = 0;
     if (more) more.pages = pages.length;
-    const page = more?.page || 0;
+    const page = more?.page || 0, mode = more?.mode || '';
+    // the tabs: a page's own (a colour light's Colour and Controls, one page in two modes), else the page; then Info
+    const tabs = pages.flatMap((pg, i) => (pg.tabs || [{ name: pg.name, svg: pg.svg }]).map((t) => ({ ...t, page: i })));
+    const picked = (t) => t.page === page && (t.mode == null || t.mode === mode);
     return [
       moreHead(id, s, head),
-      '<div class="tfMorePages' + (pop ? ' tfMorePop' : '') + '" data-more-pages>' + pages.map((pg) => '<section class="tfMorePage" aria-label="' + pg.name + '">' + pg.html + '</section>').join('') + '</div>',
+      '<div class="tfMorePages' + (pop ? ' tfMorePop' : '') + (mode === 'colour' && page === 0 ? ' tfMoreHold' : '') + '" data-more-pages>' + pages.map((pg) => '<section class="tfMorePage" aria-label="' + pg.name + '" data-mode="' + mode + '">' + pg.html + '</section>').join('') + '</div>',
       // the pages' icons in place of their dots (Matt, 12 Nov): Control's sliders and Info's (i); a light's Colour its palette first
-      '<div class="tfMoreDots tfMorePageIcons" role="tablist" aria-label="Pages">' + pages.map((pg, i) => '<button type="button" role="tab" aria-selected="' + (i === page) + '" aria-label="' + pg.name + '" title="' + pg.name + '" data-more-page="' + i + '"' + (i === page ? '' : ' tabindex="-1"') + '>' + pg.svg + '</button>').join('') + '</div>',
+      '<div class="tfMoreDots tfMorePageIcons" role="tablist" aria-label="Pages">' + tabs.map((t) => '<button type="button" role="tab" aria-selected="' + picked(t) + '" aria-label="' + t.name + '" title="' + t.name + '" data-more-page="' + t.page + '"' + (t.mode != null ? ' data-more-mode="' + t.mode + '"' : '') + (picked(t) ? '' : ' tabindex="-1"') + '>' + t.svg + '</button>').join('') + '</div>',
     ];
   }
   // under the name, as the drawings have it (17 Nov): its area and its state in a word or a number; a light its value
@@ -3742,11 +3791,11 @@ export function mountTestFocus(root, { config, getHass }) {
       const warm = modes.includes('color_temp') && popMarker('ctf', id, k == null ? null : Math.round(((kMax - k) / (kMax - kMin)) * 1000) / 10, nameOf(id) + ' warmth', k == null ? '' : Math.round(k).toLocaleString() + 'k');
       const colour = modes.some((m) => COLOUR_MODES.includes(m)) && popMarker('hue', id, hue == null ? null : Math.round((hue / 360) * 1000) / 10, nameOf(id) + ' colour', '');
       // a light with the pad (the Dual Axis Controller) has it full width; one without, its big switch
-      const space = (key) => (dacFor(id) ? '<div class="tfMoreSpace tfMoreFill tfMorePad"><div class="tfDacPad" data-dac="' + key + ':' + esc(id) + '"></div></div>' : popSwitch(id, s));
-      return { pages: [
-        colour && { name: 'Colour', svg: PALETTE_SVG, space: space('more2'), rows: [bright, colour] },
-        { name: 'Control', svg: TUNE_SVG, space: space('more'), rows: [bright, warm] },
-      ].filter(Boolean), start: colour ? 1 : 0 };
+      const space = dacFor(id) ? '<div class="tfMoreSpace tfMoreFill tfMorePad"><div class="tfDacPad" data-dac="more:' + esc(id) + '"></div></div>' : popSwitch(id, s);
+      // Controls and Colour are one page (Matt, 17 Nov: "dynamic changing"): the switch or pad and the brightness stay
+      // where they are, and only the second track changes, warmth to colour and back, in place
+      return { pages: [{ name: 'Control', svg: TUNE_SVG, space, rows: [bright, colour ? '<div class="tfMoreSwap">' + (warm || '') + colour + '</div>' : warm],
+        tabs: colour ? [{ name: 'Colour', svg: PALETTE_SVG, mode: 'colour' }, { name: 'Controls', svg: TUNE_SVG, mode: '' }] : null }] };
     }
     if (d === 'climate') {
       const step = a.target_temp_step || 0.5, t = Number(a.temperature), lo = Number(a.target_temp_low), hi = Number(a.target_temp_high), set = (data) => act('climate', 'set_temperature', id, data);
@@ -3913,7 +3962,11 @@ export function mountTestFocus(root, { config, getHass }) {
         if ([...dragging.keys()].some((k) => box.children[i].querySelector('[data-drag="' + CSS.escape(k) + '"]'))) return;
         const t = document.createElement('div');
         t.innerHTML = p;
+        // where its rows and pages were scrolled stays (17 Nov: the thermostat's rows jumped back to the top each time
+        // its reading changed, so they couldn't be scrolled down)
+        const scrolled = [...box.children[i].querySelectorAll('.tfMoreCtl,.tfMorePage')].map((e) => e.scrollTop);
         const next = swapIn(box.children[i], t.firstElementChild);
+        next.querySelectorAll('.tfMoreCtl,.tfMorePage').forEach((e, k) => { if (scrolled[k]) e.scrollTop = scrolled[k]; });
         fillIcons(next);
         drawPlantGraphs(next);
         mountDacs(next);
@@ -3944,7 +3997,9 @@ export function mountTestFocus(root, { config, getHass }) {
   }
   function markPage() {
     const page = more?.page || 0;
-    sheet.querySelectorAll('[data-more-page]').forEach((b) => { const on = Number(b.dataset.morePage) === page; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+    sheet.querySelectorAll('[data-more-page]').forEach((b) => { const on = Number(b.dataset.morePage) === page && (b.dataset.moreMode == null || b.dataset.moreMode === (more.mode || '')); b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+    // a colour light's Colour mode keeps its page still: a swipe changes the mode, not the page
+    sheet.querySelector('[data-more-pages]')?.classList.toggle('tfMoreHold', more.mode === 'colour' && page === 0);
   }
   function turnPage(page, focus) {
     const track = sheet.querySelector('[data-more-pages]');
@@ -3953,8 +4008,28 @@ export function mountTestFocus(root, { config, getHass }) {
     track.scrollTo({ left: more.page * track.clientWidth, behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
     markPage();
     fitPage(track);
-    if (focus) sheet.querySelector('[data-more-page="' + more.page + '"]')?.focus({ preventScroll: true });
+    if (focus) sheet.querySelector('.tfMoreDots [aria-selected="true"]')?.focus({ preventScroll: true });
   }
+  // a tab: its page (Info slides in), and for a colour light its mode, the second track changing in place
+  function pickTab(page, mode, focus) {
+    if (!more) return;
+    if (mode != null && mode !== (more.mode || '')) {
+      more.mode = mode;
+      sheet.querySelectorAll('.tfMorePage').forEach((p) => { p.dataset.mode = mode; });
+    }
+    turnPage(page, focus);
+  }
+  // a colour light's page swiped sideways: Controls to Colour and back (the strip itself turns to Info)
+  let swipe = null;
+  sheet.addEventListener('touchstart', (ev) => { const t = ev.touches[0]; swipe = ev.target.closest?.('[data-more-pages]') && ev.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
+  sheet.addEventListener('touchend', (ev) => {
+    if (!swipe || !more || (more.page || 0) !== 0 || !sheet.querySelector('[data-more-mode]')) { swipe = null; return; }
+    const t = ev.changedTouches[0], dx = t.clientX - swipe.x, dy = t.clientY - swipe.y;
+    swipe = null;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx > 0 && more.mode !== 'colour') pickTab(0, 'colour');
+    else if (dx < 0 && more.mode === 'colour') pickTab(0, '');
+  }, { passive: true });
   let pageTimer = 0;
   sheet.addEventListener('scroll', (ev) => {
     const track = ev.target;
@@ -4295,6 +4370,7 @@ export function mountTestFocus(root, { config, getHass }) {
     // in place, so the accordion slides like the move panels
     grid.querySelectorAll('.tfAreaPanel').forEach((p) => { const on = p === panel; p.classList.toggle('active', on); p.setAttribute('aria-expanded', String(on)); p.querySelector('.panelExpanded')?.toggleAttribute('inert', !on); });
     units.set('areas', areasHtml(grid.querySelector('[data-k="areas"]')?.style.order || 1));
+    setTimeout(() => showOpenArea(true), 340); // once it has opened out
   }
   // what a bar sets, from 0–1 along it
   const DRAG = {
@@ -4360,7 +4436,7 @@ export function mountTestFocus(root, { config, getHass }) {
       else if (t.dataset.acts) JSON.parse(t.dataset.acts).forEach(([domain, service, id, data]) => send(domain, service, id, data).catch(() => {}));
       else if (t.dataset.more) openMore(t.dataset.more, t);
       else if (t.hasAttribute('data-more-close')) closeMore();
-      else if (t.dataset.morePage) turnPage(Number(t.dataset.morePage), true);
+      else if (t.dataset.morePage) pickTab(Number(t.dataset.morePage), t.dataset.moreMode ?? null, true);
       else if (t.dataset.path) go(t.dataset.path);
       else if (t.dataset.go) openArea('room:' + t.dataset.go);
       else if (t.hasAttribute('data-area-back')) closeArea();
@@ -4469,7 +4545,13 @@ export function mountTestFocus(root, { config, getHass }) {
     // Escape folds the details away first, then closes
     sheet.addEventListener('keydown', (ev) => {
     if (ev.key === 'Escape') { ev.stopPropagation(); if (more?.details) toggleDetails(false); else closeMore(); }
-    else if ((ev.key === 'ArrowLeft' || ev.key === 'ArrowRight') && ev.target.closest?.('.tfMoreDots')) { ev.preventDefault(); turnPage((more?.page || 0) + (ev.key === 'ArrowRight' ? 1 : -1), true); }
+    else if ((ev.key === 'ArrowLeft' || ev.key === 'ArrowRight') && ev.target.closest?.('.tfMoreDots')) {
+      // tab by tab: a colour light's Colour and Controls are two tabs on one page
+      ev.preventDefault();
+      const all = [...sheet.querySelectorAll('.tfMoreDots [data-more-page]')], at = all.findIndex((b) => b.getAttribute('aria-selected') === 'true');
+      const next = all[Math.max(0, Math.min(all.length - 1, at + (ev.key === 'ArrowRight' ? 1 : -1)))];
+      if (next) pickTab(Number(next.dataset.morePage), next.dataset.moreMode ?? null, true);
+    }
   });
   }
 

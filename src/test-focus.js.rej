@@ -1,0 +1,21 @@
+@@ -2632,6 +2643,7 @@
+     const inner = tray.querySelector('.tfTrayInner'), bar = tray.querySelector('.hcTrayTabs'), mark = bar.querySelector('.rubberIndicator');
+     const head = inner.querySelector('.tfTrayHead');
+     if (head.nextElementSibling !== bar) head.after(bar); // the tabs straight under the head (Summaries is added after it)
++    const list = inner.querySelector('.hcTrayList'); if (bar.nextElementSibling !== list) bar.after(list); // a phone's list of them
+     let first = true;
+     inner.querySelectorAll(':scope>.tfTraySection').forEach((sec) => { sec.hidden = trayTabOf(sec) !== trayTab; sec.classList.toggle('hcFirst', !sec.hidden && first); if (!sec.hidden) first = false; });
+     bar.querySelectorAll('[data-tray-tab]').forEach((b) => { const on = b.dataset.trayTab === trayTab; b.classList.toggle('active', on); b.setAttribute('aria-selected', String(on)); });
+@@ -2644,10 +2656,11 @@
+   const tray = Object.assign(document.createElement('aside'), { className: 'tfEditTray' });
+   tray.setAttribute('aria-label', 'Edit custom dashboard');
+   tray.innerHTML = '<button class="tfTrayTuck" type="button" data-tray-tuck></button>' +
+-    '<div class="tfTrayInner"><div class="tfTrayHead"><div class="activityTitle">Edit custom dashboard</div><button class="pill" type="button" data-tray-done>Done</button></div>' +
++    '<div class="tfTrayInner"><div class="tfTrayHead">' + TRAY_BACK + '<div class="activityTitle">Edit custom dashboard</div><button class="pill" type="button" data-tray-done>Done</button></div>' +
+     // tabs instead of one long scroll (Matt, 12 Nov), HomeCore settings' tabs
+     '<div class="tabs rubberTabs hcTrayTabs" role="tablist" aria-label="Edit custom dashboard"><div class="rubberIndicator" aria-hidden="true"></div>' +
+       TRAY_TABS.map(([k, t], i) => '<button class="tab segBtn' + (i ? '' : ' active') + '" type="button" role="tab" aria-selected="' + !i + '" data-tray-tab="' + k + '">' + t + '</button>').join('') + '</div>' +
++    trayListHtml(TRAY_TABS, 'data-tray-go') +
+     '<section class="tfTraySection" data-tray="welcome"></section>' +
+     '<section class="tfTraySection" data-tray="cards"></section>' +
+     '<section class="tfTraySection" data-tray="weather"></section>' +

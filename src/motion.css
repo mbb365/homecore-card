@@ -48,6 +48,7 @@
 #app{--ol-l:68%;--mv-ok:#4cc38a}
 #app.light{--ol-l:48%;--mv-ok:#1f7a4d} /* the lab's --ok, dark and light */
 #app .tfAreaPanel:has(>.mvEdge){isolation:isolate;position:relative}
+#app .tfRoomTile.tfBoardItem:has(>.mvEdge){isolation:isolate} /* already placed on its board: keep its position */
 #app .mvEdge,#app .mvEdgeFill{position:absolute;inset:0;border-radius:inherit;pointer-events:none;transition:opacity var(--ol-in) ease-out}
 #app .mvEdgeFill{z-index:-1;background:hsl(var(--ol-h) 97% var(--ol-l));mix-blend-mode:soft-light;
   opacity:clamp(0,calc(var(--ol-fill) * (var(--edge-proximity,0) - var(--ol-csens)) / (100 - var(--ol-csens))),var(--ol-fill));

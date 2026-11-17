@@ -24,8 +24,8 @@
 /* hover: tile fill and a hairline (0.2, 0.4 along the bottom), on a tile that's tapped whole and on a device's tile,
    whose icon and name are its buttons (Favourites, Activity, an open area's tiles) */
 #homeView .card .activityRow.tap{cursor:pointer}
-#homeView .card .activityRow:is(.tap,:has(.tfName)),#homeView .tfATile{transition:background .15s ease,box-shadow .15s ease}
-#homeView .card .activityRow:is(.tap,:has(.tfName)):hover,#homeView .tfATile:hover{background:var(--tile);box-shadow:inset 0 0 0 .2px var(--line),inset 0 -.4px 0 var(--line)}
+#homeView .card .activityRow:is(.tap,:has(.tfName)){transition:background .15s ease,box-shadow .15s ease}
+#homeView .card .activityRow:is(.tap,:has(.tfName)):hover{background:var(--tile);box-shadow:inset 0 0 0 .2px var(--line),inset 0 -.4px 0 var(--line)}
 
 /* weather: the card is 20 in from its edge (10 on phones); under Now, the days are tiles side by side like every card of readings
    (Matt, 23 Oct; Figma Components → "Weather in halves · proposal") */
@@ -47,15 +47,16 @@
    softer than black; 4.8:1 light, 3.9:1 dark). A light that's on shows its own colour (--light, set on its tile with
    data-light); alerts and a triggered alarm stay red */
 #app.house{--hc-icon:#3a3a3a;--hc-icon-ink:var(--text)}
-#app.house.light{--hc-icon:#e6e6e6}
+/* a grey chip's glyph is the title colour, softer than black (Matt, 17 Nov: "soften them up") */
+#app.house.light{--hc-icon:#e6e6e6;--hc-icon-ink:var(--title)}
 /* phones (Matt, 28 Oct): cards 16 apart, double the 8 (the Weather page's too, and so the title to the first card);
    page titles 30% smaller, 46 to 32, the back arrow's glyph with them. It keeps its 40 to tap, hanging over the
    title's line so the header is only as tall as the title */
 @media(max-width:620px){
   #app.house{--grid-gap:16px}
   #app.house .settingsTitle{font-size:32px}
-  #app.house .tfAreaHead .back{margin-block:calc((32px * .92 - 40px) / 2)}
-  #app.house .tfAreaHead .back svg{width:24px;height:24px}
+  #app.house :is(.tfAreaHead,#settingsView>.settingsHeader) .back{margin-block:calc((32px * .92 - 40px) / 2)}
+  #app.house :is(.tfAreaHead,#settingsView>.settingsHeader) .back svg{width:24px;height:24px}
 }
 @container wb-bento (width < 652px){
   #app.house .wbBento{gap:var(--grid-gap)}
@@ -186,10 +187,7 @@
 .tfTitleBtn{min-height:0;padding:0;border:0;border-radius:0;background:none;color:inherit;text-align:left;cursor:pointer}
 /* area cards: the move panels' accordion, one panel per room */
 .tfAreas{grid-column:1/-1;min-width:0}
-.tfAreaPanel .hcAreaPanelTop>div{min-width:0}
 /* an open area's notes in the card's top right corner, beside its name (Matt, 8 Nov) */
-.tfATags{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;margin-left:auto;min-width:0}
-.tfATags .sourceTag{display:block;margin:0;max-width:100%;padding:6px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* covers (Claude Design "Covers design" → Main.dc.html): four blocks for 25/50/75/100, a Shut to Open tilt bar and
    Open/Stop/Close, each 38 tall with corner 12 and 3 inside, as drawn there (the HomeCore bars beside them are 46 / 16) */
 .tfBlocks{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;height:46px;padding:4px;border-radius:16px;background:var(--tile);box-shadow:var(--hc-hair-all);cursor:pointer;touch-action:none;user-select:none;container:blocks/inline-size}
@@ -380,15 +378,13 @@
    controls as tiles inside the padding. Folded: the icon with the name under it (6 apart), the main 32 light, the
    room's control icons two by two.
    ========================================================= */
-/* its edges match every card that holds tiles (Matt, 9 Nov): the tiles reach out to 10 from the card's sides, as in
-   Favourites, so their icons sit 20 in, and the room's icon, name and reading sit 20 in on the same line */
-#homeView .hcAreaPanel.tfAreaPanel{padding:18px 20px 10px}
-.tfAreaPanel .tfATiles{margin-inline:-10px}
-.tfAreaPanel .hcAreaPanelTop{justify-content:flex-start;gap:14px;padding:0}
-.tfAreaPanel .panelExpanded{justify-content:flex-start;gap:16px}
 .tfAreaPanel .icon{width:22px;height:22px}
-.tfATitle{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
-#app .tfAName{max-width:100%;min-height:0;padding:0;border:0;border-radius:6px;background:none;color:var(--text);font:700 24px/1.2 var(--font-tile);letter-spacing:-.01em;text-align:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+/* the open area is the area card (Matt, 17 Nov): its own padding, corner and content; the folded ones keep theirs */
+#app .hcAreaPanel.tfAreaPanel{padding:0}
+#app .hcAreaPanel.tfAreaPanel.active{border-radius:28px}
+.tfAreaPanel .panelExpanded>.tfRoomTile{height:100%;box-sizing:border-box;background:none;box-shadow:none}
+#app.tfBoard .tfAreaPanel .tfRoomTile[data-rows="1"]{padding:10px}
+#app.tfBoard .tfAreas[data-rows="1"] .hcAreaPanel.tfAreaPanel.active{border-radius:24px}
 .tfAreaIcon{flex:none;border:0;padding:0;background:var(--hc-icon);color:var(--hc-icon-ink);--mdc-icon-size:22px}
 button.tfAreaIcon{cursor:pointer}
 .tfAreaGlyph{display:grid;place-items:center}
@@ -415,19 +411,12 @@ button.tfAreaIcon{cursor:pointer}
 /* on the board Next hours' sky takes its cells' height; its 380 is for phones */
 #app.tfWeatherOpen .tfBento.tfPegs :is(.wbStripScroll,.wbBars .wbDayBars,.wbBars.wbTabbed .wbDayBars){min-height:0}
 /* the main: it opens its more-info */
-.tfABig{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-top:auto;min-height:0;height:auto;padding:0;border:0;border-radius:8px;background:none;color:var(--text);text-align:start;cursor:pointer}
 /* the reading as the Figma Source of truth's tfACMain (Matt, 16 Nov: the font is way too big; it was 64 Medium): 32 Geist
    ExtraLight on 38.5, its unit the same */
-.tfABigMain{font:200 32px/38.5px var(--font-tile);letter-spacing:0;white-space:nowrap}
-.tfABigUnit{margin-inline-start:.25em;font-size:inherit;letter-spacing:0}
-.tfABigSub{max-width:100%;overflow:hidden;color:var(--muted);font:400 16px/1.2 var(--font);white-space:nowrap;text-overflow:ellipsis}
 /* the controls: two to a row inside the padding, so their icons line up with the name; the icon is the button */
 /* an open area's tiles always hold two rows' room (Matt, 4 Nov), one row on their bottom edge, so its reading stays where
    two rows put it, however many tiles there are; the reading is one line under the number, cut with "…" */
-.tfATiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));min-height:calc(2 * var(--tile-min));align-content:end}
-.tfABig{max-width:100%}
 /* an area with no tiles keeps the same room under its reading */
-.panelExpanded:not(:has(.tfATiles)) .tfABig{margin-bottom:calc(2 * var(--tile-min) + 16px)}
 /* a folded area's number sits on the open area's number's baseline (Matt, 4 Nov), placed from the card's bottom as the
    open one is: 10 padding, two rows of tiles (120), 16, then the reading, whose number's baseline is 32.5 above its foot;
    the folded number's own baseline is 8.4 above its box's foot, so its box sits 170 up */
@@ -437,12 +426,6 @@ button.tfAreaIcon{cursor:pointer}
 #app.tfBoard .tfAreas[data-rows="4"] .tfACMain{position:absolute;left:10px;right:10px;bottom:164.1px;max-width:none;text-align:center}
 /* an open area with no tiles keeps their room under its reading at L too (12 apart there), so its number stays on the
    same line; a note under its name can push it lower (it never covers the note) */
-#app.tfBoard .tfAreas[data-rows="4"] .panelExpanded:not(:has(.tfATiles)) .tfABig{margin-bottom:calc(2 * var(--tile-min) + 12px)}
-.tfATile{display:grid;grid-template-columns:var(--chip-size) minmax(0,1fr);align-items:center;gap:12px;min-height:var(--tile-min);padding:var(--inset);border-radius:var(--r-tile)}
-.tfATile>:is(div,.tfName):last-child{min-width:0}
-.tfATile .tfIcon{border:0;padding:0;background:var(--hc-icon);color:var(--hc-icon-ink);cursor:pointer}
-.tfATile.on[data-light] .tfIcon{background:var(--light-soft);color:var(--light-ink)}
-.tfATile :is(.activityRowName,.activityRowMeta){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* folded (Matt's Figma "Area card accordions v04" 521:9673): 18 in at the top, 10 at the bottom; at the top the room's
    icon with its name under it (Inter 600 16), 6 apart, cut with "…" when it doesn't fit; the main (Geist 200 32) between;
    at the bottom the room's icons two by two as 60 tiles (icon 40, corner 16, glyph 22), one column of two when the card
@@ -532,8 +515,9 @@ button.tfAreaIcon{cursor:pointer}
 @media(min-width:901px){
   #app.tfDash .tfAreaGallery{overflow-x:auto;scrollbar-width:none}
   #app.tfDash .tfAreaGallery::-webkit-scrollbar{display:none}
-  #app.tfDash .tfAreaPanel.active{flex:1 0 409px}
-  #app.tfDash .tfAreaPanel:not(.active){flex:0 0 128px}
+  /* the open area two columns wide (set by the board), the folded ones sharing what's left over (Matt, 17 Nov) */
+  #app.tfDash .tfAreaPanel.active{flex:0 0 var(--area-open,409px)}
+  #app.tfDash .tfAreaPanel:not(.active){flex:1 0 128px}
 }
 /* the summaries: each as wide as its words (at least 200), in even rows (the board picks how many to a row), the bar as
    wide as they are; two to a row on phones */
@@ -651,11 +635,16 @@ button.tfAreaIcon{cursor:pointer}
    bottom; M its devices under it (up to four, 12 apart); L and XL the reading 52 / 64 with its second under it (the head
    then the name only). The whole tile opens the room's page; each device button that device's control */
 .tfRoomTile{cursor:pointer}
-.tfRoomTile .tfRoomIcon{background:var(--hc-icon);color:var(--hc-icon-ink)}
+.tfRoomTile .tfRoomIcon{border:0;padding:0;background:var(--hc-icon);color:var(--hc-icon-ink)}
+.tfRoomTile button.tfRoomIcon{cursor:pointer}
 .tfRoomInline,.tfRoomSub{display:none}
-.tfRoomReading{display:flex;flex-direction:column;gap:4px;min-width:0}
+.tfRoomReading{display:flex;flex-direction:column;align-items:flex-start;align-self:flex-start;gap:4px;min-width:0;max-width:100%;padding:0;border:0;border-radius:8px;background:none;color:inherit;font:inherit;text-align:start;cursor:pointer}
 /* the reading as the Figma Source of truth's tfACMain (Matt, 16 Nov): 32 Geist ExtraLight on 38.5, at every size */
-.tfRoomBig{overflow:hidden;color:var(--text);font:200 32px/38.5px var(--font-tile);letter-spacing:0;white-space:nowrap;text-overflow:ellipsis}
+.tfRoomBig{overflow:hidden;color:var(--text);font:500 36.8px/36.8px var(--font-tile);letter-spacing:-.74px;white-space:nowrap;text-overflow:ellipsis}
+#app.tfBoard .tfRoomTile[data-rows="4"] .tfRoomBig{font-size:41.6px;line-height:41.6px;letter-spacing:-1.54px}
+#app.tfBoard .tfRoomTile[data-rows="5"] .tfRoomBig{font-size:51.2px;line-height:51.2px;letter-spacing:-1.54px}
+.tfRoomTile:not([data-rows="1"]) :is(.tfRoomDevices,.tfRoomHeads){margin-top:auto}
+.tfRoomTile>.tfActionHead{margin-bottom:0}
 .tfRoomSub{overflow:hidden;color:var(--muted);font:400 16px/19px var(--font);white-space:nowrap;text-overflow:ellipsis}
 .tfRoomDevices{display:flex;gap:12px}
 .tfRoomDevices .tfIcon{border:0;padding:0;background:var(--hc-icon);color:var(--hc-icon-ink);cursor:pointer}
@@ -676,8 +665,13 @@ button.tfAreaIcon{cursor:pointer}
    state) in place of buttons, wide two by two, really wide in one row. XS the buttons on the right of the head; wide S
    (its first two) and M, and really wide S, have the reading in the head */
 .tfRoomHeads{display:none;gap:12px 16px}
-.tfRoomDev{display:flex;align-items:center;gap:12px;min-width:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
-.tfRoomDev .tfIcon{background:var(--hc-icon);color:var(--hc-icon-ink)}
+.tfRoomDev{position:relative;isolation:isolate;display:flex;align-items:center;gap:12px;min-width:0}
+/* a device's row lights on hover, as the open area's tiles did: reaching 10 past its sides and halfway into the gaps,
+   so the row's layout doesn't move */
+.tfRoomDev::before{content:"";position:absolute;z-index:-1;inset:-6px -10px;border-radius:var(--r-tile);pointer-events:none;transition:background .15s ease,box-shadow .15s ease}
+@media (hover:hover){.tfRoomDev:hover::before{background:var(--tile);box-shadow:inset 0 0 0 .2px var(--line),inset 0 -.4px 0 var(--line)}}
+.tfRoomDevName{padding:0;border:0;background:none;color:inherit;font:inherit;text-align:start;cursor:pointer}
+.tfRoomDev .tfIcon{border:0;padding:0;background:var(--hc-icon);color:var(--hc-icon-ink);cursor:pointer}
 .tfRoomDev .tfIcon.on[data-light]{background:var(--light-soft);color:var(--light-ink)}
 .tfRoomDevName{display:flex;flex-direction:column;min-width:0}
 .tfRoomDevName>span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
@@ -753,26 +747,13 @@ button.tfAreaIcon{cursor:pointer}
 #app.tfBoard .tfDashBento[data-rows="3"] :is(.wbCompareWords,.wbCompareTemps){display:none}
 /* the areas: XS each room a tile (the open one its name and value); S the open room's name and 2 tiles, the others'
    name and value; M and L 4 tiles and a row of icons; XL as drawn */
-#app.tfBoard .tfAreas[data-rows="1"] .hcAreaPanel.tfAreaPanel{padding:10px}
-#app.tfBoard .tfAreas[data-rows="1"] .panelExpanded{display:grid;grid-template-columns:40px minmax(0,1fr);gap:0 12px;align-content:center}
-#app.tfBoard .tfAreas[data-rows="1"] :is(.panelExpanded>.hcAreaPanelTop,.tfACTop){display:contents}
-#app.tfBoard .tfAreas[data-rows="1"] .panelExpanded .tfAreaIcon{grid-row:span 2}
-#app.tfBoard .tfAreas[data-rows="1"] .tfATitle .tfAName{font-size:14px;line-height:20px;height:auto}
-#app.tfBoard .tfAreas[data-rows="1"] .tfABig{margin:0;flex-direction:row}
-#app.tfBoard .tfAreas[data-rows="1"] .tfABigMain{font-size:14px;line-height:18px;letter-spacing:0}
-#app.tfBoard .tfAreas[data-rows="1"] :is(.tfABigUnit){font-size:14px}
-#app.tfBoard .tfAreas[data-rows="1"] :is(.tfABigSub,.tfATiles,.tfACTiles,.sourceTag){display:none}
+#app.tfBoard .tfAreas[data-rows="1"] .tfACTop{display:contents}
+#app.tfBoard .tfAreas[data-rows="1"] .tfACTiles{display:none}
 #app.tfBoard .tfAreas[data-rows="1"] .tfACollapsed{display:grid;grid-template-columns:40px minmax(0,1fr);column-gap:12px;align-content:center;padding:0}
 #app.tfBoard .tfAreas[data-rows="1"] .tfACollapsed .tfAreaIcon{grid-row:span 2}
 #app.tfBoard .tfAreas[data-rows="1"] :is(.tfACName,.tfACMain){margin:0;font-size:14px;line-height:18px;text-align:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#app.tfBoard .tfAreas:is([data-rows="2"],[data-rows="3"]) .tfABig{display:none}
 /* L: the room's big reading (temperature and humidity, or its main reading) in the room between its name and its tiles
    (Matt, 6 Nov: there's space for it) */
-#app.tfBoard .tfAreas[data-rows="4"] .tfABig{flex:none;margin-top:auto;margin-bottom:auto}
-#app.tfBoard .tfAreas[data-rows="4"] .tfATiles{margin-top:0}
-#app.tfBoard .tfAreas[data-rows="4"] .panelExpanded{row-gap:12px}
-#app.tfBoard .tfAreas:is([data-rows="2"],[data-rows="3"],[data-rows="4"]) .tfATiles{margin-top:auto}
-#app.tfBoard .tfAreas[data-rows="2"] .tfATile:nth-child(n+3),#app.tfBoard .tfAreas:is([data-rows="3"],[data-rows="4"]) .tfATile:nth-child(n+5){display:none}
 #app.tfBoard .tfAreas[data-rows="2"] .tfACTiles{display:none}
 #app.tfBoard .tfAreas:is([data-rows="3"],[data-rows="4"]) .tfACTile:nth-child(n+3){display:none}
 #app.tfBoard .tfAreas:is([data-rows="3"],[data-rows="4"]) .tfACollapsed{justify-content:flex-start;gap:10px}
@@ -1022,14 +1003,6 @@ button.tfAreaIcon{cursor:pointer}
 #app.tfOverview.tfDash #homeView .tfDash-wx .wbColumn{padding:8px 0;background:none}
 #app.tfOverview.tfDash #homeView .tfDash-wx .wbColumn:hover{background:var(--tile)}
 #app.tfOverview.tfDash #homeView .tfDash-wx .wbColumn .wbWx.wbS60{width:60px;height:60px;border-radius:20px}
-#app.tfOverview.tfDash #homeView .tfRoomTile{padding:18px;gap:0;border-radius:28px}
-#app.tfOverview.tfDash #homeView .tfRoomTile>.tfActionHead{margin-bottom:0}
-#app.tfOverview.tfDash #homeView .tfRoomTile .tfActionHead .activityRowMeta{display:none}
-#app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomReading{margin-top:14px;gap:4px}
-#app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomSub{display:block;font:400 16px/19px var(--font-tile)}
-#app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomDevices{display:flex;justify-content:flex-start;gap:12px;min-height:0;margin-top:auto;padding-top:14px}
-#app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomHeads{display:none}
-#app.light.tfOverview.tfDash #homeView .tfRoomTile .tfRoomIcon{background-color:#acacac;color:#ffffff}
 /* the summaries as wide as their own tiles (Edit Home page → Width: Fit the summaries) */
 #app.tfOverview.hcSumsFit.tfDash #homeView .card.tfDash-bar{width:max-content;max-width:100%}
 #app.tfOverview.hcSumsFit.tfDash #homeView .card.tfDash-bar .activityRows{justify-content:flex-start}
@@ -1053,30 +1026,19 @@ button.tfAreaIcon{cursor:pointer}
 /* the area cards' sizes (Edit Home page: Small, Medium, Large; the leadership demo, Matt, 12 Nov). Large is his Figma card as it was; each
    gives up to 15% on a smaller screen (--hc-k), its reading with it. A card shows what fits: its devices one row, the
    ones that don't fit left off */
-#app.tfOverview.tfDash #homeView .tfRoomTile{overflow:hidden}
 /* the type and the lines as the Source of truth's Tile · Room (954:6297, 17 Nov, as Matt left it that afternoon): Geist
    Medium on its own size, 36.8 at Small and Medium, 41.6 at Large, 51.2 two by two; 18 in at every size, so the title
    sits at 70 and the reading at 18; the reading 14 under the head, its second line 4 under it, the devices on the
    bottom edge. The second line only at Large and two by two, as drawn. The reading gives up with the card (--hc-k) */
-#app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomBig{font:500 calc(36.8px * var(--hc-k,1))/1 var(--font-tile);letter-spacing:calc(-.74px * var(--hc-k,1))}
-#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaL .tfRoomBig{font-size:calc(41.6px * var(--hc-k,1));letter-spacing:calc(-1.54px * var(--hc-k,1))}
-#app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaS,.hcAreaM) .tfRoomSub{display:none}
-#app.tfOverview.tfDash #homeView .tfRoomTile:is(.hcAreaS,.hcAreaM) .tfRoomDevices{flex-wrap:wrap;height:var(--chip-size);overflow:hidden}
 /* Bento's big area (two by two): the XL reading, its devices by name, two to a row, as the custom dashboard's wide area tile */
-#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaBig .tfRoomBig{font-size:calc(51.2px * var(--hc-k,1));letter-spacing:calc(-1.54px * var(--hc-k,1))}
-#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaBig .tfRoomSub{display:block}
-#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaBig .tfRoomDevices{display:none!important}
-#app.tfOverview.tfDash #homeView .tfRoomTile.hcAreaBig .tfRoomHeads{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:auto;padding-top:14px}
 /* Edit Home page open: Favourites moves by dragging, as the custom dashboard's cards do; the areas keep the areas
    page's order (the leadership demo, Matt, 12 Nov) */
 #app.hcHomeEditing.tfOverview #homeView .tfBoardItem.tfRoomTile{cursor:default;outline:0}
 #app.hcHomeEditing.tfOverview #homeView .tfBoardItem:not(.tfDashTitle,.tfDashBarRow,.tfRoomTile){cursor:grab;user-select:none;touch-action:none;outline:1.5px solid var(--primary);outline-offset:-1.5px}
-#app.hcHomeEditing.tfOverview #homeView .tfBoardItem.tfRoomTile{border-radius:28px}
 #app.hcHomeEditing.tfBoardReady #homeView .tfBoardItem{transition:left .34s cubic-bezier(.2,1.35,.4,1),top .34s cubic-bezier(.2,1.35,.4,1)} /* the others make room with a small bounce */
 @media (prefers-reduced-motion:reduce){#app.hcHomeEditing.tfBoardReady #homeView .tfBoardItem{transition:none}}
 #app.hcHomeEditing #homeView .tfBoardItem.tfDragging{z-index:20;transition:none!important;scale:1.02;cursor:grabbing;filter:drop-shadow(0 10px 30px rgba(0,0,0,.35))}
 /* phones: an area card is half the width, so its devices sit two to a row */
-@media (max-width:620px){#app.tfOverview.tfDash #homeView .tfRoomTile .tfRoomDevices{display:grid;grid-template-columns:repeat(2,max-content);gap:12px;justify-content:start}}
 /* ---------- the edit trays (the leadership demo, Matt, 12 Nov) ----------
    both 608 wide (360, then 30% wider twice for breathing room); no scrollbar in either, so nothing shifts when it would
    appear and the tabs reach both sides evenly */
@@ -1136,6 +1098,18 @@ button.tfAreaIcon{cursor:pointer}
 .tfEditTray .hcTrayTabs .rubberIndicator{background:var(--text)}
 .tfEditTray .hcTrayTabs .tab.active{color:var(--card)}
 .tfEditTray .tfTraySection[hidden]{display:none!important}
+/* a phone: the tray's tabs as a list, each opening its own page with ‹ back to the list (Matt, 17 Nov) */
+#app .tfEditTray :is(.hcTrayList,.hcTrayBack){display:none}
+@media(max-width:620px){
+  #app .tfEditTray .hcTrayTabs{display:none}
+  #app .tfEditTray:not(.hcTrayIn) .hcTrayList{display:grid;flex:none;padding:0}
+  #app .tfEditTray .hcTrayList .hcConfigRow{grid-template-columns:minmax(0,1fr) auto;margin-inline:-10px;width:calc(100% + 20px)}
+  #app .tfEditTray:not(.hcTrayIn) :is(.tfTraySection,.hcHeTabBody){display:none!important}
+  #app .tfEditTray.hcTrayIn .hcHeAreasNote{display:none}
+  #app .tfEditTray.hcTrayIn .hcTrayBack{display:inline-flex;flex:none;width:40px;height:40px;margin-block:-4px}
+  #app .tfEditTray.hcTrayIn .tfTrayHead{justify-content:flex-start;gap:12.8px}
+  #app .tfEditTray.hcTrayIn .tfTrayHead>:last-child:not(.activityTitle){margin-left:auto}
+}
 .hcHeTabBody{display:flex;flex-direction:column;gap:8px}
 .hcHomeTray .hcTrayTabs{margin:0 0 8px}
 /* a room's page: two columns that stack on their own (rows 1 px, each item spans its height; test-focus.js stack()) */
@@ -1199,9 +1173,21 @@ button.tfAreaIcon{cursor:pointer}
    of room round what they hold (the held glow reaches 13), so nothing clips it, without moving anything (17 Nov: "the
    highlighting… is broken"); the pages are 28 apart, so each is still a page's width (with its room) along */
 #app .tfMoreBackdrop:not(.wide) .tfMorePages{margin:-14px;padding:14px;gap:28px;scroll-padding-inline:14px}
-#app .tfMoreBackdrop:not(.wide) .tfMorePop>.tfMorePage:not([aria-label="Info"]){overflow:visible}
+#app .tfMoreBackdrop:not(.wide) .tfMorePop>.tfMorePage:not([aria-label="Info"]){overflow:visible;min-height:0} /* no taller than its place, so its rows scroll (17 Nov: the thermostat's couldn't) */
 #app .tfMoreBackdrop:not(.wide) :is(.tfMorePages:not(.tfMorePop)>.tfMorePage,.tfMorePop>.tfMorePage[aria-label="Info"]){margin:-14px;padding:14px}
 .tfMoreCtl{margin:-14px;padding:14px}
+/* a colour light's second track: warmth on Controls, colour on Colour, in one place, cross-fading (Matt, 17 Nov: the
+   switch or pad and the brightness stay put); in Colour the strip holds still, so a swipe changes the mode, not the page */
+/* and with a little movement (Matt, 17 Nov: "the one that switches out should move in"): each track slides in from its
+   tab's side as the other slides out the other way, Colour from the left, warmth from the right, as the tabs sit */
+.tfMoreSwap{display:grid}
+.tfMoreSwap>*{grid-area:1/1}
+/* (the slider glow's own timings kept beside the slide's, which the glow's rule would otherwise replace) */
+#app .tfMoreSwap>.tfBar{transition:opacity .26s cubic-bezier(.2,0,0,1),translate .32s cubic-bezier(.34,1.2,.64,1),visibility .32s,box-shadow var(--ab-out) var(--ab-ease),transform var(--ab-out) var(--ab-ease)}
+.tfMorePage[data-mode="colour"] .tfMoreSwap>:not(.hue){opacity:0;translate:28px 0;visibility:hidden;pointer-events:none}
+.tfMorePage:not([data-mode="colour"]) .tfMoreSwap>.hue{opacity:0;translate:-28px 0;visibility:hidden;pointer-events:none}
+@media(prefers-reduced-motion:reduce){#app .tfMoreSwap>.tfBar{transition:none}}
+#app .tfMorePages.tfMoreHold{overflow-x:hidden}
 .tfMoreCtl>*{flex:none}
 /* a row named above it: the muted 14 name, 6 over its control */
 .tfMoreField{display:flex;flex-direction:column;gap:6px}

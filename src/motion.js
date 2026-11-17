@@ -36,7 +36,8 @@ export function motionVars() {
 /* ---------- 1 · pivot: buttons and tappable tiles lean toward the pointer, with a shine; they lift, and press in ---------- */
 const PIVOT = ':is(button.primary,button.pill,.hcBtn,.wbRangeBtn,.activityRow.tap,.hcRow,a.hcRow)';
 /* ---------- 3 · icon buttons are CSS (motion.css); 11 · the outline light: the area cards only (Matt, 10 Nov) ---------- */
-const OUTLINE = '#homeView .tfAreaPanel';
+// and every area card on its own (Matt, 17 Nov: one area card, one behaviour); the Areas card's lights as a whole panel
+const OUTLINE = '#homeView :is(.tfAreaPanel,.tfRoomTile.tfBoardItem)';
 /* the pivot's drop-off (Matt, 10 Nov: wide tiles bent a lot): up to the lab's tile, 300 across, it moves as set; past
    that the tilt, lift and press shrink by 300 ÷ its size and its perspective grows by its size ÷ 300 (a fixed 220
    perspective bends a wide tile's far edges most), so its edges move as far as the lab's tile's do, however wide (and,
