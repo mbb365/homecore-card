@@ -2009,7 +2009,8 @@ export function mountTestFocus(root, { config, getHass }) {
      cards Small, Medium or Large (Large his Figma card), each giving up to 15% on a smaller screen. To start with: by
      floor, in Bento, each floor a box, every card Small ("push this grouping style as default") */
   const AREA_SIZES = { s: { w: 252, h: 136, rows: 2 }, m: { w: 252, h: 212, rows: 3 }, l: { w: 252, h: 288, rows: 4 } };
-  const areaSize = () => (AREA_SIZES[prefs.home?.areaSize] ? prefs.home.areaSize : 's');
+  // the area cards' size when none is picked: Large on a phone (Matt, 17 Nov: only Large displays right there), Small otherwise
+  const areaSize = () => (AREA_SIZES[prefs.home?.areaSize] ? prefs.home.areaSize : window.innerWidth <= 620 ? 'l' : 's');
   const areaLayout = () => (['rows', 'columns', 'bento'].includes(prefs.home?.areaLayout) ? prefs.home.areaLayout : 'bento');
   // the cards that aren't areas: Stacked down the left beside the areas (the start), or in Rows across the top over them
   // (Matt, 12 Nov, as the leadership demo: "this will be called a 'stacked' option. the other previous one will be 'rows'")
