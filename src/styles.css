@@ -13,7 +13,7 @@
      Figma's color/text/primary (Dark) is neutral/300 #d9d9d9 too (28 Oct) */
   --color-fill-bright:#f1f1f1;--color-text-primary:#d9d9d9;--color-text-muted:#969696;--color-text-on-bright:#090909;
   --color-line:rgba(255,255,255,.14);--color-border-focus:#03a9f4;
-  --color-accent-primary:#03a9f4;--color-accent-secondary:#d0ff00;--color-text-accent:#d0ff00;--color-text-on-accent:#090909;--color-bg-resting:#1f7a4d;
+  --color-accent-primary:#03a9f4;--color-text-on-accent:#090909;
   --color-bg-danger:#311313;--color-bg-danger-fill:#d53d3d;--color-border-danger:#8c2e2e;--color-text-danger:#ff7777;--color-text-on-danger:#ffffff;
   --color-state-hover:rgba(255,255,255,.08);
   --color-bg-chip:#090909;--color-fill-selected:#f1f1f1;--color-text-on-selected:#090909;--color-bg-segment-selected:#2b2b2b;
@@ -31,13 +31,13 @@ button,input{font:inherit}
   --tile:var(--color-bg-tile);--tile-2:var(--color-bg-tile);--row:var(--color-bg-tile);--row-rest:var(--color-bg-tile);--raised:var(--color-bg-tile);--chip:var(--color-bg-tile);
   --segment:var(--color-bg-tile);--seg-on:var(--color-bg-segment-selected);--scroll-thumb:var(--color-bg-tile);
   --control:var(--color-bg-ground);--control-2:var(--color-bg-ground);--sunken:var(--color-bg-ground);--input:var(--color-bg-ground);--track:var(--color-bg-ground);--icon-bg:var(--color-bg-chip);--seg-bg:var(--color-bg-ground);--switch-off:var(--color-bg-ground);--stage:var(--color-bg-ground);
-  --text:var(--color-text-primary);--soft:var(--color-text-primary);--muted:var(--color-text-muted);--accent-text:var(--color-text-accent);
+  --text:var(--color-text-primary);--soft:var(--color-text-primary);--muted:var(--color-text-muted);
   --border-hover:var(--color-text-muted);--knob-off:var(--color-text-muted);--today-ring:var(--color-text-muted);
   --line:var(--color-line);--lineb:var(--color-line);--field-line:var(--color-line);--divider:var(--color-line);
   --bright:var(--color-fill-bright);--slider-fill:var(--color-fill-bright);--segment-fill:var(--color-fill-bright);--timer-fill:var(--color-fill-bright);--on-bright:var(--color-text-on-bright);
   --hover:var(--color-state-hover);--wash-2:var(--color-state-hover);
   --danger:var(--color-text-danger);--danger-bg:var(--color-bg-danger);--danger-line:var(--color-border-danger);--danger-fill:var(--color-bg-danger-fill);--on-danger-fill:var(--color-text-on-danger);
-  --primary:var(--color-accent-primary);--secondary:var(--color-accent-secondary)}
+  --primary:var(--color-accent-primary)}
 .shell{flex:1;display:flex;flex-direction:column;position:relative;width:100%;background:var(--page);border-radius:0;overflow:visible;transition:background .28s ease}
 #app.paused .shell{background:var(--primary)}
 #app.light.paused .shell{background:color-mix(in srgb,var(--primary) 55%,var(--color-bg-card))}
@@ -45,7 +45,7 @@ button,input{font:inherit}
   /* Base palette — mirrors the Figma "Color" variables (Light): Warm paper, warm ink */
   --color-bg-ground:#eeebe8;--color-bg-card:#fbf9f6;--color-bg-tile:#f3efea;
   --color-fill-bright:#26221e;--color-text-primary:#26221e;--color-text-muted:#6a625a;--color-text-on-bright:#fbf9f6;--color-text-on-accent:#26221e;
-  --color-line:rgba(38,34,30,.12);--color-text-accent:#26221e;--color-accent-secondary:#03a9f4;--color-bg-resting:#7dbb98;
+  --color-line:rgba(38,34,30,.12);
   --color-bg-danger:#f5dede;--color-border-danger:#e3a0a0;--color-text-danger:#b42a2a;
   --color-state-hover:rgba(38,34,30,.06);--color-state-pressed:rgba(38,34,30,.12);
   --color-bg-chip:#fbf9f6;--color-fill-selected:#26221e;--color-text-on-selected:#fbf9f6;--color-bg-segment-selected:#fbf9f6;
@@ -291,7 +291,6 @@ button,input{font:inherit}
 .activityRowMeta{color:var(--text);margin-top:1.6px;font-variant-numeric:tabular-nums}
 :host{
   --primary:#03A9F4;
-  --secondary:#D0FF00;
   --font:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   --font-tile:Geist,var(--font);
   /* Synced from Figma text styles Desktop/*, Phone/*, Tile/* and Weather/* (2026-10-19) */

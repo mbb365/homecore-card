@@ -105,5 +105,5 @@ if (!customElements.get("homecore-card")) {
     preview: false,
   });
   // eslint-disable-next-line no-console
-  console.info(`%c HOMECORE %c ${VERSION} `, "background:#D0FF00;color:#090909;font-weight:700", "");
+  console.info(`%c HOMECORE %c ${VERSION} `, "background:#03a9f4;color:#090909;font-weight:700", "");
 }
