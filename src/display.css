@@ -468,6 +468,11 @@ button.tfAreaIcon{cursor:pointer}
 .tfMore.wide .tfMoreGroupName{margin:0;color:var(--text);font:400 18px/1.2 var(--font);letter-spacing:-.01em}
 .tfMoreActions{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:20px}
 .tfMoreActions .tfAction{grid-column:auto}
+/* a tile's no-wrap name or state never widens the popup (Matt, 18 Nov: the Media players popup opened at full width on a
+   phone: a long media title's max-content drove the tile, the grid, then the backdrop's grid cell): the cell is capped at
+   the page, the tiles at their column */
+.tfMoreBackdrop{grid-template-columns:minmax(0,1fr)}
+.tfMoreActions .tfAction{min-width:0}
 /* a reading tile beside a taller device keeps its icon and name at the top */
 /* a reading has nothing to control, so it stays as tall as its name and value, not its row (Matt, 9 Nov) */
 .tfMoreActions>.activityRow{align-self:start;display:grid;grid-auto-flow:column;grid-template-columns:auto minmax(0,1fr);align-items:center;align-content:start;gap:12px;min-width:0;padding:18px;border-radius:28px;background:var(--card);box-shadow:var(--hc-hair)}
