@@ -420,6 +420,13 @@ export function mountTestFocus(root, { config, getHass }) {
   const history = new Map(); // entity id → { at, points }
   const energyText = new Map(); // the dashboard's energy: statistic id → { name, text, icon } its tile shows
   const dragging = new Map(); // "kind|entity id" → value while a bar is held
+  // a bar is left alone from the pointer going down on it until it settles: pressed holds the bars under a pointer that
+  // hasn't moved yet, and dragGen counts each hold, so an earlier hold's settling (1.5 s after it's sent) never lets go
+  // of a later one of the same bar (18 Nov: a second slide right after the first was redrawn under the finger and lost)
+  const pressed = new Set(), dragGen = new Map();
+  const hold = (key) => dragGen.set(key, (dragGen.get(key) || 0) + 1);
+  const lockedKeys = () => [...new Set([...dragging.keys(), ...pressed])];
+  let stale = false; // a redraw was skipped for a held bar; it's done once the bar is let go
   const BAR_SLOP = 6; // how far a finger goes before it's sliding a bar or scrolling the page
   let heldBar = null; // the bar a finger is moving, if any
   const goals = new Map(); // cover id → { pos, tilt, at }: where it was sent, until it gets there
@@ -3496,16 +3503,18 @@ export function mountTestFocus(root, { config, getHass }) {
     keepPlace(redraw);
   }
   function redraw() {
+    stale = false;
     if (!grid.querySelector('[data-tf]')) { render(); return; }
     const out = layout();
     if (signOf(out) !== signature) { render(); return; }
     // a tile is held while one of its device's bars or drawing is (a favourite holds its device too)
-    const isHeld = (key) => [...dragging.keys()].some((k) => {
+    const isHeld = (key) => lockedKeys().some((k) => {
       const id = k.slice(k.indexOf('|') + 1);
       return key === id || key.endsWith(':' + id);
     });
     out.forEach((n) => (n.tiles || [n]).forEach((u) => {
-      if (units.get(u.key) === u.html || isHeld(u.key)) return;
+      if (units.get(u.key) === u.html) return;
+      if (isHeld(u.key)) { stale = true; return; }
       const el = grid.querySelector('[data-k="' + CSS.escape(u.key) + '"]');
       if (!el) return;
       units.set(u.key, u.html);
@@ -3588,7 +3597,7 @@ export function mountTestFocus(root, { config, getHass }) {
   sheet.addEventListener('pointerdown', (ev) => {
     const pair = sheet.querySelector('.tfMorePair');
     if (!onPhone() || !pair || !pair.contains(ev.target) || !ev.isPrimary || sheet._closing) return;
-    if (ev.target.closest('input,textarea,select,.tfDacPad,[data-cover-art],.tfMoreSide')) return;
+    if (ev.target.closest('input,textarea,select,.tfDacPad,[data-cover-art],.tfMoreSide,[data-drag],[data-blocks]')) return; // a slider, the blocks and the pad own their finger (18 Nov: the sheet grabbed a slider pulled down)
     flick = { x: ev.clientX, y: ev.clientY, t: performance.now(), dy: 0, v: 0, pair, from: ev.target, grab: ev.target.matches('.tfMore') || Boolean(ev.target.closest('.tfMoreHead')) };
   }, true);
   sheet.addEventListener('pointermove', (ev) => {
@@ -3943,7 +3952,7 @@ export function mountTestFocus(root, { config, getHass }) {
   const tidyArts = () => { arts.forEach((art, key) => { if (!art.el.isConnected) { art.destroy(); arts.delete(key); } }); syncArts(); };
   function renderMore() {
     if (!more || !(special(more.id) || states[more.id])) { sheet.hidden = true; return; }
-    if ([...dragging.keys()].some((k) => k.endsWith('|' + more.id))) { syncArts(); return; }
+    if (lockedKeys().some((k) => k.endsWith('|' + more.id))) { stale = true; syncArts(); return; }
     const parts = partsOf(more.id), box = sheet.querySelector('.tfMore');
     if (!parts) { closeMore(); return; }
     const was = focusOf(sheet), side = detailsOf(more.id);
@@ -3973,7 +3982,7 @@ export function mountTestFocus(root, { config, getHass }) {
       // only the parts that changed, so the drawing and a focused button stay
       parts.forEach((p, i) => {
         if (p === moreParts[i] || p.includes('data-cover-art') || box.children[i].contains(root.activeElement?.matches?.('input,select') ? root.activeElement : null)) return;
-        if ([...dragging.keys()].some((k) => box.children[i].querySelector('[data-drag="' + CSS.escape(k) + '"]'))) return;
+        if (lockedKeys().some((k) => box.children[i].querySelector('[data-drag="' + CSS.escape(k) + '"]'))) { stale = true; return; }
         const t = document.createElement('div');
         t.innerHTML = p;
         // where its rows and pages were scrolled stays (17 Nov: the thermostat's rows jumped back to the top each time
@@ -4039,7 +4048,7 @@ export function mountTestFocus(root, { config, getHass }) {
   }
   // a colour light's page swiped sideways: Controls to Colour and back (the strip itself turns to Info)
   let swipe = null;
-  sheet.addEventListener('touchstart', (ev) => { const t = ev.touches[0]; swipe = ev.target.closest?.('[data-more-pages]') && ev.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
+  sheet.addEventListener('touchstart', (ev) => { const t = ev.touches[0]; swipe = ev.target.closest?.('[data-more-pages]') && !ev.target.closest?.('[data-drag],[data-blocks],.tfDacPad,[data-cover-art]') && ev.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null; }, { passive: true }); // never from a slider, which a finger may cross
   sheet.addEventListener('touchend', (ev) => {
     if (!swipe || !more || (more.page || 0) !== 0 || !sheet.querySelector('[data-more-mode]')) { swipe = null; return; }
     const t = ev.changedTouches[0], dx = t.clientX - swipe.x, dy = t.clientY - swipe.y;
@@ -4342,6 +4351,7 @@ export function mountTestFocus(root, { config, getHass }) {
   // a cover's target while it's held (its drawing, its blocks or the keys): every view of it follows
   function holdCover(id, v) {
     dragging.set('pos|' + id, v);
+    hold('pos|' + id);
     units.delete(id);
     moreParts = moreParts.map(() => '');
     [grid, sheet].forEach((scope) => scope.querySelectorAll('[data-blocks="' + CSS.escape(id) + '"]').forEach((b) => paintBlocks(b, v)));
@@ -4364,6 +4374,7 @@ export function mountTestFocus(root, { config, getHass }) {
   function holdBlocks(el, ev) {
     const id = el.dataset.blocks;
     el.setPointerCapture?.(ev.pointerId);
+    pressed.add('pos|' + id); hold('pos|' + id);
     const at = (e) => { const r = el.getBoundingClientRect(); return Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100)); };
     const start = at(ev), x0 = ev.clientX;
     let fine = false, live = coverValue(id), tx = start, raf = 0;
@@ -4378,6 +4389,7 @@ export function mountTestFocus(root, { config, getHass }) {
       el.removeEventListener('pointerup', up);
       el.removeEventListener('pointercancel', up);
       el.classList.remove('fine');
+      pressed.delete('pos|' + id);
       holdCover(id, fine ? Math.round(live) : (Math.min(3, Math.floor(start / 25)) + 1) * 25);
       commit('pos', id);
     };
@@ -4412,6 +4424,7 @@ export function mountTestFocus(root, { config, getHass }) {
   function showDrag(bar, kind, id, f) {
     const v = DRAG[kind].value(id, f);
     dragging.set(kind + '|' + id, v);
+    hold(kind + '|' + id);
     const pct = Math.round(f * 100) + '%';
     const i = bar.querySelector('i');
     if (kind === 'tilt') {
@@ -4436,9 +4449,10 @@ export function mountTestFocus(root, { config, getHass }) {
     if (meta) meta.textContent = DRAG[kind].text(id, v);
   }
   function commit(kind, id) {
-    const v = dragging.get(kind + '|' + id);
+    const key = kind + '|' + id, v = dragging.get(key), gen = dragGen.get(key);
     const [domain, service, data] = DRAG[kind].send(id, v);
-    const done = () => setTimeout(() => { dragging.delete(kind + '|' + id); refresh(); }, 1500);
+    // settled: the bar is let go, unless a later hold has it; the page is drawn again either way
+    const done = () => setTimeout(() => { if (dragGen.get(key) === gen) dragging.delete(key); refresh(); }, 1500);
     send(domain, service, id, data).then(done, done);
   }
   // the same controls work on the page and in the stand-in more-info
@@ -4510,6 +4524,8 @@ export function mountTestFocus(root, { config, getHass }) {
       const fixed = kind === 'bright' && !dimmable(id), finger = ev.pointerType !== 'mouse';
       if (fixed && !finger) { run(act('light', 'toggle', id)); return; }
       const off = kind === 'bright' && states[id]?.state !== 'on';
+      const key = kind + '|' + id;
+      pressed.add(key); hold(key); // from here to the pointer going up, nothing redraws the bar
       const inset = kind === 'tilt' ? 4 : 0; // the tilt bar's fill sits 4 in
       const up_down = bar.dataset.axis === 'y'; // a vertical slider: up is more
       const span = () => (up_down ? bar.getBoundingClientRect().height : bar.getBoundingClientRect().width - inset * 2);
@@ -4541,9 +4557,11 @@ export function mountTestFocus(root, { config, getHass }) {
         ['pointermove', 'pointerup', 'pointercancel'].forEach((t, i) => bar.removeEventListener(t, i ? up : move));
         bar.classList.remove('held');
         if (heldBar === bar) heldBar = null;
+        pressed.delete(key);
         if (mode === 'sliding' || mode === 'dragging') commit(kind, id);
         else if (e2.type === 'pointerup' && fixed) run(act('light', 'toggle', id));
         else if (e2.type === 'pointerup' && off && (mode === 'waiting' || mode === 'pressed')) send('light', 'turn_on', id).catch(() => {});
+        if (stale && mode !== 'sliding' && mode !== 'dragging') refresh(); // what was kept back while the bar was pressed
       };
       bar.addEventListener('pointermove', move);
       bar.addEventListener('pointerup', up);
