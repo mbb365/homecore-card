@@ -427,6 +427,7 @@ export function mountTestFocus(root, { config, getHass }) {
   const hold = (key) => dragGen.set(key, (dragGen.get(key) || 0) + 1);
   const lockedKeys = () => [...new Set([...dragging.keys(), ...pressed])];
   let stale = false; // a redraw was skipped for a held bar; it's done once the bar is let go
+  let areaSliding = 0; // a phone's area is sliding in: its card isn't redrawn under it till it's done
   const BAR_SLOP = 6; // how far a finger goes before it's sliding a bar or scrolling the page
   let heldBar = null; // the bar a finger is moving, if any
   const goals = new Map(); // cover id → { pos, tilt, at }: where it was sent, until it gets there
@@ -3539,7 +3540,7 @@ export function mountTestFocus(root, { config, getHass }) {
     });
     out.forEach((n) => (n.tiles || [n]).forEach((u) => {
       if (units.get(u.key) === u.html) return;
-      if (isHeld(u.key)) { stale = true; return; }
+      if (isHeld(u.key) || (u.key === 'areas' && areaSliding)) { stale = true; return; }
       const el = grid.querySelector('[data-k="' + CSS.escape(u.key) + '"]');
       if (!el) return;
       units.set(u.key, u.html);
@@ -4450,6 +4451,8 @@ export function mountTestFocus(root, { config, getHass }) {
       ghost.setAttribute('aria-hidden', 'true');
       stage.appendChild(ghost);
       setTimeout(() => ghost.remove(), 340);
+      clearTimeout(areaSliding);
+      areaSliding = setTimeout(() => { areaSliding = 0; if (stale) refresh(); }, 340);
     }
     if (tile) { tile.classList.add('tfAreaLand'); tile.addEventListener('animationend', () => tile.classList.remove('tfAreaLand'), { once: true }); }
   }

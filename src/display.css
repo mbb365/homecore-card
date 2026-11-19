@@ -531,7 +531,7 @@ button.tfAreaIcon{cursor:pointer}
 @media(max-width:620px){
   #app .tfAreas .tfAreaGallery{display:none}
   #app .tfAreas .tfAreaPhone{display:flex;flex-direction:column;gap:14px}
-  .tfAreaStage{position:relative;flex:none;aspect-ratio:1325/982;min-height:0;touch-action:pan-y} /* (min-height 0: a fuller room grew it by its content) */
+  .tfAreaStage{position:relative;flex:none;aspect-ratio:1325/982;min-height:0;overflow:clip;touch-action:pan-y} /* (min-height 0: a fuller room grew it by its content; clipped, so a card sliding past the screen's edge doesn't widen the page) */
   .tfAreaStage>.tfRoomTile{height:100%;box-sizing:border-box;overflow:hidden}
   .tfAreaPicks{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;padding:0 16px}
   #app .tfAreaPick{width:100%;height:auto;aspect-ratio:1;border:0;padding:0;border-radius:40%;background:var(--hc-icon);color:var(--hc-icon-ink);cursor:pointer}
