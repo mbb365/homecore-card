@@ -230,7 +230,7 @@
 #app.house.light .tfSum{--sum-ink:var(--sum-l,var(--hc-icon-ink))}
 #app.house .tfSum[data-summary="climate"]{--g0:var(--g0-d);--g1:var(--g1-d);--g2:var(--g2-d)}
 #app.house.light .tfSum[data-summary="climate"]{--g0:var(--g0-l);--g1:var(--g1-l);--g2:var(--g2-l)}
-#app.house .tfSum[data-summary="climate"] .tfIcon svg path{fill:url(#hcClimateGrad)}
+#app.house .tfSum[data-summary="climate"] .tfIcon svg :is(path,circle,rect):not(mask *){fill:url(#hcClimateGrad)} /* (not a HomeCore icon's cuts, which are its mask) */
 .tfGradDefs{position:absolute;width:0;height:0;overflow:hidden;pointer-events:none}
 /* one line each, cut with "…" like Home Assistant's tiles, so every tile stays 60 tall */
 .tfSide :is(.activityRowName,.activityRowMeta){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1311,3 +1311,5 @@ button.tfAreaIcon{cursor:pointer}
 .tfKeypad button:active{scale:.96}
 /* the alarm's modes wrap to two lines on a phone */
 @media(max-width:620px){.tfMorePop .tfSeg:has(> :nth-child(5)){flex-wrap:wrap;height:auto}.tfMorePop .tfSeg:has(> :nth-child(5)) button{flex:0 0 auto;height:38px;padding:0 14px}}
+/* a HomeCore icon (19 Nov) sits where Home Assistant's would, at its size until it's fitted */
+[data-icon-for]>svg.hcGlyph{display:block;flex:none;width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);overflow:visible}

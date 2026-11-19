@@ -8,6 +8,7 @@
 //   its window in more-info. The normal Home never shows any of this.
 // - Show density: every display card's height, and how many readings fit on the screen.
 import { createHouse, isMadeUp, solarHistory, PLANT_RANGE } from './house.js';
+import { ICONS as HC_ICONS, svg as hcSvg } from './hc-icons.js';
 import { mountWeatherBento } from './weather-bento.js';
 import { createCoverArt, coverKind } from './cover-art.js';
 import { M, EASE, smoothD, gridLines, drawLine, stretchTo, closeDialog, toastBody, toastIn, toaster, springStep, squash, reduced } from './motion.js';
@@ -705,12 +706,56 @@ export function mountTestFocus(root, { config, getHass }) {
   }
   const watts = (w) => (w >= 1000 ? num(w / 1000, 2) + ' kW' : Math.round(w).toLocaleString() + ' W');
 
+  /* HomeCore's own icons (Matt, 19 Nov): where one of the twenty fits, it's drawn in place of the Material Design one:
+     for an icon asked for by name, from HC_FROM_MDI; for a device, from what it is (its domain and device class). A
+     device given its own icon in Home Assistant keeps it, as does anything the twenty don't cover */
+  const HC = Object.fromEntries(HC_ICONS.map((i) => [i.id, i]));
+  const HC_FROM_MDI = {
+    'mdi:lightbulb': 'light', 'mdi:lamps': 'light', 'mdi:power-plug': 'plug', 'mdi:thermostat': 'thermostat', 'mdi:home-thermometer': 'thermostat',
+    'mdi:thermometer': 'temperature', 'mdi:water': 'humidity', 'mdi:water-percent': 'humidity', 'mdi:fan': 'fan',
+    'mdi:blinds-horizontal': 'blinds', 'mdi:blinds-horizontal-closed': 'blinds', 'mdi:roller-shade': 'blinds', 'mdi:roller-shade-closed': 'blinds',
+    'mdi:window-shutter': 'blinds', 'mdi:curtains': 'blinds', 'mdi:curtains-closed': 'blinds', 'mdi:lock': 'lock', 'mdi:door-open': 'door', 'mdi:door': 'door',
+    'mdi:window-open': 'window', 'mdi:window-closed': 'window', 'mdi:motion-sensor': 'motion', 'mdi:account': 'person', 'mdi:account-multiple': 'person',
+    'mdi:cctv': 'camera', 'mdi:doorbell': 'camera', 'mdi:speaker': 'speaker', 'mdi:multimedia': 'speaker', 'mdi:television': 'tv', 'mdi:robot-vacuum': 'vacuum',
+    'mdi:lightning-bolt': 'energy', 'mdi:flash': 'energy', 'mdi:home-lightning-bolt': 'energy', 'mdi:white-balance-sunny': 'sun', 'mdi:solar-power-variant': 'sun',
+    'mdi:security': 'alarm', 'mdi:shield-home': 'alarm', 'mdi:home': 'home',
+  };
+  const hcForState = (st) => {
+    const domain = st.entity_id.split('.')[0], dc = st.attributes?.device_class;
+    if (domain === 'light') return 'light';
+    if (domain === 'switch') return 'plug';
+    if (domain === 'climate') return 'thermostat';
+    if (domain === 'fan') return 'fan';
+    if (domain === 'cover') return ['door', 'garage', 'gate'].includes(dc) ? 'door' : dc === 'window' ? 'window' : 'blinds';
+    if (domain === 'lock') return 'lock';
+    if (domain === 'camera') return 'camera';
+    if (domain === 'media_player') return dc === 'tv' ? 'tv' : 'speaker';
+    if (domain === 'vacuum') return 'vacuum';
+    if (domain === 'alarm_control_panel') return 'alarm';
+    if (domain === 'person') return 'person';
+    if (domain === 'sun') return 'sun';
+    if (domain === 'binary_sensor') return { door: 'door', garage_door: 'door', opening: 'door', window: 'window', motion: 'motion', occupancy: 'motion', presence: 'motion', moisture: 'humidity' }[dc] || null;
+    if (domain === 'sensor') return { temperature: 'temperature', humidity: 'humidity', moisture: 'humidity', power: 'energy', energy: 'energy', illuminance: 'sun' }[dc] || null;
+    return null;
+  };
+  const hcFor = (st, want) => {
+    if (want) return HC_FROM_MDI[want] || null;
+    if (!st || st.attributes?.icon || getHass()?.entities?.[st.entity_id]?.icon) return null;
+    return hcForState(st);
+  };
+  let hcN = 0; // each drawn icon's cuts need their own mask id
   // Entity icons come from Home Assistant (ha-state-icon), so they match the rest of the dashboard
   function fillIcons(scope) {
     const hass = getHass();
     scope.querySelectorAll('[data-icon-for]').forEach((slot) => {
       const st = states[slot.dataset.iconFor];
       const want = slot.dataset.iconName || '';
+      const hc = hcFor(st, want);
+      if (hc) {
+        if (slot.dataset.hc !== hc || !slot.querySelector(':scope>svg.hcGlyph')) { slot.innerHTML = hcSvg(HC[hc], 24, 'hcg' + ++hcN).replace('<svg ', '<svg class="hcGlyph" '); slot.dataset.hc = hc; }
+        return;
+      }
+      if (slot.dataset.hc) { delete slot.dataset.hc; slot.textContent = ''; }
       if (customElements.get('ha-state-icon') && st && !want) {
         let el = slot.firstElementChild;
         if (!el || el.localName !== 'ha-state-icon') { slot.textContent = ''; el = document.createElement('ha-state-icon'); slot.appendChild(el); }
@@ -741,12 +786,12 @@ export function mountTestFocus(root, { config, getHass }) {
      (curtains 22 across, a water drop 12), so in one box they look different sizes. Once drawn, each glyph is sized so
      its longest side leaves 7 clear in its room, 26 in a 40 (tiles, rows, summaries, popups and area cards alike; 18
      in the mini phone's 32), and centred on what's drawn */
-  const ICON_SEL = '[data-icon-for]>:is(ha-state-icon,ha-icon),.tfIcon>svg';
+  const ICON_SEL = '[data-icon-for]>:is(ha-state-icon,ha-icon,svg.hcGlyph),.tfIcon>svg';
   const firstSvg = (el) => { const q = [el]; while (q.length) { const n = q.shift(); if (n.localName === 'svg') return n; if (n.shadowRoot) q.push(...n.shadowRoot.children); q.push(...n.children); } return null; };
   // true once the icon is fitted (or there's nothing to fit); false while it's still loading or out of sight
   function fitIcon(el) {
     const svg = el.localName === 'svg' ? el : firstSvg(el);
-    const shapes = svg ? [...svg.querySelectorAll('path,rect,circle,ellipse,polygon,polyline,line')] : [];
+    const shapes = svg ? [...svg.querySelectorAll('path,rect,circle,ellipse,polygon,polyline,line')].filter((x) => !x.closest('defs,mask')) : []; // (a HomeCore icon's cuts are a mask, not part of its shape)
     if (!shapes.length) return !svg;
     const room = el.closest('.tfIcon')?.offsetWidth;
     if (room === undefined) return true;
