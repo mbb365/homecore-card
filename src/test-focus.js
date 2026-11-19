@@ -1185,11 +1185,24 @@ export function mountTestFocus(root, { config, getHass }) {
   // yet, the areas page's
   const byAreaOrder = (list) => { const o = prefs.areaOrder || []; const at = (r) => { const i = o.indexOf(r.id); return i < 0 ? o.length + list.indexOf(r) : i; }; return [...list].sort((a, b) => at(a) - at(b)); };
   const areasShown = () => { const off = new Set(prefs.dash?.areasOff || []); return byAreaOrder(areaRooms).filter((r) => !off.has(r.id)); };
+  /* on a phone (Matt, 19 Nov: "it is changing the size of the cards as you swipe across… this is the mobile view only"):
+     no accordion. The open area is one card, as tall for every area (about 4:3, from his drawing), and under it, on the
+     page, every area as an Icon button, eight to a row; the open one's is On (Figma "Icon button" 902:2536, State=On),
+     the rest Off. A button, or a sideways swipe on the card, changes the area in place (pickPhoneArea) */
+  const PICK_ON = colourVars([255, 162, 75]); // Icon button, State=On: #ffd5ae
+  const areaPick = (r) => {
+    const on = r.id === activeArea;
+    return '<button class="tfIcon tfAreaPick' + (on ? ' on' : '') + '" type="button" data-area-pick="' + esc(r.id) + '"' + (on ? ' data-light style="' + PICK_ON + '"' : '') +
+      ' aria-label="' + esc(r.name) + '" aria-pressed="' + on + '"><span class="tfAreaGlyph"' + iconSlot('area:' + r.id, r.icon || 'mdi:texture-box', r.name) + '></span></button>';
+  };
   const areasHtml = (order) => {
     const shown = areasShown();
     if (!shown.some((r) => r.id === activeArea)) activeArea = shown[0]?.id || null;
+    const open = shown.find((r) => r.id === activeArea);
     return '<div class="tfAreas" data-tf data-k="areas" style="order:' + order + '">' +
-      '<section class="hcAreaGallery tfAreaGallery" aria-label="Areas">' + shown.map(areaPanel).join('') + '</section></div>';
+      '<section class="hcAreaGallery tfAreaGallery" aria-label="Areas">' + shown.map(areaPanel).join('') + '</section>' +
+      '<div class="tfAreaPhone"><div class="tfAreaStage">' + (open ? roomTile(open, null, ' data-cols="2" data-rows="' + sizeOf('areas') + '"') : '') + '</div>' +
+      '<div class="tfAreaPicks" role="group" aria-label="Areas">' + shown.map(areaPick).join('') + '</div></div></div>';
   };
   /* one room on its own (Tile · Room, Matt, 6 Nov; Figma 954:6176): a tile added from the edit tray instead of the Areas
      card, keyed room:<area>. The head is the room's icon and name; XS its reading in the head, S the reading big, M its
@@ -1806,6 +1819,13 @@ export function mountTestFocus(root, { config, getHass }) {
   };
   // a card's rows: its height's
   const rowsOf = (it) => sizeOf(it.key);
+  // a phone's Areas (a phone's cards are as tall as what they hold, demo.css): its card 1325:982 (Matt's drawing), 14 to
+  // the buttons, eight to a row 8 apart inside the page's 16. Its rows, for a board that places it, hold all of that
+  const PHONE_AREAS = window.matchMedia('(max-width: 620px)');
+  const phoneAreaRows = (W) => {
+    const btn = (W - 32 - 7 * 8) / 8, lines = Math.ceil(areasShown().length / 8);
+    return Math.max(1, Math.ceil((W * 982 / 1325 + 14 + lines * btn + (lines - 1) * 8 + PEG_GAP) / ROW_PITCH));
+  };
   // each card's cell on a board n pegs wide (the cards know their cols and rows): a dragged card where it would land;
   // then the cards with a saved cell, top to bottom (one in the way goes down to the next free cell); then the rest in
   // the page's order, each in the first cell from the top left it fits.
@@ -1960,6 +1980,7 @@ export function mountTestFocus(root, { config, getHass }) {
       it.el.style.width = (it.cols === n ? W : it.cols * w + (it.cols - 1) * PEG_GAP) + 'px';
       it.el.style.height = '';
       it.rows = rowsOf(it) ?? Math.max(1, Math.ceil((it.el.offsetHeight + PEG_GAP - 6) / ROW_PITCH));
+      if (it.key === 'areas' && PHONE_AREAS.matches) it.rows = phoneAreaRows(parseFloat(it.el.style.width));
     });
     const dragged = drag && cards.find((it) => it.key === drag.key);
     const order = phone && phoneCards().map((it) => it.key), seq = (it) => (order.includes(it.key) ? order.indexOf(it.key) : -1);
@@ -1971,7 +1992,7 @@ export function mountTestFocus(root, { config, getHass }) {
       // a phone shows the weather card whole, its sentence and days, whatever its size on the big board (Matt, 9 Nov)
       it.el.dataset.rows = phone && it.key === 'wx' ? 5 : sizeOf(it.key);
       // the Areas card's open area is an area card as tall as it
-      if (it.key === 'areas') it.el.querySelectorAll('.tfAreaPanel .tfRoomTile').forEach((t) => { t.dataset.rows = it.el.dataset.rows; });
+      if (it.key === 'areas') it.el.querySelectorAll('.tfAreaPanel .tfRoomTile, .tfAreaStage>.tfRoomTile').forEach((t) => { t.dataset.rows = it.el.dataset.rows; });
       // one column wide on a board of more (not a phone's single column): the card's narrow version (Matt, 6 Nov)
       it.el.toggleAttribute('data-narrow', !phone && p.cols === 1 && n > 1);
       it.el.dataset.cols = p.cols; // how many columns it spans (a room's tile lays out by it)
@@ -2522,6 +2543,9 @@ export function mountTestFocus(root, { config, getHass }) {
   root.addEventListener('pointerover', (ev) => {
     if (ev.pointerType === 'touch') return;
     if (tip.contains(ev.target)) { clearTimeout(tipHideTimer); return; }
+    // a phone's area buttons are named in one too (their icons say nothing on their own)
+    const pick = ev.target.closest?.('.tfAreaPick');
+    if (pick) { if (pick !== tipFor) showTip(pick, pick.getAttribute('aria-label')); else clearTimeout(tipHideTimer); return; }
     const el = cutUnder(ev.target);
     if (el && look.names === 'scroll' && el.matches(NAME_SEL)) { glide(el); return; }
     if (el) { if (el !== tipFor) showTip(el, el.textContent.trim()); else clearTimeout(tipHideTimer); return; }
@@ -2533,6 +2557,7 @@ export function mountTestFocus(root, { config, getHass }) {
   root.addEventListener('focusin', (ev) => {
     const el = ev.target;
     if (!el.matches?.(':focus-visible')) return;
+    if (el.classList.contains('tfAreaPick')) { showTip(el, el.getAttribute('aria-label')); return; }
     let cut = [el, ...el.querySelectorAll('*')].filter(cutShort);
     if (look.names === 'scroll') { cut.filter((x) => x.matches(NAME_SEL)).forEach(glide); cut = cut.filter((x) => !x.matches(NAME_SEL)); }
     if (cut.length) showTip(el, cut.map((x) => x.textContent.trim()).join(' · '));
@@ -4404,6 +4429,52 @@ export function mountTestFocus(root, { config, getHass }) {
     units.set('areas', areasHtml(grid.querySelector('[data-k="areas"]')?.style.order || 1));
     setTimeout(() => showOpenArea(true), 340); // once it has opened out
   }
+  /* a phone's Areas: another area in the card, in place, as the light popup changes its slider (Matt, 17 Nov: "fade,
+     pulse and land in place… rather than sliding in"): the one going fades away over it, the one coming lands */
+  function pickPhoneArea(id) {
+    const el = grid.querySelector('.tfAreas[data-k="areas"]');
+    if (!el || !id || id === activeArea) return;
+    const old = el.querySelector('.tfAreaStage>.tfRoomTile'), ghost = old && !reduced() ? old.cloneNode(true) : null;
+    // the way it slides (Matt, 19 Nov: "make the transition be a slide"): an area further along comes in from the right
+    const order = areasShown().map((r) => r.id), dir = order.indexOf(id) > order.indexOf(activeArea) ? 1 : -1;
+    activeArea = id;
+    const html = areasHtml(el.style.order || 1);
+    units.set('areas', html);
+    replace(el, html);
+    const stage = grid.querySelector('.tfAreas[data-k="areas"] .tfAreaStage'), tile = stage?.querySelector(':scope>.tfRoomTile');
+    if (!stage || reduced()) return;
+    stage.style.setProperty('--dir', dir);
+    if (ghost) {
+      ghost.classList.add('tfAreaGoing');
+      ghost.inert = true;
+      ghost.setAttribute('aria-hidden', 'true');
+      stage.appendChild(ghost);
+      setTimeout(() => ghost.remove(), 340);
+    }
+    if (tile) { tile.classList.add('tfAreaLand'); tile.addEventListener('animationend', () => tile.classList.remove('tfAreaLand'), { once: true }); }
+  }
+  // a sideways swipe on the card: the next area or the one before (none past the ends). It's a swipe once the finger has
+  // gone BAR_SLOP more across than up or down; up and down is the page's, which scrolls as ever (the card is pan-y)
+  const SWIPE = 40;
+  function swipeAreas(ev) {
+    if (ev.pointerType === 'mouse' || !ev.isPrimary || !ev.target.closest?.('.tfAreaStage') || !PHONE_AREAS.matches) return;
+    const x0 = ev.clientX, y0 = ev.clientY, id = ev.pointerId;
+    let axis = null;
+    const move = (e) => { if (e.pointerId === id && !axis && Math.hypot(e.clientX - x0, e.clientY - y0) >= BAR_SLOP) axis = Math.abs(e.clientX - x0) > Math.abs(e.clientY - y0) ? 'x' : 'y'; };
+    const end = (e) => {
+      if (e.pointerId !== id) return;
+      removeEventListener('pointermove', move, true); removeEventListener('pointerup', end, true); removeEventListener('pointercancel', end, true);
+      const dx = e.clientX - x0;
+      if (e.type !== 'pointerup' || axis !== 'x' || Math.abs(dx) < SWIPE) return;
+      // the swipe isn't a tap on what it started on
+      const swallow = (c) => { c.stopPropagation(); c.preventDefault(); };
+      root.addEventListener('click', swallow, { capture: true, once: true });
+      setTimeout(() => root.removeEventListener('click', swallow, true), 400);
+      const shown = areasShown(), to = shown[shown.findIndex((r) => r.id === activeArea) + (dx < 0 ? 1 : -1)];
+      if (to) pickPhoneArea(to.id);
+    };
+    addEventListener('pointermove', move, true); addEventListener('pointerup', end, true); addEventListener('pointercancel', end, true);
+  }
   // what a bar sets, from 0–1 along it
   const DRAG = {
     bright: { value: (id, f) => Math.round(f * 100), text: (id, v) => (v ? v + '%' : 'Off'), send: (id, v) => (v > 0 ? ['light', 'turn_on', { brightness_pct: v }] : ['light', 'turn_off', {}]) },
@@ -4458,7 +4529,7 @@ export function mountTestFocus(root, { config, getHass }) {
   // the same controls work on the page and in the stand-in more-info
   function bindControls(el) {
     el.addEventListener('click', (ev) => {
-      const t = ev.target.closest('[data-act],[data-acts],[data-more],[data-more-close],[data-more-back],[data-details],[data-details-close],[data-go],[data-summary],[data-star],[data-favs-edit],[data-area-back],[data-board-more],[data-board-act],[data-board-show],[data-fav-hide],[data-energy-pick],[data-more-page],[data-path],.tfAreaPanel');
+      const t = ev.target.closest('[data-act],[data-acts],[data-more],[data-more-close],[data-more-back],[data-details],[data-details-close],[data-go],[data-summary],[data-star],[data-favs-edit],[data-area-back],[data-board-more],[data-board-act],[data-board-show],[data-fav-hide],[data-energy-pick],[data-more-page],[data-path],[data-area-pick],.tfAreaPanel');
       if (boardOpen && !ev.target.closest('.tfBoardMenu,[data-board-more]')) closeBoardMenu();
       if (!t || !el.contains(t) || t.disabled) return;
       if (t.dataset.boardMore) { if (boardOpen?.key === t.dataset.boardMore) closeBoardMenu(true); else openBoardMenu(t.dataset.boardMore, t); }
@@ -4466,6 +4537,7 @@ export function mountTestFocus(root, { config, getHass }) {
       else if (t.dataset.boardShow) showCard(t.dataset.boardShow);
       else if (t.dataset.favHide) setFavShown(t.dataset.favHide, false);
       else if (t.dataset.energyPick) pickEnergy(t.dataset.energyPick);
+      else if (t.dataset.areaPick) pickPhoneArea(t.dataset.areaPick);
       else if (t.dataset.act) run(t.dataset.act);
       else if (t.hasAttribute('data-details')) toggleDetails(!more?.details);
       else if (t.hasAttribute('data-details-close')) toggleDetails(false);
@@ -4573,6 +4645,7 @@ export function mountTestFocus(root, { config, getHass }) {
   if (grid && testFocus) {
     loadPrefs();
     bindControls(grid);
+    grid.addEventListener('pointerdown', swipeAreas); // a phone's Areas card
     bindControls(sheet);
     sheet.addEventListener('click', (ev) => { if (ev.target === sheet) closeMore(); });
     // Home, from an area's page, goes back to the house

@@ -524,6 +524,26 @@ button.tfAreaIcon{cursor:pointer}
   #app.tfDash .tfAreaPanel.active{flex:0 0 var(--area-open,409px)}
   #app.tfDash .tfAreaPanel:not(.active){flex:1 0 128px}
 }
+/* a phone's Areas (Matt, 19 Nov, phones only): no accordion. The open area's card is as tall for every area, about 4:3
+   (his drawing: 982 tall for 1325 wide), cut like the others when its content is taller; 14 under it, on the page, every
+   area as an Icon button (Figma 902:2536), eight to a row, square, 8 apart, inside the page's 16; the open one's On */
+.tfAreaPhone{display:none}
+@media(max-width:620px){
+  #app .tfAreas .tfAreaGallery{display:none}
+  #app .tfAreas .tfAreaPhone{display:flex;flex-direction:column;gap:14px}
+  .tfAreaStage{position:relative;flex:none;aspect-ratio:1325/982;min-height:0;touch-action:pan-y} /* (min-height 0: a fuller room grew it by its content) */
+  .tfAreaStage>.tfRoomTile{height:100%;box-sizing:border-box;overflow:hidden}
+  .tfAreaPicks{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;padding:0 16px}
+  #app .tfAreaPick{width:100%;height:auto;aspect-ratio:1;border:0;padding:0;border-radius:40%;background:var(--hc-icon);color:var(--hc-icon-ink);cursor:pointer}
+  #app .tfAreaPick.on[data-light]{background:var(--light-soft);color:var(--light-ink)}
+  /* another area slides (Matt, 19 Nov): the one going out one way, the one coming in from the other, a card's width and
+     its 16 apart; --dir is 1 for an area further along, -1 for one before */
+  .tfAreaStage>.tfAreaGoing{position:absolute;inset:0;pointer-events:none;animation:tfAreaOut .32s cubic-bezier(.2,.7,.3,1) forwards}
+  .tfAreaStage>.tfAreaLand{animation:tfAreaIn .32s cubic-bezier(.2,.7,.3,1) backwards}
+}
+@keyframes tfAreaOut{to{translate:calc(var(--dir,1) * (-100% - 16px)) 0}}
+@keyframes tfAreaIn{from{translate:calc(var(--dir,1) * (100% + 16px)) 0}}
+@media(prefers-reduced-motion:reduce){.tfAreaStage>*{animation:none!important}}
 /* the summaries: each as wide as its words (at least 200), in even rows (the board picks how many to a row), the bar as
    wide as they are; two to a row on phones */
 #app.tfDash .tfDash-bar{flex:none;max-width:100%}
