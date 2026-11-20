@@ -690,7 +690,7 @@ button.tfAreaIcon{cursor:pointer}
    state) in place of buttons, wide two by two, really wide in one row. XS the buttons on the right of the head; wide S
    (its first two) and M, and really wide S, have the reading in the head */
 .tfRoomHeads{display:none;gap:12px 16px}
-.tfRoomDev{position:relative;isolation:isolate;display:flex;align-items:center;gap:12px;min-width:0}
+.tfRoomDev{position:relative;isolation:isolate;display:flex;align-items:center;gap:12px;min-width:0;cursor:pointer}
 /* a device's row lights on hover, as the open area's tiles did: reaching 10 past its sides and halfway into the gaps,
    so the row's layout doesn't move */
 .tfRoomDev::before{content:"";position:absolute;z-index:-1;inset:-6px -10px;border-radius:var(--r-tile);pointer-events:none;transition:background .15s ease,box-shadow .15s ease}

@@ -1265,10 +1265,14 @@ export function mountTestFocus(root, { config, getHass }) {
     const controls = keys.filter((k) => k.kind === 'control').slice(0, 4), lit = (k) => (k.on && k.light ? ' data-light style="' + k.light + '"' : '');
     // the icon is the button: it turns the device on and off
     const toggle = (k) => '<button class="tfIcon' + (k.on ? ' on' : '') + '" type="button" data-tone="' + k.tone + '"' + lit(k) + ' data-acts="' + acts(k.acts) + '" aria-label="' + esc(k.aria) + '" aria-pressed="' + k.on + '">' + k.icon + '</button>';
-    const devices = controls.map(toggle);
+    // just an icon opens what controls it, its own more info or its group's (Matt, 20 Nov: "If it is just an icon, it
+    // opens the panel or more info that controls that")
+    const opener = (k) => '<button class="tfIcon' + (k.on ? ' on' : '') + '" type="button" data-tone="' + k.tone + '"' + lit(k) + ' data-more="' + esc(opens(k)) + '" aria-label="' + esc(r.name + ' ' + k.label.toLowerCase() + ', ' + k.value + '. Open') + '">' + k.icon + '</button>';
+    const devices = controls.map(opener);
     // wide, the same devices as heads (icon, name, state), as the open room shows them (Matt, 6 Nov; Figma 954:6297): the
-    // name opens its control
-    const heads = controls.map((k) => '<div class="tfRoomDev' + (k.on ? ' on' : '') + '">' + toggle(k) +
+    // tile opens its control, and its icon is the on/off when the device has one (Matt, 20 Nov: "if it is a tile with name
+    // and subtitle etc then it opens the more info and the icon in the tile becomes the binary toggle")
+    const heads = controls.map((k) => '<div class="tfRoomDev' + (k.on ? ' on' : '') + '" data-more="' + esc(opens(k)) + '">' + (k.acts ? toggle(k) : opener(k)) +
       '<button class="tfName tfRoomDevName" type="button" data-more="' + esc(opens(k)) + '" aria-label="' + esc(r.name + ' ' + k.label.toLowerCase() + ', ' + k.value + '. Open') + '"><span class="activityRowName">' + esc(k.label) + '</span><span class="activityRowMeta">' + esc(k.value) + '</span></button></div>');
     // the room's icon turns its lights on and off (always grey for now); a room without lights only shows it
     const lights = keys.find((k) => k.key === 'lights'), glyph = '<span class="tfAreaGlyph"' + iconSlot('area:' + r.id, r.icon || 'mdi:texture-box', r.name) + '></span>';
