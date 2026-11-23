@@ -1313,3 +1313,32 @@ button.tfAreaIcon{cursor:pointer}
 @media(max-width:620px){.tfMorePop .tfSeg:has(> :nth-child(5)){flex-wrap:wrap;height:auto}.tfMorePop .tfSeg:has(> :nth-child(5)) button{flex:0 0 auto;height:38px;padding:0 14px}}
 /* a HomeCore icon (19 Nov) sits where Home Assistant's would, at its size until it's fitted */
 [data-icon-for]>svg.hcGlyph{display:block;flex:none;width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);overflow:visible}
+
+/* ---------- a popup's title stays put (Matt, 23 Nov: "the title should stay in place… the content will scroll beneath it
+   with a gentle fade out underneath", phone and desktop): the head sticks where it sits, what's above it is covered in
+   the popup's own ground, and a 24 fade under it comes in once there's something scrolled beneath ---------- */
+.tfMore,.tfMoreSideInner{--hc-pop-bg:var(--card);--hc-head-top:0px} /* (counted from inside the popup's padding) */
+.tfMore.wide,.tfMorePair.over .tfMore.wide+.tfMoreSide .tfMoreSideInner{--hc-pop-bg:var(--bg);--hc-head-top:-20px} /* its head sits 20 up into the 40 */
+@media(max-width:620px){
+  #app .tfMoreBackdrop .tfMore{--hc-head-top:19px} /* under the handle: its 5 and the 14 to the head */
+  #app .tfMoreBackdrop .tfMore.wide{--hc-head-top:25px} /* a summary's 20 to the head */
+  #app .tfMorePair.over .tfMore.wide+.tfMoreSide .tfMoreSideInner{--hc-head-top:0px}
+}
+:is(.tfMore,.tfMoreSideInner)>.tfMoreHead{position:sticky;top:var(--hc-head-top);z-index:1;flex:none;background:var(--hc-pop-bg)}
+/* (the cover reaches up past the popup's top edge and the fade out to its sides as shadows, which never make it scroll) */
+:is(.tfMore,.tfMoreSideInner)>.tfMoreHead::before,:is(.tfMore,.tfMoreSideInner)>.tfMoreHead::after{content:"";position:absolute;left:0;right:0;pointer-events:none}
+:is(.tfMore,.tfMoreSideInner)>.tfMoreHead::before{bottom:100%;height:80px;background:var(--hc-pop-bg);box-shadow:-40px 0 0 var(--hc-pop-bg),40px 0 0 var(--hc-pop-bg)}
+:is(.tfMore,.tfMoreSideInner)>.tfMoreHead::after{top:100%;height:24px;background:linear-gradient(var(--hc-pop-bg),color-mix(in srgb,var(--hc-pop-bg) 0%,transparent));opacity:0}
+@keyframes hcHeadFade{to{opacity:1}}
+@supports (animation-timeline:scroll()){
+  :is(.tfMore,.tfMoreSideInner)>.tfMoreHead::after{animation:hcHeadFade linear both;animation-timeline:scroll(nearest block);animation-range:0 24px}
+}
+/* ---------- a device's more info opens bigger (Matt, 23 Nov: "reactively full screen, the same way… security or media
+   players or maintenance opens on mobile. On desktop… just a little bit larger"): on a phone it's as tall as a summary's
+   sheet (85% of the screen); on a wider screen 480 × 660, was 440 × 604.4. The space takes what's gained ---------- */
+@media(min-width:621px){
+  #app .tfMoreBackdrop:not(.wide,.hcOops,.hcSearchPop) .tfMore{width:480px;height:min(660px,calc(100dvh - 32px))}
+}
+@media(max-width:620px){
+  #app .tfMoreBackdrop:not(.wide,.hcOops,.hcSearchPop) .tfMore{height:85dvh}
+}
