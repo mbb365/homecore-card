@@ -1342,3 +1342,6 @@ button.tfAreaIcon{cursor:pointer}
 @media(max-width:620px){
   #app .tfMoreBackdrop:not(.wide,.hcOops,.hcSearchPop) .tfMore{height:85dvh}
 }
+/* ---------- a popup's stroke drawn over what's in it (Matt, 23 Nov: "the top corners and edge of the popup windows and more info cards… appear to be missing the stroke"): the pinned head's cover was painted over the inset stroke, so the stroke is a border now: a scrolling box clips what it holds inside its border, so nothing in it can cover it ---------- */
+#app .tfMoreBackdrop :is(.tfMore,.tfMoreSideInner){box-shadow:none;border:1px solid var(--line)}
+@media(max-width:620px){#app .tfMoreBackdrop :is(.tfMore,.tfMoreSideInner){box-shadow:0 10px 30px rgba(0,0,0,.28)}}
