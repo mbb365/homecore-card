@@ -6974,7 +6974,7 @@ function x0(n, { config: i, getHass: d }) {
     }
   };
 }
-const M0 = "0.14.1";
+const M0 = "0.14.2";
 function k0() {
   if (document.getElementById("homecore-fonts")) return;
   const n = document.createElement("link");
