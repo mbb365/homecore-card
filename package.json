@@ -1,7 +1,7 @@
 {
   "name": "homecore-card",
   "private": true,
-  "version": "0.14.0",
+  "version": "0.14.1",
   "type": "module",
   "description": "A test environment for the HomeCore design language",
   "scripts": {
