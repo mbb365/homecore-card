@@ -800,8 +800,10 @@ export function mountTestFocus(root, { config, getHass }) {
     if (el.dataset.fitted === key) return true;
     let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
     for (const x of shapes) {
-      const b = x.getBBox(), cs = getComputedStyle(x), pad = cs.stroke !== 'none' ? (parseFloat(cs.strokeWidth) || 0) / 2 : 0;
-      if (!b.width && !b.height) continue;
+      const r = x.getBBox(), cs = getComputedStyle(x), pad = cs.stroke !== 'none' ? (parseFloat(cs.strokeWidth) || 0) / 2 : 0;
+      if (!r.width && !r.height) continue;
+      // a shape turned in place (a HomeCore fan's blades) is measured where it's drawn, not where it starts
+      const m = x.transform?.baseVal?.consolidate?.()?.matrix, b = m ? (() => { const c = [[r.x, r.y], [r.x + r.width, r.y], [r.x, r.y + r.height], [r.x + r.width, r.y + r.height]].map(([u, v]) => [m.a * u + m.c * v + m.e, m.b * u + m.d * v + m.f]), xs = c.map((q) => q[0]), ys = c.map((q) => q[1]); return { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) }; })() : r;
       x1 = Math.min(x1, b.x - pad); y1 = Math.min(y1, b.y - pad); x2 = Math.max(x2, b.x + b.width + pad); y2 = Math.max(y2, b.y + b.height + pad);
     }
     if (!(x2 > x1)) return false;
