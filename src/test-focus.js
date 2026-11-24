@@ -1256,7 +1256,7 @@ export function mountTestFocus(root, { config, getHass }) {
      card, keyed room:<area>. The head is the room's icon and name; XS its reading in the head, S the reading big, M its
      devices too (up to four), L and XL the reading bigger with its second under it. It never opens out: the tile opens
      the room's page. Its interactions are the Areas card's open area's (Matt, 17 Nov: "bring them all"): the room's
-     icon turns its lights on and off, a device's icon turns it on and off, its name opens its control (one device its
+     icon opens its page, a device's icon turns it on and off, its name opens its control (one device its
      own, a room's lights or covers as a group), the reading opens its more-info, and the edge lights up */
   const isRoomKey = (key) => key.startsWith('room:');
   const roomOf = (key) => areaRooms.find((r) => 'room:' + r.id === key);
@@ -1276,10 +1276,10 @@ export function mountTestFocus(root, { config, getHass }) {
     // and subtitle etc then it opens the more info and the icon in the tile becomes the binary toggle")
     const heads = controls.map((k) => '<div class="tfRoomDev' + (k.on ? ' on' : '') + '" data-more="' + esc(opens(k)) + '">' + (k.acts ? toggle(k) : opener(k)) +
       '<button class="tfName tfRoomDevName" type="button" data-more="' + esc(opens(k)) + '" aria-label="' + esc(r.name + ' ' + k.label.toLowerCase() + ', ' + k.value + '. Open') + '"><span class="activityRowName">' + esc(k.label) + '</span><span class="activityRowMeta">' + esc(k.value) + '</span></button></div>');
-    // the room's icon turns its lights on and off (always grey for now); a room without lights only shows it
-    const lights = keys.find((k) => k.key === 'lights'), glyph = '<span class="tfAreaGlyph"' + iconSlot('area:' + r.id, r.icon || 'mdi:texture-box', r.name) + '></span>';
-    const roomIcon = lights ? '<button class="tfIcon tfRoomIcon" type="button" data-acts="' + acts(lights.acts) + '" aria-label="' + esc(lights.aria) + '" aria-pressed="' + Boolean(lights.on) + '">' + glyph + '</button>'
-      : '<span class="tfIcon tfRoomIcon" aria-hidden="true">' + glyph + '</span>';
+    // the room's icon opens the room's page, as the demo's does (Matt, 24 Nov: "the area icon / button for the area card
+    // should just take you to the area. not turn on and off everything")
+    const glyph = '<span class="tfAreaGlyph"' + iconSlot('area:' + r.id, r.icon || 'mdi:texture-box', r.name) + '></span>';
+    const roomIcon = '<button class="tfIcon tfIconOpen tfRoomIcon" type="button" data-go="' + esc(r.id) + '" aria-label="Open ' + esc(r.name) + '">' + glyph + '</button>';
     return '<div class="tfAction tfRoomTile"' + (key ? ' data-k="' + esc(key) + '"' : '') + attrs + ' data-go="' + esc(r.id) + '">' +
       '<div class="tfActionHead">' + roomIcon +
       '<button class="tfName" type="button" data-go="' + esc(r.id) + '" aria-label="Open ' + esc(r.name) + '"><span class="activityRowName">' + esc(r.name) + '</span>' +

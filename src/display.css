@@ -662,6 +662,8 @@ button.tfAreaIcon{cursor:pointer}
 .tfRoomTile{cursor:pointer}
 .tfRoomTile .tfRoomIcon{border:0;padding:0;background:var(--hc-icon);color:var(--hc-icon-ink)}
 .tfRoomTile button.tfRoomIcon{cursor:pointer}
+/* the room's icon opens the room (Matt, 24 Nov), bare as the demo's: no chip behind it */
+#app .tfRoomTile .tfIcon.tfIconOpen{border:0;padding:0;background-color:transparent!important;color:var(--hc-icon-ink);cursor:pointer}
 .tfRoomInline,.tfRoomSub{display:none}
 .tfRoomReading{display:flex;flex-direction:column;align-items:flex-start;align-self:flex-start;gap:4px;min-width:0;max-width:100%;padding:0;border:0;border-radius:8px;background:none;color:inherit;font:inherit;text-align:start;cursor:pointer}
 /* the reading as the Figma Source of truth's tfACMain (Matt, 16 Nov): 32 Geist ExtraLight on 38.5, at every size */
