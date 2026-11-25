@@ -7,7 +7,7 @@ import { mountShell } from "./shell.js";
 import { mountTestFocus } from "./test-focus.js";
 import { installMotion, installSegments } from "./motion.js";
 
-const VERSION = "0.14.3";
+const VERSION = "0.14.4";
 
 // Fonts declared inside a shadow root are ignored, so Inter (and Geist, for tile text) is added to the page once.
 function loadFonts() {
