@@ -1346,3 +1346,21 @@ button.tfAreaIcon{cursor:pointer}
 /* ---------- a popup's stroke drawn over what's in it (Matt, 23 Nov: "the top corners and edge of the popup windows and more info cards… appear to be missing the stroke"): the pinned head's cover was painted over the inset stroke, so the stroke is a border now: a scrolling box clips what it holds inside its border, so nothing in it can cover it ---------- */
 #app .tfMoreBackdrop :is(.tfMore,.tfMoreSideInner){box-shadow:none;border:1px solid var(--line)}
 @media(max-width:620px){#app .tfMoreBackdrop :is(.tfMore,.tfMoreSideInner){box-shadow:0 10px 30px rgba(0,0,0,.28)}}
+
+/* Physical controls (25 Nov 2026): the line drawing fills the more-info space; lines in the text colour, faces in the
+   space's own fill so they hide what is behind them, shadows hatched in the muted colour */
+#app .tfMoreSpace.tfPhys{position:relative;padding:0;display:block;--face:var(--tile);--shade:var(--muted);--phys-accent:#d0ff00}
+#app.light .tfMoreSpace.tfPhys{--phys-accent:var(--text)}
+.tfPhys .iso{position:absolute;inset:0;width:100%;height:100%;display:block;color:var(--text);touch-action:none;outline:none;-webkit-user-select:none;user-select:none}
+.tfPhys .iso:focus-visible{box-shadow:inset 0 0 0 2px var(--text);border-radius:16px}
+.tfPhys .iso .face{fill:var(--face);stroke:var(--face);stroke-width:.9;stroke-linejoin:round}
+.tfPhys .iso .edge,.tfPhys .iso .accent{fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.tfPhys .iso .accent{stroke:var(--phys-accent);stroke-width:1.6}
+.tfPhys .iso .mark{stroke-width:1.6}
+.tfPhys .iso .pointer{stroke-width:2}
+.tfPhys .iso .hatch{stroke:var(--shade);stroke-width:.8}
+.tfPhys .iso .level,.tfPhys .iso .dotfill{fill:currentColor;stroke:currentColor;stroke-width:1}
+.tfPhys .iso .st{fill:currentColor;font-family:inherit;font-weight:500}
+.tfPhys .iso .st.sel{font-weight:600;fill:var(--phys-accent)}
+.tfPhys .iso [data-part]{cursor:pointer}
+.tfPhys .iso .deco{pointer-events:none}

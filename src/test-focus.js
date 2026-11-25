@@ -11,9 +11,13 @@ import { createHouse, isMadeUp, solarHistory, PLANT_RANGE } from './house.js';
 import { ICONS as HC_ICONS, svg as hcSvg } from './hc-icons.js';
 import { mountWeatherBento } from './weather-bento.js';
 import { createCoverArt, coverKind } from './cover-art.js';
+import { PushButton, Rocker, Fader, Dial, Rotary, Guarded } from './physical/controls.js';
 import { M, EASE, smoothD, gridLines, drawLine, stretchTo, closeDialog, toastBody, toastIn, toaster, springStep, squash, reduced } from './motion.js';
 
 const DENSITY_KEY = 'homecore-density';
+// Physical controls (Matt, 25 Nov 2026): line-drawn buttons, rockers, faders, dials, selectors and guarded switches in
+// the more-info space, on a switch in Settings → Appearance, with the angle they're seen from and whether they fill it
+const PHYS_KEY = 'homecore-physical', PHYS_VIEW_KEY = 'homecore-physical-view', PHYS_FIT_KEY = 'homecore-physical-fit';
 
 const local = {
   get(k) { try { return localStorage.getItem(k); } catch (_e) { return null; } },
@@ -131,6 +135,7 @@ export function mountTestFocus(root, { config, getHass }) {
      Favourites and each area's card, laid out the same for everyone and not edited. Only what the house has */
   const overview = String(cfg.page || '').toLowerCase() === 'overview';
   let densityOn = local.get(DENSITY_KEY) === '1';
+  let physOn = local.get(PHYS_KEY) === '1', physView = local.get(PHYS_VIEW_KEY) || 'front', physFit = local.get(PHYS_FIT_KEY) || 'fill';
   let states = {};
   const callWS = (msg) => getHass()?.callWS(msg);
   const callService = (domain, service, data) => callWS({ type: 'call_service', domain, service, service_data: data });
@@ -186,6 +191,26 @@ export function mountTestFocus(root, { config, getHass }) {
     [rowOf($('moreInfoChoice')), rowOf($('namesChoice'))].forEach((row) => row && group('house').appendChild(row));
     group('house').insertAdjacentHTML('beforeend', settingRow('Lights', 'How lights show on the house page.', seg('lightsChoice', 'Lights', 'data-lights', [['tile', 'HomeCore tile'], ['dac', 'Dual Axis Controller']]), 'lightsRow') +
       settingRow('Pad', 'What the Dual Axis Controller’s pad sets on its tile.', seg('dacPadChoice', 'Pad', 'data-dac-pad', [['temperature', 'Temperature'], ['colour', 'Colour']]), 'dacPadRow'));
+    group('house').insertAdjacentHTML('beforeend', settingRow('Physical controls', 'Buttons, rockers, faders, dials and switches you press, drawn in lines, in the more info space.', '<button class="switch" type="button" role="switch" id="physToggle" aria-label="Physical controls"></button>') +
+      settingRow('Angle', 'Where the physical controls are seen from.', seg('physViewChoice', 'Angle', 'data-phys-view', [['iso', 'Isometric'], ['three', 'Three-quarter'], ['tilted', 'Tilted'], ['front', 'Front'], ['flat', 'Flat']]), 'physViewRow') +
+      settingRow('Fit', 'Keep each control’s drawn size, or stretch it to fill the space.', seg('physFitChoice', 'Fit', 'data-phys-fit', [['drawn', 'As drawn'], ['fill', 'Fill']]), 'physFitRow'));
+    const showPhys = () => {
+      const sw = $('physToggle');
+      sw.classList.toggle('on', physOn); sw.setAttribute('aria-checked', String(physOn));
+      $('physViewRow').hidden = $('physFitRow').hidden = !physOn;
+      view.querySelectorAll('[data-phys-view]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.physView === physView)));
+      view.querySelectorAll('[data-phys-fit]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.physFit === physFit)));
+    };
+    group('house').addEventListener('click', (ev) => {
+      const b = ev.target.closest('#physToggle,[data-phys-view],[data-phys-fit]');
+      if (!b) return;
+      if (b.id === 'physToggle') { physOn = !physOn; local.set(PHYS_KEY, physOn ? '1' : '0'); physs.clear(); }
+      if (b.dataset.physView) { physView = b.dataset.physView; local.set(PHYS_VIEW_KEY, physView); physs.forEach((p) => p.ctl.setCamera(physView)); }
+      if (b.dataset.physFit) { physFit = b.dataset.physFit; local.set(PHYS_FIT_KEY, physFit); physs.forEach((p) => p.ctl.setFill(physFit === 'fill')); }
+      showPhys();
+      if (b.id === 'physToggle') render();
+    });
+    showPhys();
     [rowOf($('hoursChoice')), rowOf($('wxStyleChoice'))].forEach((row) => row && group('weather').appendChild(row));
     const pane = $('housePane'), bar = pane.querySelector('.houseTabs'), mark = bar.querySelector('.rubberIndicator');
     const LIGHT_VIEW_KEY = 'homecore-light-view';
@@ -3529,6 +3554,7 @@ export function mountTestFocus(root, { config, getHass }) {
     drawSolar();
     renderMore();
     tidyArts();
+    tidyPhys();
     requestAnimationFrame(measureDensity);
   }
 
@@ -3601,6 +3627,7 @@ export function mountTestFocus(root, { config, getHass }) {
     }));
     renderMore();
     tidyArts();
+    tidyPhys();
     syncDacs();
     syncSettings();
     bento?.update();
@@ -3675,7 +3702,7 @@ export function mountTestFocus(root, { config, getHass }) {
   sheet.addEventListener('pointerdown', (ev) => {
     const pair = sheet.querySelector('.tfMorePair');
     if (!onPhone() || !pair || !pair.contains(ev.target) || !ev.isPrimary || sheet._closing) return;
-    if (ev.target.closest('input,textarea,select,.tfDacPad,[data-cover-art],.tfMoreSide,[data-drag],[data-blocks]')) return; // a slider, the blocks and the pad own their finger (18 Nov: the sheet grabbed a slider pulled down)
+    if (ev.target.closest('input,textarea,select,.tfDacPad,[data-cover-art],.tfPhys,.tfMoreSide,[data-drag],[data-blocks]')) return; // a slider, the blocks and the pad own their finger (18 Nov: the sheet grabbed a slider pulled down)
     flick = { x: ev.clientX, y: ev.clientY, t: performance.now(), dy: 0, v: 0, pair, from: ev.target, grab: ev.target.matches('.tfMore') || Boolean(ev.target.closest('.tfMoreHead')) };
   }, true);
   sheet.addEventListener('pointermove', (ev) => {
@@ -3829,6 +3856,7 @@ export function mountTestFocus(root, { config, getHass }) {
     return { sections: [], on, button, icon: iconFor(id) };
   }
   function moreSpace(id) {
+    if (physKind(id)) return physSlot(id);
     // a device whose visual controller is its data and action (Matt, 10 Nov: the curtains' drawing) fills the space with it
     const d = id.split('.')[0];
     // a device that is only its controls or a state word has no space (Matt, 10 Nov: Popup · Device, rule popup.space):
@@ -3873,7 +3901,81 @@ export function mountTestFocus(root, { config, getHass }) {
   const coded = (domain, service, id, label, pressed) => ({ label, pressed, html: null, coded: [domain, service, id].join('|') });
   const codedSeg = (label, items) => '<div class="tfSeg" role="group" aria-label="' + esc(label) + '">' + items.map((it) => '<button type="button" data-coded="' + esc(it.coded) + '" aria-pressed="' + Boolean(it.pressed) + '">' + esc(it.label) + '</button>').join('') + '</div>';
   const onOff = (id, d, on) => popSeg(nameOf(id), [{ label: 'Off', act: act(d, 'turn_off', id), pressed: !on }, { label: 'On', act: act(d, 'turn_on', id), pressed: on }]);
+  /* Physical controls in the more-info space (Matt, 25 Nov 2026; Figma Actions file, "Physical control / …"): a
+     light's brightness is a fader, a thermostat's target a dial, a fan's speed a rotary selector (Off, Low, Medium,
+     High), a switch a rocker, a valve a guarded switch (lift the cover, then flip it), a scene, script or button a push
+     button. Each is kept across redraws, like a cover's drawing, so a press can finish its movement */
+  const physs = new Map();
+  const FAN_STEPS = [0, 33, 67, 100];
+  const FAN_POSITIONS = [{ label: 'Off', a: 180 }, { label: 'Low', a: 240 }, { label: 'Medium', a: 300 }, { label: 'High', a: 360 }];
+  function physKind(id) {
+    if (!physOn || !states[id]) return null;
+    const d = id.split('.')[0], a = states[id].attributes;
+    if (d === 'light') return modesOf(id).some((m) => m !== 'onoff') ? 'fader' : 'rocker';
+    if (d === 'climate') return Number.isFinite(Number(a.temperature)) ? 'dial' : null;
+    if (d === 'fan') return a.percentage != null ? 'rotary' : 'rocker';
+    if (d === 'switch' || d === 'input_boolean') return 'rocker';
+    if (d === 'valve') return 'guarded';
+    if (d === 'scene' || d === 'script' || d === 'button') return 'push';
+    return null;
+  }
+  const physSlot = (id) => '<div class="tfMoreSpace tfPhys" data-phys="' + esc(id) + '"></div>';
+  const fanStep = (pct) => (pct <= 0 ? 0 : pct <= 33 ? 1 : pct <= 67 ? 2 : 3);
+  function physState(id, kind) {
+    const st = states[id], a = st.attributes, on = st.state === 'on';
+    if (kind === 'fader') return [on ? brightnessOf(st) / 100 : 0];
+    if (kind === 'dial') return [Number(a.temperature), Number.isFinite(Number(a.current_temperature)) ? Number(a.current_temperature) : null];
+    if (kind === 'rotary') return [on ? fanStep(Number(a.percentage) || 0) : 0];
+    if (kind === 'guarded') return [st.state === 'open' || st.state === 'opening'];
+    return [on];
+  }
+  function makePhys(id, kind) {
+    const el = document.createElement('div');
+    el.className = 'tfMoreSpace tfPhys';
+    const d = id.split('.')[0], a = states[id].attributes;
+    const p = { id, kind, el, quiet: 0, timer: 0 };
+    // a change made here sends once the hand settles, and the device's own state is ignored for a moment so the control
+    // doesn't jump back while it catches up
+    const later = (fn, ms = 260) => { p.quiet = performance.now() + 2500; clearTimeout(p.timer); p.timer = setTimeout(fn, ms); };
+    const opts = { camera: physView, fill: physFit === 'fill', label: nameOf(id) };
+    if (kind === 'push') p.ctl = new PushButton(el, { ...opts, onChange: () => send(d, d === 'button' ? 'press' : 'turn_on', id).catch(() => {}) });
+    if (kind === 'rocker') p.ctl = new Rocker(el, { ...opts, on: states[id].state === 'on', onChange: (on) => later(() => send(d, on ? 'turn_on' : 'turn_off', id).catch(() => {}), 0) });
+    if (kind === 'fader') p.ctl = new Fader(el, { ...opts, value: physState(id, kind)[0], onChange: (l) => later(() => (Math.round(l * 100) ? send('light', 'turn_on', id, { brightness_pct: Math.round(l * 100) }) : send('light', 'turn_off', id)).catch(() => {})) });
+    if (kind === 'dial') {
+      const [t, now] = physState(id, kind), min = Number(a.min_temp), max = Number(a.max_temp);
+      p.ctl = new Dial(el, { ...opts, value: t, now: now ?? t, min: Number.isFinite(min) ? min : 7, max: Number.isFinite(max) ? max : 35, onChange: (v) => later(() => send('climate', 'set_temperature', id, { temperature: v }).catch(() => {}), 450) });
+    }
+    if (kind === 'rotary') p.ctl = new Rotary(el, { ...opts, positions: FAN_POSITIONS, index: physState(id, kind)[0], onChange: (i) => later(() => (i ? send('fan', 'set_percentage', id, { percentage: FAN_STEPS[i] }) : send('fan', 'turn_off', id)).catch(() => {})) });
+    if (kind === 'guarded') p.ctl = new Guarded(el, { ...opts, on: physState(id, kind)[0], onChange: (on) => later(() => send('valve', on ? 'open_valve' : 'close_valve', id).catch(() => {}), 0) });
+    // while it's held nothing redraws the popup (a redraw would move the drawing out from under the finger)
+    const key = 'phys|' + id;
+    el.addEventListener('pointerdown', () => { pressed.add(key); hold(key); });
+    const let_go = () => { if (!pressed.has(key)) return; pressed.delete(key); if (stale) refresh(); };
+    el.addEventListener('pointerup', let_go);
+    el.addEventListener('pointercancel', let_go);
+    return p;
+  }
+  function mountPhys(scope) {
+    scope.querySelectorAll('[data-phys]').forEach((slot) => {
+      const id = slot.dataset.phys, kind = physKind(id);
+      if (!kind) { slot.remove(); return; }
+      let p = physs.get(id);
+      if (!p || p.kind !== kind) { p = makePhys(id, kind); physs.set(id, p); }
+      slot.replaceWith(p.el);
+      syncPhys(p);
+    });
+  }
+  function syncPhys(p) {
+    if (!states[p.id] || performance.now() < p.quiet) return;
+    p.ctl.show(...physState(p.id, p.kind));
+  }
+  const tidyPhys = () => { physs.forEach((p, id) => { if (!p.el.isConnected) physs.delete(id); else syncPhys(p); }); };
   function popOf(id) {
+    const r = popOfDrawn(id);
+    if (r && physKind(id)) { r.pages[0].space = physSlot(id); r.pages[0].tabs = []; delete r.infoButton; }
+    return r;
+  }
+  function popOfDrawn(id) {
     const d = id.split('.')[0], st = states[id], a = st.attributes;
     if (!POP_DOMAINS.includes(d)) return null;
     const s = ACTION_DOMAINS.includes(d) || TOGGLES.includes(d) ? specFor(id) : quickSpec(id);
@@ -4048,6 +4150,7 @@ export function mountTestFocus(root, { config, getHass }) {
       sheet.hidden = false;
       fitDetails();
       mountArt(sheet);
+      mountPhys(sheet);
       mountDacs(sheet);
       fillIcons(sheet);
       sheet.querySelectorAll('[data-day]').forEach((svg) => drawDay(svg.dataset.day, svg, more.at));
@@ -4070,6 +4173,7 @@ export function mountTestFocus(root, { config, getHass }) {
         next.querySelectorAll('.tfMoreCtl,.tfMorePage').forEach((e, k) => { if (scrolled[k]) e.scrollTop = scrolled[k]; });
         fillIcons(next);
         drawPlantGraphs(next);
+        mountPhys(next);
         mountDacs(next);
       });
       if (side !== moreSide) { const body = sheet.querySelector('.tfMoreSideBody'); if (body) body.innerHTML = side; moreSide = side; }
@@ -4126,7 +4230,7 @@ export function mountTestFocus(root, { config, getHass }) {
   }
   // a colour light's page swiped sideways: Controls to Colour and back (the strip itself turns to Info)
   let swipe = null;
-  sheet.addEventListener('touchstart', (ev) => { const t = ev.touches[0]; swipe = ev.target.closest?.('[data-more-pages]') && !ev.target.closest?.('[data-drag],[data-blocks],.tfDacPad,[data-cover-art]') && ev.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null; }, { passive: true }); // never from a slider, which a finger may cross
+  sheet.addEventListener('touchstart', (ev) => { const t = ev.touches[0]; swipe = ev.target.closest?.('[data-more-pages]') && !ev.target.closest?.('[data-drag],[data-blocks],.tfDacPad,[data-cover-art],.tfPhys') && ev.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null; }, { passive: true }); // never from a slider, which a finger may cross
   sheet.addEventListener('touchend', (ev) => {
     if (!swipe || !more || (more.page || 0) !== 0 || !sheet.querySelector('[data-more-mode]')) { swipe = null; return; }
     const t = ev.changedTouches[0], dx = t.clientX - swipe.x, dy = t.clientY - swipe.y;
