@@ -167,17 +167,20 @@ export class Rocker extends Control {
   show(on) { if (this.held) return; this.on = on; this.t.t = on ? 1 : 0; this.svg.setAttribute('aria-checked', on); this.kick(); }
   render(h) {
     const v = this.v, t = this.t.x;
-    const [W, D] = this.size(72, 96), sx = W / 72, sy = D / 96, m = Math.min(sx, sy);
-    const base = 9, hb = lerp(3, 12, t), hf = lerp(12, 3, t), hm = (hb + hf) / 2 - 1.4, L = 31 * sy;
+    // bare: just the switch, no plate round it (Matt, 25 Nov: the light dial's little Tone / Colour rocker); its bezel
+    // sits on the ground and takes the room the plate had
+    const bare = !!this.opts.bare;
+    const [W, D] = bare ? this.size(48, 72) : this.size(72, 96), sx = bare ? W / 48 : W / 72, sy = bare ? D / 72 : D / 96, m = Math.min(sx, sy);
+    const z0 = bare ? 0 : 6, base = z0 + 3, hb = lerp(3, 12, t), hf = lerp(12, 3, t), hm = (hb + hf) / 2 - 1.4, L = 31 * sy;
     const plate = prism(roundRect(W, D, 16 * m), 0, 6);
-    const bezel = prism(roundRect(48 * sx, 72 * sy, 9 * m), 6, base);
+    const bezel = prism(roundRect(48 * sx, 72 * sy, 9 * m), z0, base);
     const profile = [[-L, base], [L, base], [L, base + hf], [0, base + hm], [-L, base + hb]];
     const paddle = prism(profile, -20 * sx, 20 * sx, false, (u, w, x) => [x, u, w]);
     const zAt = (y) => base + (y < 0 ? lerp(hb, hm, (y + L) / L) : lerp(hm, hf, y / L)) + 0.05;
     const o = circle(4.2 * m, 36).map(([x, y]) => [x, y - L / 2, zAt(y - L / 2)]);
     const i = [[0, L * 0.32], [0, L * 0.68]].map(([x, y]) => [x, y, zAt(y)]);
     return (
-      shadow(v, plate, 0, h) + draw(v, plate) +
+      (bare ? shadow(v, bezel, 0, h) : shadow(v, plate, 0, h) + draw(v, plate)) +
       draw(v, bezel, 'paddle') +
       shadow(v, paddle, base, h, facePath(v, bezel, 1)) +
       draw(v, paddle, 'paddle') +
@@ -559,7 +562,8 @@ export class LightDial extends Control {
     this.label();
     this.paint();
   }
-  frac(k, val) { const c = this.rings[k]; return Math.max(0, Math.min(1, (val - c.min) / (c.max - c.min || 1))); }
+  // a ring can run backwards (reverse): Tone goes white to orange, left to right (Matt, 25 Nov)
+  frac(k, val) { const c = this.rings[k], f = Math.max(0, Math.min(1, (val - c.min) / (c.max - c.min || 1))); return c.reverse ? 1 - f : f; }
   label() {
     const c = this.rings[this.active];
     this.svg.setAttribute('aria-label', (this.opts.label || 'Light') + ' ' + c.title.toLowerCase() + (this.rings.second ? '. Press to switch' : ''));
@@ -605,7 +609,7 @@ export class LightDial extends Control {
     if (d > 180) d -= 360; if (d < -180) d += 360;
     this.grab.last = a;
     this.grab.moved += Math.abs(d);
-    this.grab.raw = Math.max(c.min, Math.min(c.max, this.grab.raw + (d / 270) * (c.max - c.min)));
+    this.grab.raw = Math.max(c.min, Math.min(c.max, this.grab.raw + (c.reverse ? -1 : 1) * (d / 270) * (c.max - c.min)));
     this.set(this.grab.raw);
   }
   up() { const g = this.grab; this.grab = null; this.kh.t = 15; if (g && g.moved < 3) this.press(); }
@@ -614,7 +618,7 @@ export class LightDial extends Control {
     const step = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key];
     if (step === undefined) return false;
     const c = this.rings[this.active];
-    if (isDown) { this.set(c.value + step * c.step); this.kh.t = 12.5; } else this.kh.t = 15;
+    if (isDown) { this.set(c.value + (c.reverse ? -1 : 1) * step * c.step); this.kh.t = 12.5; } else this.kh.t = 15; // keys turn it clockwise either way
     return true;
   }
   render(h) {

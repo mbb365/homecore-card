@@ -4078,7 +4078,7 @@ export function mountTestFocus(root, { config, getHass }) {
   const LIGHT_DIAL = {
     bright: () => ({ min: 0, max: 100, step: 1, tick: 2, major: 25, now: 0, labelOf: (v) => (v % 50 === 0 ? v + '%' : null), title: 'Brightness' }),
     colour: () => ({ min: 0, max: 360, step: 5, tick: 10, major: 3, tint: (h) => 'hsl(' + h + ',100%,55%)', labelOf: () => null, title: 'Colour' }),
-    warm: (id) => { const [kMin, kMax] = kelvinRange(id); return { min: kMin, max: kMax, step: 50, tick: 100, major: 5, tint: kelvinColour, labelOf: () => null, title: 'Tone' }; }, // no numbers on it (Matt, 25 Nov): the colours say it
+    warm: (id) => { const [kMin, kMax] = kelvinRange(id); return { min: kMin, max: kMax, step: 50, tick: 100, major: 5, tint: kelvinColour, labelOf: () => null, title: 'Tone', reverse: true }; }, // white on the left to orange on the right // no numbers on it (Matt, 25 Nov): the colours say it
   };
   function lightDial(el, opts, id, onSet) {
     const modes = id ? modesOf(id) : ['hs', 'color_temp'], colourOk = modes.some((m) => COLOUR_MODES.includes(m)), warmOk = modes.includes('color_temp');
@@ -4096,7 +4096,7 @@ export function mountTestFocus(root, { config, getHass }) {
     if (colourOk && warmOk) {
       const tCell = document.createElement('div'); tCell.className = 'tfPhysCell mini'; wrap.appendChild(tCell);
       // a rocker (Matt, 25 Nov: "make the toggle in the bottom corner be a rocker"): Colour at the front, White behind
-      const mini = new Rocker(tCell, { ...opts, label: 'Outer ring sets colour or tone', on: true, labels: ['Colour', 'Tone'], textSize: 9,
+      const mini = new Rocker(tCell, { ...opts, label: 'Outer ring sets colour or tone', on: true, labels: ['Colour', 'Tone'], textSize: 9, bare: true,
         onChange: (on) => { second = on ? 'colour' : 'warm'; dial.setSecond(ring(second)); } });
       ctls.push(mini);
     }
