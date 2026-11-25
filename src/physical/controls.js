@@ -449,3 +449,49 @@ export class Guarded extends Control {
     );
   }
 }
+
+/* 7 · Toggle switch: a lever on a collar, for anything that is on or off. Up (away from you) is On, down is Off,
+   printed on the plate; the lever flips with a little overshoot and the nut dips as it's pressed. */
+export class Toggle extends Control {
+  constructor(host, opts) {
+    super(host, opts);
+    this.on = !!opts.on;
+    this.labels = opts.labels || ['On', 'Off'];
+    this.base = [3.1, 200, 206]; this.lift = 24;
+    this.phi = this.spring(this.on ? -28 : 28, 0.3, 0.45);
+    this.press = this.spring(0, 0.3, 0.55);
+    this.svg.setAttribute('role', 'switch');
+    this.svg.setAttribute('aria-label', opts.label);
+    this.svg.setAttribute('aria-checked', this.on);
+    this.paint();
+  }
+  set(on) { this.on = on; this.phi.t = on ? -28 : 28; this.svg.setAttribute('aria-checked', on); this.onChange(on); }
+  show(on) { if (this.held || on === this.on) return; this.on = on; this.phi.t = on ? -28 : 28; this.svg.setAttribute('aria-checked', on); this.kick(); }
+  down(part) { if (part !== 'lever') return; this.press.t = 1; this.set(!this.on); }
+  up() { this.press.t = 0; }
+  key(e, isDown) {
+    if (e.key !== ' ' && e.key !== 'Enter') return false;
+    if (isDown && !e.repeat) this.down('lever'); else if (!isDown) this.up();
+    return true;
+  }
+  render(h) {
+    const v = this.v;
+    const [W, D] = this.size(64, 84), m = Math.min(W / 64, D / 84);
+    const grow = ([x, y, z]) => [x * m, y * m, 6 + (z - 6) * m]; // the lever grows with the plate, from its top
+    const dip = this.press.x * 1.2;
+    const plate = prism(roundRect(W, D, 16 * m), 0, 6);
+    const nut = move(prism(circle(10, 6).map(([x, y]) => [x, y]), 6, 9 - dip, false), (p) => grow(turnZ(30)(p)));
+    const collar = move(prism(circle(6.5, 36), 9 - dip, 12 - dip), grow);
+    const tilt = (p) => grow(shift(0, 0, 12 - dip)(turnX(this.phi.x)(p)));
+    const bat = move(prism(circle(2.3, 20), 0, 15), tilt);
+    const tip = move(prism(circle(4, 24), 14, 19), tilt);
+    const ly = D / 2 - 13 * m;
+    const label = (txt, y, sel) => surfText(v, [0, y, 6], txt, 6 * m, { part: 'lever', cls: sel ? 'sel' : '', w: 30 });
+    return (
+      shadow(v, plate, 0, h) + draw(v, plate) +
+      label(this.labels[0], -ly, this.on) + label(this.labels[1], ly, !this.on) +
+      shadow(v, tip, 6, h, facePath(v, plate, 1)) + shadow(v, bat, 6, h, facePath(v, plate, 1)) +
+      `<g data-part="lever">${draw(v, nut)}${draw(v, collar)}${draw(v, bat)}${draw(v, tip)}</g>`
+    );
+  }
+}

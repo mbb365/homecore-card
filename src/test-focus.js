@@ -11,13 +11,13 @@ import { createHouse, isMadeUp, solarHistory, PLANT_RANGE } from './house.js';
 import { ICONS as HC_ICONS, svg as hcSvg } from './hc-icons.js';
 import { mountWeatherBento } from './weather-bento.js';
 import { createCoverArt, coverKind } from './cover-art.js';
-import { PushButton, Rocker, Fader, Dial, Rotary, Guarded } from './physical/controls.js';
+import { PushButton, Rocker, Fader, Dial, Rotary, Guarded, Toggle } from './physical/controls.js';
 import { M, EASE, smoothD, gridLines, drawLine, stretchTo, closeDialog, toastBody, toastIn, toaster, springStep, squash, reduced } from './motion.js';
 
 const DENSITY_KEY = 'homecore-density';
 // Physical controls (Matt, 25 Nov 2026): line-drawn buttons, rockers, faders, dials, selectors and guarded switches in
 // the more-info space, on a switch in Settings → Appearance, with the angle they're seen from and whether they fill it
-const PHYS_KEY = 'homecore-physical', PHYS_VIEW_KEY = 'homecore-physical-view', PHYS_FIT_KEY = 'homecore-physical-fit';
+const PHYS_KEY = 'homecore-physical', PHYS_VIEW_KEY = 'homecore-physical-view', PHYS_FIT_KEY = 'homecore-physical-fit', PHYS_BINARY_KEY = 'homecore-physical-binary';
 
 const local = {
   get(k) { try { return localStorage.getItem(k); } catch (_e) { return null; } },
@@ -135,7 +135,7 @@ export function mountTestFocus(root, { config, getHass }) {
      Favourites and each area's card, laid out the same for everyone and not edited. Only what the house has */
   const overview = String(cfg.page || '').toLowerCase() === 'overview';
   let densityOn = local.get(DENSITY_KEY) === '1';
-  let physOn = local.get(PHYS_KEY) === '1', physView = local.get(PHYS_VIEW_KEY) || 'front', physFit = local.get(PHYS_FIT_KEY) || 'fill';
+  let physOn = local.get(PHYS_KEY) === '1', physView = local.get(PHYS_VIEW_KEY) || 'front', physFit = local.get(PHYS_FIT_KEY) || 'fill', physBinary = local.get(PHYS_BINARY_KEY) || 'toggle';
   let states = {};
   const callWS = (msg) => getHass()?.callWS(msg);
   const callService = (domain, service, data) => callWS({ type: 'call_service', domain, service, service_data: data });
@@ -193,22 +193,25 @@ export function mountTestFocus(root, { config, getHass }) {
       settingRow('Pad', 'What the Dual Axis Controller’s pad sets on its tile.', seg('dacPadChoice', 'Pad', 'data-dac-pad', [['temperature', 'Temperature'], ['colour', 'Colour']]), 'dacPadRow'));
     group('house').insertAdjacentHTML('beforeend', settingRow('Physical controls', 'Buttons, rockers, faders, dials and switches you press, drawn in lines, in the more info space.', '<button class="switch" type="button" role="switch" id="physToggle" aria-label="Physical controls"></button>') +
       settingRow('Angle', 'Where the physical controls are seen from.', seg('physViewChoice', 'Angle', 'data-phys-view', [['iso', 'Isometric'], ['three', 'Three-quarter'], ['tilted', 'Tilted'], ['front', 'Front'], ['flat', 'Flat']]), 'physViewRow') +
-      settingRow('Fit', 'Keep each control’s drawn size, or stretch it to fill the space.', seg('physFitChoice', 'Fit', 'data-phys-fit', [['drawn', 'As drawn'], ['fill', 'Fill']]), 'physFitRow'));
+      settingRow('Fit', 'Keep each control’s drawn size, or stretch it to fill the space.', seg('physFitChoice', 'Fit', 'data-phys-fit', [['drawn', 'As drawn'], ['fill', 'Fill']]), 'physFitRow') +
+      settingRow('On and off', 'How anything that is only on or off shows: switches, plugs, locks, simple lights and fans.', seg('physBinaryChoice', 'On and off', 'data-phys-binary', [['toggle', 'Toggle'], ['rocker', 'Rocker']]), 'physBinaryRow'));
     const showPhys = () => {
       const sw = $('physToggle');
       sw.classList.toggle('on', physOn); sw.setAttribute('aria-checked', String(physOn));
-      $('physViewRow').hidden = $('physFitRow').hidden = !physOn;
+      $('physViewRow').hidden = $('physFitRow').hidden = $('physBinaryRow').hidden = !physOn;
       view.querySelectorAll('[data-phys-view]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.physView === physView)));
       view.querySelectorAll('[data-phys-fit]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.physFit === physFit)));
+      view.querySelectorAll('[data-phys-binary]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.physBinary === physBinary)));
     };
     group('house').addEventListener('click', (ev) => {
-      const b = ev.target.closest('#physToggle,[data-phys-view],[data-phys-fit]');
+      const b = ev.target.closest('#physToggle,[data-phys-view],[data-phys-fit],[data-phys-binary]');
       if (!b) return;
       if (b.id === 'physToggle') { physOn = !physOn; local.set(PHYS_KEY, physOn ? '1' : '0'); physs.clear(); }
       if (b.dataset.physView) { physView = b.dataset.physView; local.set(PHYS_VIEW_KEY, physView); physs.forEach((p) => p.ctl.setCamera(physView)); }
       if (b.dataset.physFit) { physFit = b.dataset.physFit; local.set(PHYS_FIT_KEY, physFit); physs.forEach((p) => p.ctl.setFill(physFit === 'fill')); }
+      if (b.dataset.physBinary) { physBinary = b.dataset.physBinary; local.set(PHYS_BINARY_KEY, physBinary); physs.clear(); }
       showPhys();
-      if (b.id === 'physToggle') render();
+      if (b.id === 'physToggle' || b.dataset.physBinary) render();
     });
     showPhys();
     [rowOf($('hoursChoice')), rowOf($('wxStyleChoice'))].forEach((row) => row && group('weather').appendChild(row));
@@ -3806,7 +3809,7 @@ export function mountTestFocus(root, { config, getHass }) {
     const pop = popOf(id);
     // its pages: the drawn ones (a light's Colour and Control) or Control as it was, then Info
     const pages = [...(pop ? pop.pages.map((pg) => ({ name: pg.name, svg: pg.svg, tabs: pg.tabs, html: pg.space + '<div class="tfMoreCtl"' + lightAttrs(id).replace(' data-light', '') + '>' + pg.rows.filter(Boolean).join('') + '</div>' }))
-      : [{ name: 'Control', svg: TUNE_SVG, html: moreSpace(id) + (d === 'plant' ? plantProblems(id).join('') : '') + s.sections.filter(Boolean).join('') }]), { name: 'Info', svg: INFO_SVG, html: infoOf(id) }];
+      : [{ name: 'Control', svg: TUNE_SVG, ...(physKind(id) ? { tabs: physTabs() } : {}), html: moreSpace(id) + (physKind(id) ? physSlot(id) : '') + (d === 'plant' ? plantProblems(id).join('') : '') + s.sections.filter(Boolean).join('') }]), { name: 'Info', svg: INFO_SVG, html: infoOf(id) }];
     if (more && more.page == null) more.page = 0;
     if (more) more.pages = pages.length;
     const page = more?.page || 0, mode = more?.mode || '';
@@ -3856,7 +3859,6 @@ export function mountTestFocus(root, { config, getHass }) {
     return { sections: [], on, button, icon: iconFor(id) };
   }
   function moreSpace(id) {
-    if (physKind(id)) return physSlot(id);
     // a device whose visual controller is its data and action (Matt, 10 Nov: the curtains' drawing) fills the space with it
     const d = id.split('.')[0];
     // a device that is only its controls or a state word has no space (Matt, 10 Nov: Popup · Device, rule popup.space):
@@ -3911,15 +3913,26 @@ export function mountTestFocus(root, { config, getHass }) {
   function physKind(id) {
     if (!physOn || !states[id]) return null;
     const d = id.split('.')[0], a = states[id].attributes;
-    if (d === 'light') return modesOf(id).some((m) => m !== 'onoff') ? 'fader' : 'rocker';
+    // anything only on or off (Matt, 25 Nov: "a toggle for binary things too"): a toggle switch, or a rocker
+    const binary = physBinary === 'rocker' ? 'rocker' : 'toggle';
+    if (d === 'light') return modesOf(id).some((m) => m !== 'onoff') ? 'fader' : binary;
     if (d === 'climate') return Number.isFinite(Number(a.temperature)) ? 'dial' : null;
-    if (d === 'fan') return a.percentage != null ? 'rotary' : 'rocker';
-    if (d === 'switch' || d === 'input_boolean') return 'rocker';
+    if (d === 'fan') return a.percentage != null ? 'rotary' : binary;
+    if (['switch', 'input_boolean', 'lock', 'automation', 'siren'].includes(d)) return binary;
+    if (d === 'cover') return a.current_position == null ? binary : null;
     if (d === 'valve') return 'guarded';
     if (d === 'scene' || d === 'script' || d === 'button') return 'push';
     return null;
   }
   const physSlot = (id) => '<div class="tfMoreSpace tfPhys" data-phys="' + esc(id) + '"></div>';
+  // what On means for each: a lock is On when locked, a cover when it isn't closed
+  const isOnish = (id) => { const d = id.split('.')[0], st = states[id].state; return d === 'lock' ? st === 'locked' : d === 'cover' ? st !== 'closed' : st === 'on'; };
+  const binarySend = (d, id, on) => (d === 'lock' ? send('lock', on ? 'lock' : 'unlock', id) : d === 'cover' ? send('cover', on ? 'open_cover' : 'close_cover', id) : send(d, on ? 'turn_on' : 'turn_off', id)).catch(() => {});
+  const binaryLabels = (d) => (d === 'lock' ? ['Locked', 'Unlocked'] : d === 'cover' ? ['Open', 'Closed'] : ['On', 'Off']);
+  // Physical sits in the pill beside what was there (Matt, 25 Nov: "I should have all the options still"): the
+  // device's own space stays, and the control is one more view of it
+  const PHYS_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L6.04,7.5L12,10.85L17.96,7.5L12,4.15M5,15.91L11,19.29V12.58L5,9.21V15.91M19,15.91V9.21L13,12.58V19.29L19,15.91Z"/></svg>';
+  const physTabs = (tabs) => [{ name: 'Physical', svg: PHYS_SVG, mode: 'phys' }, ...(tabs?.length ? tabs : [{ name: 'Control', svg: TUNE_SVG, mode: '' }])];
   const fanStep = (pct) => (pct <= 0 ? 0 : pct <= 33 ? 1 : pct <= 67 ? 2 : 3);
   function physState(id, kind) {
     const st = states[id], a = st.attributes, on = st.state === 'on';
@@ -3927,7 +3940,7 @@ export function mountTestFocus(root, { config, getHass }) {
     if (kind === 'dial') return [Number(a.temperature), Number.isFinite(Number(a.current_temperature)) ? Number(a.current_temperature) : null];
     if (kind === 'rotary') return [on ? fanStep(Number(a.percentage) || 0) : 0];
     if (kind === 'guarded') return [st.state === 'open' || st.state === 'opening'];
-    return [on];
+    return [isOnish(id)];
   }
   function makePhys(id, kind) {
     const el = document.createElement('div');
@@ -3939,7 +3952,8 @@ export function mountTestFocus(root, { config, getHass }) {
     const later = (fn, ms = 260) => { p.quiet = performance.now() + 2500; clearTimeout(p.timer); p.timer = setTimeout(fn, ms); };
     const opts = { camera: physView, fill: physFit === 'fill', label: nameOf(id) };
     if (kind === 'push') p.ctl = new PushButton(el, { ...opts, onChange: () => send(d, d === 'button' ? 'press' : 'turn_on', id).catch(() => {}) });
-    if (kind === 'rocker') p.ctl = new Rocker(el, { ...opts, on: states[id].state === 'on', onChange: (on) => later(() => send(d, on ? 'turn_on' : 'turn_off', id).catch(() => {}), 0) });
+    if (kind === 'rocker') p.ctl = new Rocker(el, { ...opts, on: isOnish(id), onChange: (on) => later(() => binarySend(d, id, on), 0) });
+    if (kind === 'toggle') p.ctl = new Toggle(el, { ...opts, on: isOnish(id), labels: binaryLabels(d), onChange: (on) => later(() => binarySend(d, id, on), 0) });
     if (kind === 'fader') p.ctl = new Fader(el, { ...opts, value: physState(id, kind)[0], onChange: (l) => later(() => (Math.round(l * 100) ? send('light', 'turn_on', id, { brightness_pct: Math.round(l * 100) }) : send('light', 'turn_off', id)).catch(() => {})) });
     if (kind === 'dial') {
       const [t, now] = physState(id, kind), min = Number(a.min_temp), max = Number(a.max_temp);
@@ -3972,7 +3986,7 @@ export function mountTestFocus(root, { config, getHass }) {
   const tidyPhys = () => { physs.forEach((p, id) => { if (!p.el.isConnected) physs.delete(id); else syncPhys(p); }); };
   function popOf(id) {
     const r = popOfDrawn(id);
-    if (r && physKind(id)) { r.pages[0].space = physSlot(id); r.pages[0].tabs = []; delete r.infoButton; }
+    if (r && physKind(id)) { r.pages[0].space += physSlot(id); r.pages[0].tabs = physTabs(r.pages[0].tabs); }
     return r;
   }
   function popOfDrawn(id) {
@@ -4287,11 +4301,11 @@ export function mountTestFocus(root, { config, getHass }) {
       under.hidden = false;
       sheet.hidden = true;
       sheet.innerHTML = '';
-      more = { id, opener, back: null, frame: null, under: parked, at: Number(opener?.dataset?.at) || null };
+      more = { id, opener, back: null, frame: null, under: parked, at: Number(opener?.dataset?.at) || null, mode: physKind(id) ? 'phys' : '' };
       showMore();
       return;
     }
-    more = { id, opener: inside ? more.opener : opener, back: inside ? more : null, frame: inside ? more.frame || { wide: box.classList.contains('wide'), h: box.offsetHeight } : null, under: inside ? more.under : null, at: Number(opener?.dataset?.at) || null };
+    more = { id, opener: inside ? more.opener : opener, back: inside ? more : null, frame: inside ? more.frame || { wide: box.classList.contains('wide'), h: box.offsetHeight } : null, under: inside ? more.under : null, at: Number(opener?.dataset?.at) || null, mode: physKind(id) ? 'phys' : '' };
     showMore();
   }
   let turning = false; // a new page in the open popup (a device, or Back)

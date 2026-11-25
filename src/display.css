@@ -1364,3 +1364,5 @@ button.tfAreaIcon{cursor:pointer}
 .tfPhys .iso .st.sel{font-weight:600;fill:var(--phys-accent)}
 .tfPhys .iso [data-part]{cursor:pointer}
 .tfPhys .iso .deco{pointer-events:none}
+/* Physical is one view of the space: the device's own space shows otherwise (25 Nov: every option stays) */
+#app .tfMorePage[data-mode="phys"]>.tfMoreSpace:not(.tfPhys),#app .tfMorePage:not([data-mode="phys"])>.tfMoreSpace.tfPhys{display:none!important}
