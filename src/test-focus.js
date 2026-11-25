@@ -17,7 +17,7 @@ import { M, EASE, smoothD, gridLines, drawLine, stretchTo, closeDialog, toastBod
 const DENSITY_KEY = 'homecore-density';
 // Physical controls (Matt, 25 Nov 2026): line-drawn buttons, rockers, faders, dials, selectors and guarded switches in
 // the more-info space, on a switch in Settings → Appearance, with the angle they're seen from and whether they fill it
-const PHYS_KEY = 'homecore-physical', PHYS_VIEW_KEY = 'homecore-physical-view', PHYS_FIT_KEY = 'homecore-physical-fit', PHYS_BINARY_KEY = 'homecore-physical-binary';
+const PHYS_KEY = 'homecore-physical', PHYS_VIEW_KEY = 'homecore-physical-view', PHYS_FIT_KEY = 'homecore-physical-fit', PHYS_BINARY_KEY = 'homecore-physical-binary', PHYS_PREVIEW_AT_KEY = 'homecore-physical-preview-at';
 
 const local = {
   get(k) { try { return localStorage.getItem(k); } catch (_e) { return null; } },
@@ -225,6 +225,13 @@ export function mountTestFocus(root, { config, getHass }) {
       preview.classList.remove('in');
       setTimeout(() => { if (!preview.classList.contains('in')) preview.hidden = true; }, 220);
     };
+    // kept wholly on the screen, 8 in from its edges
+    function placePreview(x, y) {
+      const w = preview.offsetWidth, h = preview.offsetHeight;
+      preview.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, x)) + 'px';
+      preview.style.top = Math.max(8, Math.min(window.innerHeight - h - 8, y)) + 'px';
+      preview.classList.add('placed');
+    }
     function showPreview(rowEl) {
       const app = root.querySelector('#app');
       if (!app) return;
@@ -234,11 +241,31 @@ export function mountTestFocus(root, { config, getHass }) {
         preview.hidden = true;
         preview.setAttribute('role', 'dialog');
         preview.setAttribute('aria-label', 'Physical controls preview');
-        preview.innerHTML = '<div class="tfPhysPreviewHead"><span class="activityTitle">Preview</span><button class="tfBack" type="button" data-preview-close aria-label="Close preview">' + CLOSE + '</button></div>' +
+        preview.innerHTML = '<div class="tfPhysPreviewHead" title="Drag to move"><span class="tfPhysGrip" aria-hidden="true"></span><span class="activityTitle">Preview</span><button class="tfBack" type="button" data-preview-close aria-label="Close preview">' + CLOSE + '</button></div>' +
           '<div class="tfPhysPreviewRow"></div><div class="tfPhysPreviewNote">Off: popups show their usual controls.</div>';
         app.appendChild(preview);
         preview.querySelector('[data-preview-close]').addEventListener('click', hidePreview);
+        // dragged by its head anywhere on the screen, so it never sits over the rows being changed (Matt, 25 Nov);
+        // where it's left is remembered
+        const head = preview.querySelector('.tfPhysPreviewHead');
+        head.addEventListener('pointerdown', (ev) => {
+          if (ev.button > 0 || ev.target.closest('button')) return;
+          ev.preventDefault();
+          const r = preview.getBoundingClientRect(), dx = ev.clientX - r.left, dy = ev.clientY - r.top;
+          try { head.setPointerCapture(ev.pointerId); } catch {}
+          preview.classList.add('dragging');
+          const move = (e) => placePreview(e.clientX - dx, e.clientY - dy);
+          const up = () => {
+            head.removeEventListener('pointermove', move); head.removeEventListener('pointerup', up); head.removeEventListener('pointercancel', up);
+            preview.classList.remove('dragging');
+            const at = preview.getBoundingClientRect();
+            local.set(PHYS_PREVIEW_AT_KEY, JSON.stringify([Math.round(at.left), Math.round(at.top)]));
+          };
+          head.addEventListener('pointermove', move); head.addEventListener('pointerup', up); head.addEventListener('pointercancel', up);
+        });
+        window.addEventListener('resize', () => { if (preview.classList.contains('placed')) { const r = preview.getBoundingClientRect(); placePreview(r.left, r.top); } });
       }
+      const saved = (() => { try { return JSON.parse(local.get(PHYS_PREVIEW_AT_KEY) || 'null'); } catch { return null; } })();
       const row = preview.querySelector('.tfPhysPreviewRow');
       if (preview.dataset.binary !== physBinary) {
         // made again when the on and off control changes; otherwise the same ones move, so a change glides
@@ -253,10 +280,10 @@ export function mountTestFocus(root, { config, getHass }) {
         ];
       } else preview.ctls.forEach((c) => { c.setCamera(physView); c.setFill(physFit === 'fill'); });
       preview.classList.toggle('off', !physOn);
-      if (preview.hidden) { preview.hidden = false; void preview.offsetWidth; } // laid out first, so it rises in
+      if (preview.hidden) { preview.hidden = false; if (saved) placePreview(saved[0], saved[1]); void preview.offsetWidth; } // laid out first, so it rises in
       preview.classList.add('in');
       // the row being changed stays in sight above it
-      const over = rowEl ? rowEl.getBoundingClientRect().bottom - (preview.getBoundingClientRect().top - 16) : 0;
+      const over = rowEl && !preview.classList.contains('placed') ? rowEl.getBoundingClientRect().bottom - (preview.getBoundingClientRect().top - 16) : 0;
       if (over > 0) rowEl.scrollIntoView({ block: 'center', behavior: reduced() ? 'instant' : 'smooth' });
     }
     // leaving Settings takes it away

@@ -1379,3 +1379,11 @@ button.tfAreaIcon{cursor:pointer}
 #app .tfPhysPreview.off .tfPhysPreviewRow{opacity:.3;filter:grayscale(1);pointer-events:none}
 #app .tfPhysPreview.off .tfPhysPreviewNote{display:block}
 @media(prefers-reduced-motion:reduce){#app .tfPhysPreview{transition:none}}
+/* moved by its head (25 Nov): once placed it keeps its own left and top */
+#app .tfPhysPreview.placed{bottom:auto;transform:translateY(16px)}
+#app .tfPhysPreview.placed.in{transform:none}
+#app .tfPhysPreview.dragging{transition:none;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.tfPhysPreviewHead{cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none}
+.tfPhysPreview.dragging .tfPhysPreviewHead{cursor:grabbing}
+.tfPhysPreviewHead .activityTitle{flex:1}
+.tfPhysGrip{width:10px;height:16px;flex:none;margin-left:-4px;background:radial-gradient(circle,var(--muted) 1.3px,transparent 1.6px) 0 0/5px 5.33px}
