@@ -1400,3 +1400,4 @@ button.tfAreaIcon{cursor:pointer}
 .tfPhysLightDial{position:absolute;inset:0}
 .tfPhysLightDial>.tfPhysCell.dial{position:absolute;inset:0}
 .tfPhysLightDial>.tfPhysCell.mini{position:absolute;right:0;bottom:0;width:27%;aspect-ratio:1/1;min-width:84px}
+.tfPhys .iso .dim{opacity:.38}

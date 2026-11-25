@@ -11,7 +11,7 @@ import { createHouse, isMadeUp, solarHistory, PLANT_RANGE } from './house.js';
 import { ICONS as HC_ICONS, svg as hcSvg } from './hc-icons.js';
 import { mountWeatherBento } from './weather-bento.js';
 import { createCoverArt, coverKind } from './cover-art.js';
-import { PushButton, Rocker, Fader, Dial, Rotary, Guarded, Toggle } from './physical/controls.js';
+import { PushButton, Rocker, Fader, Dial, Rotary, Guarded, Toggle, LightDial } from './physical/controls.js';
 import { M, EASE, smoothD, gridLines, drawLine, stretchTo, closeDialog, toastBody, toastIn, toaster, springStep, squash, reduced } from './motion.js';
 
 const DENSITY_KEY = 'homecore-density';
@@ -4083,24 +4083,24 @@ export function mountTestFocus(root, { config, getHass }) {
   function lightDial(el, opts, id, onSet) {
     const modes = id ? modesOf(id) : ['hs', 'color_temp'], colourOk = modes.some((m) => COLOUR_MODES.includes(m)), warmOk = modes.includes('color_temp');
     const now = (k) => { if (!id) return { bright: 64, colour: 30, warm: 3000 }[k]; const [b, , hue, kel] = lightPhys(id); return k === 'bright' ? Math.round(b * 100) : k === 'colour' ? hue ?? 30 : kel ?? Math.round(kelvinRange(id).reduce((x, y) => x + y) / 2); };
-    let second = colourOk ? 'colour' : warmOk ? 'warm' : null, mode = 'bright';
-    const cfg = (k) => ({ ...LIGHT_DIAL[k](id), label: (opts.label || 'Light') + ' ' + LIGHT_DIAL[k](id).title.toLowerCase() });
+    let second = colourOk ? 'colour' : warmOk ? 'warm' : null;
+    const ring = (k) => ({ ...LIGHT_DIAL[k](id), value: now(k) });
     const wrap = document.createElement('div');
     wrap.className = 'tfPhysLightDial';
     el.appendChild(wrap);
     const dCell = document.createElement('div'); dCell.className = 'tfPhysCell dial'; wrap.appendChild(dCell);
-    const dial = new Dial(dCell, { ...opts, ...cfg('bright'), value: now('bright'),
-      onChange: (v) => onSet(mode, v),
-      onPress: () => { if (!second) return; mode = mode === 'bright' ? second : 'bright'; dial.setConfig(cfg(mode), now(mode)); } });
+    // two rings (Matt, 25 Nov): brightness inside, colour or warmth outside; the knob turns the lit one, a tap swaps
+    const dial = new LightDial(dCell, { ...opts, bright: ring('bright'), second: second ? ring(second) : null,
+      onChange: (k, v) => onSet(k === 'bright' ? 'bright' : second, v) });
     const ctls = [dial];
     if (colourOk && warmOk) {
       const tCell = document.createElement('div'); tCell.className = 'tfPhysCell mini'; wrap.appendChild(tCell);
       // a rocker (Matt, 25 Nov: "make the toggle in the bottom corner be a rocker"): Colour at the front, White behind
-      const mini = new Rocker(tCell, { ...opts, label: 'Dial sets colour or white', on: true, labels: ['Colour', 'White'], textSize: 9,
-        onChange: (on) => { second = on ? 'colour' : 'warm'; if (mode !== 'bright') { mode = second; dial.setConfig(cfg(mode), now(mode)); } } });
+      const mini = new Rocker(tCell, { ...opts, label: 'Outer ring sets colour or white', on: true, labels: ['Colour', 'White'], textSize: 9,
+        onChange: (on) => { second = on ? 'colour' : 'warm'; dial.setSecond(ring(second)); } });
       ctls.push(mini);
     }
-    return { ctls, sync: () => { if (id) dial.show(now(mode)); } };
+    return { ctls, sync: () => { if (!id) return; dial.show('bright', now('bright')); if (second) dial.show('second', now(second)); } };
   }
   const lightSend = (id, k, v) => (k === 'bright' ? (v ? send('light', 'turn_on', id, { brightness_pct: v }) : send('light', 'turn_off', id))
     : k === 'colour' ? send('light', 'turn_on', id, { hs_color: [v % 360, states[id].attributes.hs_color?.[1] || 100] }) : send('light', 'turn_on', id, { color_temp_kelvin: v }));

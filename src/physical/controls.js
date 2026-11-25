@@ -539,3 +539,127 @@ export class Toggle extends Control {
     );
   }
 }
+
+/* 8 · Light dial (Matt, 25 Nov: "2 rings. The inside ring will be to do the brightness, and the outside ring would be
+   the color or temperature"): one knob over two printed scales. The inner ring is brightness, lit up to its level;
+   the outer is colour (the spectrum) or warmth (warm to cool), with a marker at its value. The knob turns the ring
+   that's lit; a tap (no turn) swings it to the other ring, which brightens while the first dims. The knob's top shows
+   the light's colour, and the lit ring's name is printed in the gap facing you.
+   opts.bright and opts.second: { min, max, step, tick, major, value, title, tint?, labelOf? }; second may be null */
+export class LightDial extends Control {
+  constructor(host, opts) {
+    super(host, opts);
+    this.rings = { bright: { ...opts.bright }, second: opts.second ? { ...opts.second } : null };
+    this.active = 'bright';
+    this.vals = { bright: this.spring(this.rings.bright.value, 0.35, 0.5), second: this.spring(this.rings.second?.value ?? 0, 0.35, 0.5) };
+    this.knobF = this.spring(this.frac('bright', this.rings.bright.value), 0.3, 0.55);
+    this.kh = this.spring(15, 0.3, 0.55);
+    this.base = [2.6, 200, 194]; this.lift = 22;
+    this.svg.setAttribute('role', 'slider');
+    this.label();
+    this.paint();
+  }
+  frac(k, val) { const c = this.rings[k]; return Math.max(0, Math.min(1, (val - c.min) / (c.max - c.min || 1))); }
+  label() {
+    const c = this.rings[this.active];
+    this.svg.setAttribute('aria-label', (this.opts.label || 'Light') + ' ' + c.title.toLowerCase() + (this.rings.second ? '. Press to switch' : ''));
+    this.svg.setAttribute('aria-valuenow', c.value);
+  }
+  // camera angle of a fraction round the scale: the gap faces you, min on the left, max on the right
+  angF(f) { return 135 + f * 270 - this.yaw.x; }
+  set(val) {
+    const c = this.rings[this.active];
+    const snapped = Math.max(c.min, Math.min(c.max, Math.round(val / c.step) * c.step));
+    this.vals[this.active].t = snapped;
+    this.knobF.t = this.frac(this.active, snapped);
+    if (snapped !== c.value) { c.value = snapped; this.label(); this.onChange(this.active, snapped); }
+  }
+  press() {
+    if (!this.rings.second) return;
+    this.active = this.active === 'bright' ? 'second' : 'bright';
+    this.knobF.t = this.frac(this.active, this.rings[this.active].value);
+    this.label();
+    this.opts.onPress?.(this.active);
+  }
+  // the outer ring's kind changed (the Colour / White rocker): its scale and value swap in place
+  setSecond(cfg) {
+    this.rings.second = { ...cfg };
+    this.vals.second.x = this.vals.second.t = cfg.value;
+    if (this.active === 'second') this.knobF.t = this.frac('second', cfg.value);
+    this.label();
+    this.kick();
+  }
+  show(k, val) {
+    if (this.held || !this.rings[k] || val == null) return;
+    this.rings[k].value = val;
+    this.vals[k].t = val;
+    if (k === this.active) { this.knobF.t = this.frac(k, val); this.label(); }
+    this.kick();
+  }
+  angleAt(p) { const [x, y] = this.v.ground(p[0], p[1], 7 + this.kh.x); return (Math.atan2(y, x) * 180) / Math.PI; }
+  down(part, p) { this.grab = { last: this.angleAt(p), raw: this.rings[this.active].value, moved: 0 }; this.kh.t = 11.5; }
+  drag(p) {
+    if (!this.grab) return;
+    const a = this.angleAt(p), c = this.rings[this.active];
+    let d = a - this.grab.last;
+    if (d > 180) d -= 360; if (d < -180) d += 360;
+    this.grab.last = a;
+    this.grab.moved += Math.abs(d);
+    this.grab.raw = Math.max(c.min, Math.min(c.max, this.grab.raw + (d / 270) * (c.max - c.min)));
+    this.set(this.grab.raw);
+  }
+  up() { const g = this.grab; this.grab = null; this.kh.t = 15; if (g && g.moved < 3) this.press(); }
+  key(e, isDown) {
+    if (e.key === 'Enter' || e.key === ' ') { if (isDown && !e.repeat) this.press(); return true; }
+    const step = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key];
+    if (step === undefined) return false;
+    const c = this.rings[this.active];
+    if (isDown) { this.set(c.value + step * c.step); this.kh.t = 12.5; } else this.kh.t = 15;
+    return true;
+  }
+  render(h) {
+    const v = this.v, top = 7 + this.kh.x;
+    const [W, D] = this.size(100, 100), m = Math.min(W, D) / 100; // round: grows to the room's shorter side
+    const at = (r, t, z) => [r * m * Math.cos(t), r * m * Math.sin(t), z];
+    const plinth = prism(circle(50 * m, 80), 0, 7);
+    const knob = prism(circle(19 * m, 64), 7, top);
+    const B = this.rings.bright, S = this.rings.second, bOn = this.active === 'bright';
+    // inner ring: brightness, lit lime up to its level
+    let inner = '';
+    const bv = this.vals.bright.x, bn = Math.round((B.max - B.min) / B.tick);
+    for (let k = 0; k <= bn; k++) {
+      const val = B.min + k * B.tick, t = rad(this.angF(this.frac('bright', val))), major = k % B.major === 0;
+      inner += seg(v, at(24, t, 7), at(major ? 29.5 : 28, t, 7), val <= bv + 1e-6 && bv > B.min ? 'accent' : 'edge');
+    }
+    // outer ring: colour or warmth in its own colours, a marker at its value
+    let outer = '';
+    if (S) {
+      const sn = Math.round((S.max - S.min) / S.tick);
+      for (let k = 0; k <= sn; k++) {
+        const val = S.min + k * S.tick, t = rad(this.angF(this.frac('second', val))), major = k % S.major === 0;
+        outer += seg(v, at(33, t, 7), at(38, t, 7), S.tint ? 'edge tint" style="stroke:' + S.tint(val) : 'edge');
+        const lab = major && S.labelOf ? S.labelOf(val) : null;
+        if (lab != null && lab !== '') outer += surfText(v, at(43.5, t, 7), lab, 3.6 * m);
+      }
+      const mt = rad(this.angF(this.frac('second', this.vals.second.x)));
+      outer += seg(v, at(31.5, mt, 7), at(40, mt, 7), 'edge pointer');
+    }
+    const dim = (s, on) => (on ? s : '<g class="dim">' + s + '</g>');
+    const title = surfText(v, at(38, rad(90 - this.yaw.x), 7), (bOn ? B : S || B).title, 4.4 * m, { cls: 'sel' });
+    let knurl = '';
+    const a = this.angF(this.knobF.x);
+    for (let j = 0; j < 40; j++) {
+      const t = rad(a + j * 9), c = Math.cos(t), s = Math.sin(t), r = 19 * m;
+      if (c * v.V[0] + s * v.V[1] > 0.12 * Math.hypot(v.V[0], v.V[1])) knurl += seg(v, [r * c, r * s, 9], [r * c, r * s, top - 2.2]);
+    }
+    const t = rad(a), ring = circle(15.5 * m, 64).map(([x, y]) => [x, y, top]);
+    const swatch = S?.tint ? `<path class="swatch" style="fill:${S.tint(S.value)}" d="${pathOf(circle(6.5 * m, 40).map(([x, y]) => v.p([x, y, top])))}"/>` : '';
+    return (
+      shadow(v, plinth, 0, h) + draw(v, plinth, 'knob') +
+      `<g class="deco">${dim(inner, bOn)}${dim(outer, !bOn)}${title}</g>` +
+      shadow(v, knob, 7, h, facePath(v, plinth, 1)) +
+      draw(v, knob, 'knob') +
+      `<g class="deco">${knurl}${loop(v, ring)}${swatch}${seg(v, [(swatch ? 8 : 4) * m * Math.cos(t), (swatch ? 8 : 4) * m * Math.sin(t), top], [13 * m * Math.cos(t), 13 * m * Math.sin(t), top], 'edge pointer')}</g>`
+    );
+  }
+}
