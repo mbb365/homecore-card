@@ -650,8 +650,8 @@ button.tfAreaIcon{cursor:pointer}
 .tfBoardMenu .tfWidth .tfHeightTabs button{white-space:nowrap}
 /* what each height shows (Matt, 2 Nov): a smaller one shows fewer of the same things, never part of one. At XS
    (one row, 60) every element is one tile: 10 in, its icon, name and line, no title and no controls */
-#app.tfBoard .tfBoardItem:is(.tfDash-favs,.tfDash-act)>.activityRows{grid-auto-rows:var(--fill-row,60px);margin-top:0}
-#app.tfBoard .tfBoardItem:is(.tfDash-favs,.tfDash-act)>.activityRows>.activityRow{min-height:0;height:var(--fill-row,60px);box-sizing:border-box}
+#app.tfBoard .tfBoardItem:is(.tfDash-favs,.tfDash-act)>.activityRows{grid-auto-rows:60px;row-gap:var(--fill-gap,0px);margin-top:0}
+#app.tfBoard .tfBoardItem:is(.tfDash-favs,.tfDash-act)>.activityRows>.activityRow{min-height:0;height:60px;box-sizing:border-box}
 #app.tfBoard .tfBoardItem.tfDashCard[data-rows="1"]{padding:0;gap:0}
 #app.tfBoard .tfBoardItem.tfDashCard[data-rows="1"]>.activityHeader,#app.tfBoard .tfBoardItem.tfDashCard[data-rows="1"]>.tfDashGraph{display:none}
 #app.tfBoard .tfBoardItem.tfDashCard[data-rows="1"]>.activityRows{margin:0;flex:1}
@@ -680,22 +680,21 @@ button.tfAreaIcon{cursor:pointer}
 #app.tfBoard .tfRoomTile[data-rows="1"] :is(.tfRoomReading,.tfRoomDevices),#app.tfBoard .tfRoomTile[data-rows="2"] .tfRoomDevices{display:none}
 #app.tfBoard .tfRoomTile:is([data-rows="4"],[data-rows="5"]) .tfActionHead .activityRowMeta{display:none}
 #app.tfBoard .tfRoomTile:is([data-rows="4"],[data-rows="5"]) .tfRoomSub{display:block}
-/* narrow (one column; Matt, 11 Nov): all four devices, two by two; at M the reading moves into the head to make room,
-   at L and XL it stays big above them */
-#app.tfBoard .tfRoomTile[data-cols="1"]:is([data-rows="3"],[data-rows="4"],[data-rows="5"]) .tfRoomDevices{display:grid;grid-template-columns:repeat(2,max-content)}
-#app.tfBoard .tfRoomTile[data-cols="1"][data-rows="3"]:has(.tfRoomDevices) .tfRoomInline{display:inline}
-#app.tfBoard .tfRoomTile[data-cols="1"][data-rows="3"]:has(.tfRoomDevices) .tfRoomReading{display:none}
-/* at L and XL the reading sits at one level on every room tile, where it is with four devices (Matt, 11 Nov): the
-   devices' room is always two rows tall, one or two rows of buttons at its top */
-#app.tfBoard .tfRoomTile[data-cols="1"]:is([data-rows="4"],[data-rows="5"]) .tfRoomDevices{min-height:calc(2 * var(--chip-size) + 12px);align-content:start}
+/* narrow (one column): all four devices in one row along the foot, 12 apart, as the Figma draws them (Width=1, Size=M,
+   L, XL: 954:6202, 954:6233, 954:6265; the demo's since 18 Nov), the reading big above them. A card too narrow for four
+   in a row (a phone's) takes them onto a second */
+#app.tfBoard .tfRoomTile[data-cols="1"]:is([data-rows="3"],[data-rows="4"],[data-rows="5"]) .tfRoomDevices{display:flex;flex-wrap:wrap}
 /* a room's tile wide (2 columns) or really wide (3+; Matt, 6 Nov; Figma 954:6297): its devices as heads (icon, name,
    state) in place of buttons, wide two by two, really wide in one row. XS the buttons on the right of the head; wide S
    (its first two) and M, and really wide S, have the reading in the head */
-.tfRoomHeads{display:none;gap:12px 16px}
-.tfRoomDev{position:relative;isolation:isolate;display:flex;align-items:center;gap:12px;min-width:0;cursor:pointer}
-/* a device's row lights on hover, as the open area's tiles did: reaching 10 past its sides and halfway into the gaps,
-   so the row's layout doesn't move */
-.tfRoomDev::before{content:"";position:absolute;z-index:-1;inset:-6px -10px;border-radius:var(--r-tile);pointer-events:none;transition:background .15s ease,box-shadow .15s ease}
+/* each device a tile, as Favourites' are (the demo's since 18 Nov; Figma Row 5:121): 60 tall, 10 round its icon, clear
+   until it's hovered; the tiles touch, 10 out from the card's inset so their icons line up with the room's, corner 20
+   (they nest). A tile never changes size (Matt, 25 Nov) */
+.tfRoomHeads{display:none;gap:0;margin:auto -10px -10px}
+.tfRoomDev{position:relative;isolation:isolate;display:flex;align-items:center;gap:12px;min-width:0;height:60px;padding:10px;box-sizing:border-box;border-radius:20px;cursor:pointer}
+.tfRoomDev::before{content:"";position:absolute;z-index:-1;inset:0;border-radius:inherit;pointer-events:none;transition:background .15s ease,box-shadow .15s ease}
+/* a wide Small card: its head, 10, then its one row of tiles */
+#app.tfBoard .tfRoomTile:not([data-cols="1"])[data-rows="2"]{gap:10px}
 @media (hover:hover){.tfRoomDev:hover::before{background:var(--tile);box-shadow:inset 0 0 0 .2px var(--line),inset 0 -.4px 0 var(--line)}}
 .tfRoomDevName{padding:0;border:0;background:none;color:inherit;font:inherit;text-align:start;cursor:pointer}
 .tfRoomDev .tfIcon{border:0;padding:0;background:var(--hc-icon);color:var(--hc-icon-ink);cursor:pointer}

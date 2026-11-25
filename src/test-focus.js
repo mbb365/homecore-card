@@ -1816,8 +1816,9 @@ export function mountTestFocus(root, { config, getHass }) {
     return Math.max(1, Math.min(most, h));
   };
   const TILE_ROWS = 2, DAC_CHROME = 90; // a tile's padding (18 and 18), head (40) and gap (14) around the controller's pad
-  // a card of tiles fills its height (Matt, 2 Nov): as many rows as fit at 56 or taller, every row the same height
-  const FILL_MIN = 56;
+  // a card of tiles fills its height with as many whole XS tiles (60, Figma Tile 4:63) as fit; the tile never changes
+  // size, only the space between the rows does (Matt, 25 Nov: "the tile is a set size")
+  const FILL_MIN = 60;
   const boardName = (key) => BOARD_NAMES[key] || (key.startsWith('room:') ? areaRooms.find((r) => 'room:' + r.id === key)?.name || 'Area' : nameOf(key));
   const AREA_FOLDED = 128;
   let editing = false, drag = null, boardOpen = null, fitQueued = false, lastPlaced = new Map(), boardRows = 0, boardTop = 0;
@@ -2064,7 +2065,7 @@ export function mountTestFocus(root, { config, getHass }) {
       // measured to the list's real top, rounded down: whole pixels (offsetTop) overshot by a fraction and made it scroll
       const below = list.getBoundingClientRect().top - card.getBoundingClientRect().top;
       const space = p.rows === 1 ? p.h : Math.floor(p.h - below - parseFloat(getComputedStyle(card).paddingBottom)), n = Math.max(1, Math.floor(space / FILL_MIN));
-      list.style.setProperty('--fill-row', (space / n).toFixed(2) + 'px');
+      list.style.setProperty('--fill-gap', (n > 1 ? (space - n * FILL_MIN) / (n - 1) : 0).toFixed(2) + 'px');
       list.style.maxHeight = space + 'px';
     });
     boardRows = Math.max(0, ...[...placed.values()].map((p) => p.row + p.rows));

@@ -186,6 +186,10 @@ button,input{font:inherit}
   --glow-color-30:hsl(199deg 97% 48% / 30%);
   --glow-color-20:hsl(199deg 97% 48% / 20%);
   --glow-color-10:hsl(199deg 97% 48% / 10%)}
+/* a folded area shows only its folded layer (icon, name, main, device icons); the area card shows once it is open.
+   Lost in the v0.1.0 style prune, as the demo's rule also names .addPanel (Matt, 25 Nov: a bug) */
+.hcAreaPanel:not(.active) .panelExpanded{opacity:0;filter:blur(8px);pointer-events:none}
+.hcAreaPanel:not(.active) .panelCollapsed{opacity:1;filter:blur(0)}
 .hcAreaPanel.active .panelExpanded{opacity:1;filter:blur(0);pointer-events:auto}
 .hcAreaPanel.active .panelCollapsed{opacity:0;filter:blur(6.4px);pointer-events:none}
 .panelExpanded{position:relative;z-index:4;width:100%;height:100%;min-width:0;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;transition:opacity .22s ease,filter .22s ease}
@@ -199,6 +203,8 @@ button,input{font:inherit}
   .hcAreaGallery{overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:3.2px}
   .hcAreaPanel,.hcAreaPanel.active{height:288px;flex:0 0 min(68.8vw,544px);min-width:min(68.8vw,544px);scroll-snap-align:start}
   .panelCollapsed{display:none}
+  /* a swipe card is full width, so every area shows its area card, open or not (as the demo) */
+  .hcAreaPanel:not(.active) .panelExpanded{opacity:1;filter:none;pointer-events:auto}
 }
 
 .activityHeader{display:flex;align-items:center;gap:var(--inset);margin-bottom:var(--inset)}
