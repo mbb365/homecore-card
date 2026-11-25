@@ -166,7 +166,8 @@ export function mountTestFocus(root, { config, getHass }) {
     const view = $('settingsView');
     view.querySelector('.settingsTitle').textContent = 'HomeCore settings'; // (Matt, 9 Nov)
     // one tab each (Matt, 27 Oct); the tab names the section, so the sections have no heading of their own
-    const tabs = [['look', 'Appearance'], ['lights', 'Lights'], ['sources', 'Sources'], ['sums', 'Summaries']];
+    // Physical controls has its own tab (Matt, 25 Nov: "move the controls for this to its own tab in the settings")
+    const tabs = [['look', 'Appearance'], ['lights', 'Lights'], ['sources', 'Sources'], ['sums', 'Summaries'], ['phys', 'Physical']];
     const tabPane = (k, html) => '<div class="houseTab' + (k === 'look' ? ' active' : '') + '" data-house-pane="' + k + '"><section class="card">' + html + '</section></div>';
     view.querySelector('.rubberTabs').insertAdjacentHTML('afterend', '<div class="settingsPane active" id="housePane">' +
       '<div class="tabs rubberTabs houseTabs"><div class="rubberIndicator" aria-hidden="true"></div>' +
@@ -179,6 +180,7 @@ export function mountTestFocus(root, { config, getHass }) {
         '<p class="note tfTableNote">This is an example of a table. It is not how to control features in lights.</p>' +
         '<div class="metaTableWrap"><table class="metaTable tfLightTable"><thead><tr><th>Light</th><th>Room</th><th>Now</th><th class="metaSwitchCol">Favourite</th><th>Tile</th><th>Pad</th></tr></thead>' +
         '<tbody id="lightRows"></tbody></table></div><div class="tfLightCards" id="lightCards"></div>') +
+      tabPane('phys', '<div class="toggleList" data-phys-list></div>') +
       tabPane('sources', '<div class="toggleList">' +
         SOURCES.map(([k, t, s]) => settingRow(t, s, '<select class="settingsSelect" data-source="' + k + '" aria-label="' + t + '"></select>')).join('') + '</div>') +
       tabPane('sums', '<div class="toggleList">' +
@@ -191,7 +193,8 @@ export function mountTestFocus(root, { config, getHass }) {
     [rowOf($('moreInfoChoice')), rowOf($('namesChoice'))].forEach((row) => row && group('house').appendChild(row));
     group('house').insertAdjacentHTML('beforeend', settingRow('Lights', 'How lights show on the house page.', seg('lightsChoice', 'Lights', 'data-lights', [['tile', 'HomeCore tile'], ['dac', 'Dual Axis Controller']]), 'lightsRow') +
       settingRow('Pad', 'What the Dual Axis Controller’s pad sets on its tile.', seg('dacPadChoice', 'Pad', 'data-dac-pad', [['temperature', 'Temperature'], ['colour', 'Colour']]), 'dacPadRow'));
-    group('house').insertAdjacentHTML('beforeend', settingRow('Physical controls', 'Buttons, rockers, faders, dials and switches you press, drawn in lines, in the more info space.', '<button class="switch" type="button" role="switch" id="physToggle" aria-label="Physical controls"></button>') +
+    const physList = view.querySelector('[data-phys-list]');
+    physList.insertAdjacentHTML('beforeend', settingRow('Physical controls', 'Buttons, rockers, faders, dials and switches you press, drawn in lines, in the more info space.', '<button class="switch" type="button" role="switch" id="physToggle" aria-label="Physical controls"></button>') +
       settingRow('Angle', 'Where the physical controls are seen from.', seg('physViewChoice', 'Angle', 'data-phys-view', [['iso', 'Isometric'], ['three', 'Three-quarter'], ['tilted', 'Tilted'], ['front', 'Front'], ['flat', 'Flat']]), 'physViewRow') +
       settingRow('Fit', 'Keep each control’s drawn size, or stretch it to fill the space.', seg('physFitChoice', 'Fit', 'data-phys-fit', [['drawn', 'As drawn'], ['fill', 'Fill']]), 'physFitRow') +
       settingRow('On and off', 'How anything that is only on or off shows: switches, plugs, locks, simple lights and fans.', seg('physBinaryChoice', 'On and off', 'data-phys-binary', [['toggle', 'Toggle'], ['rocker', 'Rocker']]), 'physBinaryRow'));
@@ -203,7 +206,7 @@ export function mountTestFocus(root, { config, getHass }) {
       view.querySelectorAll('[data-phys-fit]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.physFit === physFit)));
       view.querySelectorAll('[data-phys-binary]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.physBinary === physBinary)));
     };
-    group('house').addEventListener('click', (ev) => {
+    physList.addEventListener('click', (ev) => {
       const b = ev.target.closest('#physToggle,[data-phys-view],[data-phys-fit],[data-phys-binary]');
       if (!b) return;
       if (b.id === 'physToggle') { physOn = !physOn; local.set(PHYS_KEY, physOn ? '1' : '0'); physs.clear(); }
