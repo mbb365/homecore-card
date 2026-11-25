@@ -68,10 +68,10 @@ function Wm(o, { setLight: n, fullscreenSupported: i, toggleFullscreen: l }) {
     K.innerHTML = qm(K.dataset.icon);
   });
   const g = { home: f("homeView"), settings: f("settingsView") }, v = f("homeNav"), D = f("settingsNav");
-  function L(K) {
+  function T(K) {
     Object.entries(g).forEach(([tt, z]) => z.classList.toggle("active", tt === K)), v.classList.toggle("active", K === "home"), D.classList.toggle("active", K === "settings");
   }
-  v.addEventListener("click", () => L("home")), D.addEventListener("click", () => L("settings")), f("settingsBack").addEventListener("click", () => L("home"));
+  v.addEventListener("click", () => T("home")), D.addEventListener("click", () => T("settings")), f("settingsBack").addEventListener("click", () => T("home"));
   function _(K) {
     const tt = K === "light";
     o.querySelectorAll(".themeBtn").forEach((z) => z.classList.toggle("active", z.dataset.theme === K)), b.classList.toggle("light", tt), n(tt);
@@ -86,7 +86,7 @@ function Wm(o, { setLight: n, fullscreenSupported: i, toggleFullscreen: l }) {
     const tt = f("toast");
     tt && (tt.textContent = K, tt.classList.add("show"), clearTimeout(O), O = setTimeout(() => tt.classList.remove("show"), 2600));
   }
-  return { showView: L, toast: k };
+  return { showView: T, toast: k };
 }
 const Vm = /* @__PURE__ */ new Set(["roaming", "test_area"]), jm = {
   living_room: { climate: !0, cover: ["Curtains", "curtain", 62], temperature: 20.5, humidity: 44, motion: "Living room motion", plant: ["Monstera", 32, 4200, 21.4, 580] },
@@ -167,13 +167,13 @@ function Gm({ onChange: o }) {
   }), l("alarm_control_panel." + Ae + "house", null, "disarmed", { friendly_name: "Alarm", supported_features: 39, code_format: "number", code_arm_required: !1, changed_by: "Matt" }), b(null, "Front door", "door", !1), b(null, "Smoke alarm", "smoke", !1), l("sensor." + Ae + "doorbell", null, "", { friendly_name: "Doorbell", device_class: "timestamp", rang: Date.now() - 47 * 60 * 1e3 });
   const g = {}, v = {};
   let D = null;
-  function L() {
+  function T() {
     const z = /* @__PURE__ */ new Date();
     Object.keys(n).forEach((N) => {
       N.endsWith("_solar_power") && (n[N] = { ...n[N], state: qc(z).toFixed(2) }), N.endsWith("_solar_today") && (n[N] = { ...n[N], state: zm(z).toFixed(1) });
     });
   }
-  L();
+  T();
   let _ = 0;
   function P() {
     let z = !1;
@@ -201,7 +201,7 @@ function Gm({ onChange: o }) {
     it.state === "cleaning" && N && et(it.entity_id, null, { battery_level: Math.max(5, pt.battery_level - 1) }), it.state === "returning" && et(it.entity_id, "docked", {}), it.state === "docked" && pt.battery_level < 100 && et(it.entity_id, null, { battery_level: Math.min(100, pt.battery_level + 2) }), D && Date.now() - D.at > 5e3 && (et("alarm_control_panel." + Ae + "house", "armed_" + D.mode, {}), D = null), z && o();
   }
   const O = setInterval(P, 1e3), k = setInterval(() => {
-    L(), o();
+    T(), o();
   }, 60 * 1e3);
   function K(z, N, et) {
     const it = et == null ? void 0 : et.entity_id;
@@ -305,8 +305,8 @@ const Dp = (o) => +o.toFixed(2), Ep = (o) => o * Math.PI / 180, Di = (o, n, i, l
   const [b, g] = Di(o, n, i, l), [v, D] = Di(o, n, i, f);
   return `M${b} ${g}A${i} ${i} 0 ${f - l > 180 ? 1 : 0} 1 ${v} ${D}`;
 }, Xe = (o, n, i, l, f, b = "") => `<rect x="${o}" y="${n}" width="${i}" height="${l}" rx="${f}"${b}/>`, Aa = (o, n, i, l = "") => `<circle cx="${o}" cy="${n}" r="${i}"${l}/>`, wa = (o, n = "") => `<path d="${o}"${n}/>`, Ds = (o, n = 2.5) => wa(o, ` fill="none" stroke="currentColor" stroke-width="${n}" stroke-linecap="round" stroke-linejoin="round"`), Kn = (o, n = 1.5) => wa(o, ` stroke="currentColor" stroke-width="${n}" stroke-linejoin="round"`), Xn = (o) => o.replace(/\/>$/, ' fill="#000" stroke="none"/>'), $m = (o, n, i, l = 0) => Array.from({ length: o }, (f, b) => {
-  const g = l + 360 / o * b, [v, D] = Di(12, 12, n, g), [L, _] = Di(12, 12, i, g);
-  return Ds(`M${v} ${D}L${L} ${_}`, 2.2);
+  const g = l + 360 / o * b, [v, D] = Di(12, 12, n, g), [T, _] = Di(12, 12, i, g);
+  return Ds(`M${v} ${D}L${T} ${_}`, 2.2);
 }).join(""), Um = "M12 10.4C10.2 8.6 9.7 5 11.6 3.3C13.6 1.6 17.4 2.6 17.3 5.6C17.2 7.6 15.2 9.6 13.6 10.6Z", Ym = [
   {
     id: "light",
@@ -524,8 +524,8 @@ function Qm(o, n = za) {
     rain: Rc.map(() => ({ o: 0, dy: -16 })),
     snow: Hc.map(() => ({ o: 0, dy: -16 })),
     bolt: { o: 0, dy: -10 }
-  }, L = (_) => Pc.map(() => ({ o: _ }));
-  return b === "clear" ? g ? (D.moon.o = 1, D.stars = L(1)) : D.sun.o = 1 : b === "partly" ? (D.cloud = { x: 52.83, y: 52.83, w: 58.7, o: 1, f: g ? 1 : 0 }, g ? (D.moon = { x: 34, y: 33, d: 48, o: 1 }, D.stars = L(0.7)) : D.sun = { x: 35.22, y: 33.26, r: 23.48, o: 1 }) : b === "cloudy" || b === "fog" ? (D.cloud = { x: 45, y: 42.99, w: 66.52, o: 1, f: g ? 1 : 0 }, g ? D.moon = { x: 40, y: 36, d: 40, o: 0 } : D.sun = { x: 40, y: 36, r: 20, o: 0 }) : (D.cloud = { x: 45, y: 33.26, w: 58.7, o: 1, f: 1 }, g ? D.moon = { x: 38, y: 28, d: 36, o: 0 } : D.sun = { x: 38, y: 28, r: 18, o: 0 }, b === "snow" ? D.snow = Hc.map(() => ({ o: 1, dy: 0 })) : D.rain = Rc.map((_, P) => ({ o: b === "storm" && P === 1 ? 0 : 1, dy: 0 })), b === "storm" && (D.bolt = { o: 1, dy: 0 })), D;
+  }, T = (_) => Pc.map(() => ({ o: _ }));
+  return b === "clear" ? g ? (D.moon.o = 1, D.stars = T(1)) : D.sun.o = 1 : b === "partly" ? (D.cloud = { x: 52.83, y: 52.83, w: 58.7, o: 1, f: g ? 1 : 0 }, g ? (D.moon = { x: 34, y: 33, d: 48, o: 1 }, D.stars = T(0.7)) : D.sun = { x: 35.22, y: 33.26, r: 23.48, o: 1 }) : b === "cloudy" || b === "fog" ? (D.cloud = { x: 45, y: 42.99, w: 66.52, o: 1, f: g ? 1 : 0 }, g ? D.moon = { x: 40, y: 36, d: 40, o: 0 } : D.sun = { x: 40, y: 36, r: 20, o: 0 }) : (D.cloud = { x: 45, y: 33.26, w: 58.7, o: 1, f: 1 }, g ? D.moon = { x: 38, y: 28, d: 36, o: 0 } : D.sun = { x: 38, y: 28, r: 18, o: 0 }, b === "snow" ? D.snow = Hc.map(() => ({ o: 1, dy: 0 })) : D.rain = Rc.map((_, P) => ({ o: b === "storm" && P === 1 ? 0 : 1, dy: 0 })), b === "storm" && (D.bolt = { o: 1, dy: 0 })), D;
 }
 const t0 = [
   0,
@@ -601,7 +601,7 @@ const t0 = [
   return l;
 };
 function r0(o, { size: n = 90, px: i = 2, oneBit: l = !1, colors: f = za, ink: b = "#26221e", paper: g = "#fbf9f6", clock: v = 0, idle: D = !1 } = {}) {
-  const L = { ...za, ...f }, _ = Math.sin, P = Math.PI * 2, O = Math.max(6, Math.round(n / i)), k = O / 90, K = D ? Math.floor(v / 100) * 100 : 0, tt = D ? _(P * K / 3600) : 0, z = D ? 1.8 * _(P * K / 6400) : 0, N = D ? 0.9 * _(P * K / 4100) : 0, et = D ? 0.8 * _(P * K / 5200) : 0, it = K / 3400 % 1, pt = D && o.bolt.o > 0.5 && (it < 0.04 || it > 0.08 && it < 0.11), Q = new Array(O * O), I = new Uint8Array(O * O), $ = (Y, nt, st, mt, ot) => {
+  const T = { ...za, ...f }, _ = Math.sin, P = Math.PI * 2, O = Math.max(6, Math.round(n / i)), k = O / 90, K = D ? Math.floor(v / 100) * 100 : 0, tt = D ? _(P * K / 3600) : 0, z = D ? 1.8 * _(P * K / 6400) : 0, N = D ? 0.9 * _(P * K / 4100) : 0, et = D ? 0.8 * _(P * K / 5200) : 0, it = K / 3400 % 1, pt = D && o.bolt.o > 0.5 && (it < 0.04 || it > 0.08 && it < 0.11), Q = new Array(O * O), I = new Uint8Array(O * O), $ = (Y, nt, st, mt, ot) => {
     st == null || Y < 0 || nt < 0 || Y >= O || nt >= O || (mt >= 1 || mt > Jn(Y + 5, nt + 3)) && (Q[nt * O + Y] = st, I[nt * O + Y] = ot);
   }, ut = (Y, nt, st, mt) => {
     for (let ot = Math.max(0, Math.floor(nt - st) - 1); ot <= Math.min(O - 1, nt + st + 1); ot++) for (let lt = Math.max(0, Math.floor(Y - st) - 1); lt <= Math.min(O - 1, Y + st + 1); lt++) mt(lt, ot, lt + 0.5 - Y, ot + 0.5 - nt);
@@ -620,19 +620,19 @@ function r0(o, { size: n = 90, px: i = 2, oneBit: l = !1, colors: f = za, ink: b
   if (o.sun.o > 0.01) {
     const Y = o.sun.x * k, nt = o.sun.y * k, st = Math.max(1, o.sun.r * k);
     if (D) {
-      const mt = st * (1.45 + 0.06 * tt), ot = Va(L.sun, "#ffffff", 0.55);
+      const mt = st * (1.45 + 0.06 * tt), ot = Va(T.sun, "#ffffff", 0.55);
       if (ut(Y, nt, mt, (lt, q, gt, Ct) => {
         const Vt = Math.sqrt(gt * gt + Ct * Ct);
         Vt > st && Vt < mt && $(lt, q, ot, 0.26 * (1 - (Vt - st) / (mt - st)) * o.sun.o, e0);
       }), o.sun.o > 0.5) {
         const lt = Math.floor(K / 500) % 2, q = Math.max(1, st * 0.22);
-        for (let gt = 0; gt < 8; gt++) if (gt % 2 === lt) for (let Ct = st + 1.5; Ct < st + 1.5 + q; Ct += 0.7) $(Math.floor(Y + Math.cos(gt * Math.PI / 4) * Ct), Math.floor(nt + Math.sin(gt * Math.PI / 4) * Ct), L.sun, o.sun.o, Zu);
+        for (let gt = 0; gt < 8; gt++) if (gt % 2 === lt) for (let Ct = st + 1.5; Ct < st + 1.5 + q; Ct += 0.7) $(Math.floor(Y + Math.cos(gt * Math.PI / 4) * Ct), Math.floor(nt + Math.sin(gt * Math.PI / 4) * Ct), T.sun, o.sun.o, Zu);
       }
     }
     ut(Y, nt, st, (mt, ot, lt, q) => {
       if (lt * lt + q * q > st * st) return;
       const gt = ((lt * 0.643 + q * 0.766) / st + 1) / 2;
-      $(mt, ot, ki((gt - 0.62) / 0.38) > Jn(mt, ot) ? L.sunEdge : L.sun, o.sun.o, Gu);
+      $(mt, ot, ki((gt - 0.62) / 0.38) > Jn(mt, ot) ? T.sunEdge : T.sun, o.sun.o, Gu);
     });
   }
   if (Pc.forEach((Y, nt) => {
@@ -641,17 +641,17 @@ function r0(o, { size: n = 90, px: i = 2, oneBit: l = !1, colors: f = za, ink: b
     const mt = Math.floor(Y[0] * k), ot = Math.floor(Y[1] * k), lt = D ? (Math.floor(K / 300) + nt * 3) % 6 : 0;
     if (lt === 5) return;
     const q = Math.round(Y[2] * k * (lt === 4 ? 0.3 : lt < 2 ? 1 : 0.6));
-    $(mt, ot, L.star, st, Hr);
+    $(mt, ot, T.star, st, Hr);
     for (let gt = 1; gt <= q; gt++) {
-      const Ct = gt === q && q > 1 ? Va(L.star, o.sky, 0.5) : L.star;
+      const Ct = gt === q && q > 1 ? Va(T.star, o.sky, 0.5) : T.star;
       $(mt - gt, ot, Ct, st, Hr), $(mt + gt, ot, Ct, st, Hr), $(mt, ot - gt, Ct, st, Hr), $(mt, ot + gt, Ct, st, Hr);
     }
   }), o.moon.o > 0.01) {
-    const Y = Math.max(1.5, o.moon.d * k * 0.37), nt = o.moon.x * k, st = o.moon.y * k + (D && et > 0.4 ? -1 : 0), mt = nt + 0.547 * Y, ot = st - 0.503 * Y, lt = 0.82 * Y, q = Va(L.moon, "#ffffff", 0.6);
+    const Y = Math.max(1.5, o.moon.d * k * 0.37), nt = o.moon.x * k, st = o.moon.y * k + (D && et > 0.4 ? -1 : 0), mt = nt + 0.547 * Y, ot = st - 0.503 * Y, lt = 0.82 * Y, q = Va(T.moon, "#ffffff", 0.6);
     ut(nt, st, Y, (gt, Ct, Vt, ne) => {
       if (Vt * Vt + ne * ne > Y * Y) return;
       const sa = gt + 0.5 - mt, fa = Ct + 0.5 - ot;
-      sa * sa + fa * fa <= lt * lt || $(gt, Ct, ki((ne + Y) / (2 * Y) * 1.1 - 0.1) > Jn(gt, Ct) ? L.moon : q, o.moon.o, $u);
+      sa * sa + fa * fa <= lt * lt || $(gt, Ct, ki((ne + Y) / (2 * Y) * 1.1 - 0.1) > Jn(gt, Ct) ? T.moon : q, o.moon.o, $u);
     });
   }
   const ct = Math.max(2, Math.round(15.65 * k)), S = Math.max(1, Math.round(5.87 * k * 0.5));
@@ -664,7 +664,7 @@ function r0(o, { size: n = 90, px: i = 2, oneBit: l = !1, colors: f = za, ink: b
       mt += -5 + gt * 14, ot *= gt < 0.18 ? gt / 0.18 : gt > 0.72 ? (1 - gt) / 0.28 : 1;
     }
     const lt = (Y[0] + 3 + z) * k, q = (Y[1] + mt) * k;
-    for (let gt = 0; gt < ct; gt++) for (let Ct = 0; Ct < S; Ct++) $(Math.floor(lt - 0.208 * gt) + Ct, Math.floor(q) + gt, L.rain, ot, Yu);
+    for (let gt = 0; gt < ct; gt++) for (let Ct = 0; Ct < S; Ct++) $(Math.floor(lt - 0.208 * gt) + Ct, Math.floor(q) + gt, T.rain, ot, Yu);
   });
   const Ft = Math.max(0, Math.round(7.34 * k / 2.6));
   if (Hc.forEach((Y, nt) => {
@@ -676,24 +676,24 @@ function r0(o, { size: n = 90, px: i = 2, oneBit: l = !1, colors: f = za, ink: b
       mt += -6 + Ct * 14, ot = 1.5 * _(P * (Ct * 1.5 + nt / 5)), lt *= Ct < 0.2 ? Ct / 0.2 : Ct > 0.75 ? (1 - Ct) / 0.25 : 1;
     }
     const q = Math.floor((Y[0] + 3.67 + ot + z) * k), gt = Math.floor((Y[1] + 3.67 + mt) * k);
-    $(q, gt, L.snow, lt, vo);
+    $(q, gt, T.snow, lt, vo);
     for (let Ct = 1; Ct <= Ft; Ct++)
-      $(q - Ct, gt, L.snow, lt, vo), $(q + Ct, gt, L.snow, lt, vo), $(q, gt - Ct, L.snow, lt, vo), $(q, gt + Ct, L.snow, lt, vo), Ft > 1 && Ct < Ft && ($(q - Ct, gt - Ct, L.snow, lt, vo), $(q + Ct, gt - Ct, L.snow, lt, vo), $(q - Ct, gt + Ct, L.snow, lt, vo), $(q + Ct, gt + Ct, L.snow, lt, vo));
+      $(q - Ct, gt, T.snow, lt, vo), $(q + Ct, gt, T.snow, lt, vo), $(q, gt - Ct, T.snow, lt, vo), $(q, gt + Ct, T.snow, lt, vo), Ft > 1 && Ct < Ft && ($(q - Ct, gt - Ct, T.snow, lt, vo), $(q + Ct, gt - Ct, T.snow, lt, vo), $(q - Ct, gt + Ct, T.snow, lt, vo), $(q + Ct, gt + Ct, T.snow, lt, vo));
   }), o.bolt.o > 0.01)
     if (O >= 30) {
       const Y = 39 + z, nt = 50 + o.bolt.dy;
       for (let st = Math.floor(nt * k); st <= (nt + 28) * k; st++) for (let mt = Math.floor(Y * k); mt <= (Y + 13) * k; mt++)
-        n0(o0, (mt + 0.5) / k - Y, (st + 0.5) / k - nt) && $(mt, st, L.sun, o.bolt.o, Ns);
+        n0(o0, (mt + 0.5) / k - Y, (st + 0.5) / k - nt) && $(mt, st, T.sun, o.bolt.o, Ns);
     } else {
       const Y = O / 18, nt = 7, st = 10 + Math.round(o.bolt.dy * 0.2);
       a0.forEach((mt, ot) => mt.split("").forEach((lt, q) => {
         if (lt !== "#") return;
         const gt = Math.floor((nt + q) * Y), Ct = Math.floor((st + ot) * Y);
-        for (let Vt = Ct; Vt < Math.max(Ct + 1, Math.floor((st + ot + 1) * Y)); Vt++) for (let ne = gt; ne < Math.max(gt + 1, Math.floor((nt + q + 1) * Y)); ne++) $(ne, Vt, L.sun, o.bolt.o, Ns);
+        for (let Vt = Ct; Vt < Math.max(Ct + 1, Math.floor((st + ot + 1) * Y)); Vt++) for (let ne = gt; ne < Math.max(gt + 1, Math.floor((nt + q + 1) * Y)); ne++) $(ne, Vt, T.sun, o.bolt.o, Ns);
       }));
     }
   if (o.cloud.o > 0.01) {
-    const Y = Math.max(3, o.cloud.w * k), nt = Y * 0.6665, st = (o.cloud.x + z) * k - Y / 2, mt = (o.cloud.y + N) * k - nt / 2, ot = Va(L.cloudDay, L.cloudNight, Math.round(o.cloud.f * 4) / 4), lt = Va(ot, "#000000", 0.16);
+    const Y = Math.max(3, o.cloud.w * k), nt = Y * 0.6665, st = (o.cloud.x + z) * k - Y / 2, mt = (o.cloud.y + N) * k - nt / 2, ot = Va(T.cloudDay, T.cloudNight, Math.round(o.cloud.f * 4) / 4), lt = Va(ot, "#000000", 0.16);
     for (let q = Math.max(0, Math.floor(mt) - 1); q <= Math.min(O - 1, mt + nt + 1); q++) for (let gt = Math.max(0, Math.floor(st) - 1); gt <= Math.min(O - 1, st + Y + 1); gt++) {
       const Ct = (gt + 0.5 - st) / Y, Vt = (q + 0.5 - mt) / Y;
       Rp(Ct, Vt) && $(gt, q, !Rp(Ct, Vt + 1 / Y) || ki((Vt - 0.42) / 0.25) * 0.8 > Jn(gt, q) ? lt : ot, o.cloud.o, Uu);
@@ -702,14 +702,14 @@ function r0(o, { size: n = 90, px: i = 2, oneBit: l = !1, colors: f = za, ink: b
   return i0(Q, I, O, O, { oneBit: l, ink: b, paper: g, snowInk: !o.night });
 }
 function i0(o, n, i, l, { oneBit: f, ink: b, paper: g, snowInk: v }) {
-  const D = new Uint8ClampedArray(i * l * 4), L = ic(b), _ = ic(g);
+  const D = new Uint8ClampedArray(i * l * 4), T = ic(b), _ = ic(g);
   for (let P = 0; P < l; P++) for (let O = 0; O < i; O++) {
     const k = P * i + O, K = n[k];
     if (o[k] == null) continue;
     let tt = ic(o[k]);
     if (f) {
       let z;
-      K === Yu || K === Zu ? z = !0 : K === vo ? z = v : K === Hr || K === Ns ? z = !1 : z = Math.round((0.2126 * tt[0] + 0.7152 * tt[1] + 0.0722 * tt[2]) / 255 * 4) / 4 <= Jn(O, P), (K === Gu || K === $u || K === Uu || K === Ns) && (O > 0 && n[k - 1] !== K || O < i - 1 && n[k + 1] !== K || P > 0 && n[k - i] !== K || P < l - 1 && n[k + i] !== K) && (z = !0), tt = z ? L : _;
+      K === Yu || K === Zu ? z = !0 : K === vo ? z = v : K === Hr || K === Ns ? z = !1 : z = Math.round((0.2126 * tt[0] + 0.7152 * tt[1] + 0.0722 * tt[2]) / 255 * 4) / 4 <= Jn(O, P), (K === Gu || K === $u || K === Uu || K === Ns) && (O > 0 && n[k - 1] !== K || O < i - 1 && n[k + 1] !== K || P > 0 && n[k - i] !== K || P < l - 1 && n[k + i] !== K) && (z = !0), tt = z ? T : _;
     }
     D[k * 4] = tt[0], D[k * 4 + 1] = tt[1], D[k * 4 + 2] = tt[2], D[k * 4 + 3] = 255;
   }
@@ -800,14 +800,14 @@ const c0 = [
   return l;
 };
 function p0(o, n, i, l, { oneBit: f, ink: b, paper: g, snowInk: v }) {
-  const D = new Uint8ClampedArray(i * l * 4), L = Es(b), _ = Es(g);
+  const D = new Uint8ClampedArray(i * l * 4), T = Es(b), _ = Es(g);
   for (let P = 0; P < l; P++) for (let O = 0; O < i; O++) {
     const k = P * i + O, K = n[k];
     if (o[k] == null) continue;
     let tt = Es(o[k]);
     if (f) {
       let z;
-      K === Qu || K === tf ? z = !0 : K === Nr ? z = v : K === Oc || K === Os ? z = !1 : z = Math.round((0.2126 * tt[0] + 0.7152 * tt[1] + 0.0722 * tt[2]) / 255 * 4) / 4 <= tn(O, P), (K === Ku || K === Xu || K === Ju || K === Os) && (O > 0 && n[k - 1] !== K || O < i - 1 && n[k + 1] !== K || P > 0 && n[k - i] !== K || P < l - 1 && n[k + i] !== K) && (z = !0), tt = z ? L : _;
+      K === Qu || K === tf ? z = !0 : K === Nr ? z = v : K === Oc || K === Os ? z = !1 : z = Math.round((0.2126 * tt[0] + 0.7152 * tt[1] + 0.0722 * tt[2]) / 255 * 4) / 4 <= tn(O, P), (K === Ku || K === Xu || K === Ju || K === Os) && (O > 0 && n[k - 1] !== K || O < i - 1 && n[k + 1] !== K || P > 0 && n[k - i] !== K || P < l - 1 && n[k + i] !== K) && (z = !0), tt = z ? T : _;
     }
     D[k * 4] = tt[0], D[k * 4 + 1] = tt[1], D[k * 4 + 2] = tt[2], D[k * 4 + 3] = 255;
   }
@@ -819,9 +819,9 @@ const u0 = { clear: 0, partly: 0.35, cloudy: 0.85, fog: 0.9, rain: 1, storm: 1, 
   return n = n + Math.imul(n ^ n >>> 7, 61 | n) ^ n, ((n ^ n >>> 14) >>> 0) / 4294967296;
 }, h0 = "M41.0875 21.224C40.4398 17.9648 38.6815 15.0313 36.1125 12.9237C33.5435 10.816 30.3229 9.66488 27 9.66651C21.4608 9.66651 16.65 12.8098 14.2542 17.3907C11.4355 17.6995 8.83007 19.0382 6.93769 21.1499C5.0453 23.2616 3.99919 25.9976 4 28.8332C4 31.8832 5.2116 34.8082 7.36827 36.9649C9.52494 39.1216 12.45 40.3332 15.5 40.3332H40.4167C41.6752 40.3332 42.9213 40.0853 44.084 39.6037C45.2468 39.1221 46.3032 38.4162 47.1931 37.5263C48.083 36.6364 48.7889 35.5799 49.2705 34.4172C49.7521 33.2545 50 32.0083 50 30.7498C50 25.6898 46.0708 21.5882 41.0875 21.224Z", m0 = "M21.0459 6.11182C19.2847 8.44583 18.2402 11.3513 18.2402 14.5005C18.2405 22.199 24.4811 28.4398 32.1797 28.4399C34.9446 28.4399 37.5211 27.634 39.6885 26.2456C38.1734 34.0818 31.2788 40.0005 23 40.0005C13.6113 40.0005 6.00026 32.3891 6 23.0005C6 14.2725 12.5775 7.08102 21.0459 6.11182Z", g0 = "M0 -1L0.2687 -0.2687L1 0L0.2687 0.2687L0 1L-0.2687 0.2687L-1 0L-0.2687 -0.2687Z", b0 = "M7 0L0 13L5 13L2 24L11 9L6 9L9 0Z", w0 = [[7, 0], [0, 13], [5, 13], [2, 24], [11, 9], [6, 9], [9, 0]], v0 = [".##", "##.", ".#.", "#.."];
 function ef(o, { width: n, height: i, colors: l, wave: f = 0.38, soft: b = 6, glow: g = 0.6, columns: v = 6 }) {
-  const D = { ...za, dawn: "#e5a77e", ...l }, L = l0(D), _ = n, P = i, O = _ / v, k = O / 2, K = Math.PI * 2, tt = o.length ? o : [{ cond: "cloudy", night: !1 }], z = [...Array(v * 2)].map((pt, Q) => {
+  const D = { ...za, dawn: "#e5a77e", ...l }, T = l0(D), _ = n, P = i, O = _ / v, k = O / 2, K = Math.PI * 2, tt = o.length ? o : [{ cond: "cloudy", night: !1 }], z = [...Array(v * 2)].map((pt, Q) => {
     const I = tt[Math.min(Q, tt.length - 1)], $ = f0(I.cond), ut = Q % 2 === 1;
-    return { cond: I.cond, k: $, night: ut, sky: L[$][ut ? 1 : 0], cover: u0[$] };
+    return { cond: I.cond, k: $, night: ut, sky: T[$][ut ? 1 : 0], cover: u0[$] };
   }), N = (pt) => P * (0.5 - f * Math.cos(K * (pt / O - 0.25)));
   return { C: D, S: z, W: _, H: P, cw: O, sw: k, TAU: K, yb: N, side: (pt, Q, I) => {
     const $ = (pt ? N(Q) - I : I - N(Q)) / Math.max(3, b * 1.4) + 0.5;
@@ -832,20 +832,20 @@ function ef(o, { width: n, height: i, colors: l, wave: f = 0.38, soft: b = 6, gl
   }, soft: b, tw: O * 0.3, sy: P / 90 };
 }
 function af(o, { clock: n = 0, ambient: i = !1, seed: l = 1 }) {
-  const { S: f, sw: b, side: g, C: v, TAU: D, sy: L, H: _ } = o, P = n, O = { stars: [], suns: [], moons: [], clouds: [], drops: [], flakes: [], fogs: [], bolts: [] };
+  const { S: f, sw: b, side: g, C: v, TAU: D, sy: T, H: _ } = o, P = n, O = { stars: [], suns: [], moons: [], clouds: [], drops: [], flakes: [], fogs: [], bolts: [] };
   f.forEach((tt, z) => {
     const N = sc(l * 977 + z * 131 + 7), et = (z + 0.5) * b, it = tt.night ? { clear: 9, partly: 5, cloudy: 2, fog: 0, rain: 0, storm: 0, snow: 1 }[tt.k] : 0;
     for (let pt = 0; pt < it; pt++) {
-      const Q = et + (N() - 0.5) * b * 1.6, I = (6 + N() * 76) * L, $ = N() < 0.35, ut = 1.8 + N() * 1.6, xt = g(!0, Q, I) * ($ ? 0.95 : 0.7) * (i ? 0.6 + 0.4 * Math.sin(D * P / 2600 + pt * 1.7 + z) : 1);
+      const Q = et + (N() - 0.5) * b * 1.6, I = (6 + N() * 76) * T, $ = N() < 0.35, ut = 1.8 + N() * 1.6, xt = g(!0, Q, I) * ($ ? 0.95 : 0.7) * (i ? 0.6 + 0.4 * Math.sin(D * P / 2600 + pt * 1.7 + z) : 1);
       xt >= 0.03 && O.stars.push({ x: Q, y: I, big: $, size: ut, o: xt });
     }
     if (!tt.night && (tt.k === "clear" || tt.k === "partly")) {
       const pt = et + (N() - 0.5) * b * 0.3, Q = Math.min(15, b * 0.29);
-      O.suns.push({ x: pt, y: 32 * L, rad: Q, halo: Q * 2.8 * (i ? 1 + 0.07 * Math.sin(D * P / 3600 + z) : 1) });
+      O.suns.push({ x: pt, y: 32 * T, rad: Q, halo: Q * 2.8 * (i ? 1 + 0.07 * Math.sin(D * P / 3600 + z) : 1) });
     }
     if (tt.night && (tt.k === "clear" || tt.k === "partly")) {
       const pt = Math.min(0.78, b * 0.55 / 34), Q = et - 23 * pt + (N() - 0.5) * b * 0.2;
-      O.moons.push({ x: Q + 23 * pt, y: (4 + (i ? 0.8 * Math.sin(D * P / 5200 + z) : 0)) * L + 23 * pt, d: 46 * pt });
+      O.moons.push({ x: Q + 23 * pt, y: (4 + (i ? 0.8 * Math.sin(D * P / 5200 + z) : 0)) * T + 23 * pt, d: 46 * pt });
     }
   });
   const k = Math.max(56, Math.min(100, _ * 0.45)), K = Math.max(1, b / (k * 2.4));
@@ -854,7 +854,7 @@ function af(o, { clock: n = 0, ambient: i = !1, seed: l = 1 }) {
     if (!N) return;
     const et = tt.k === "partly" ? 1 : Math.round(N * K), it = sc(l * 577 + z * 71 + 3), pt = (z + 0.5) * b, Q = tt.k === "rain" || tt.k === "storm" || tt.night ? v.cloudNight : v.cloudDay, I = tt.night ? 0.82 : tt.k === "storm" ? 0.75 : 1;
     for (let $ = 0; $ < et; $++) {
-      const ut = k / 46 * (tt.k === "partly" ? 1 : 0.8 + it() * 0.4), xt = pt + (tt.k === "partly" ? b * 0.12 : (($ + 0.5) / et - 0.5) * b * 0.95 + (it() - 0.5) * b * 0.5 / et), Rt = (tt.k === "partly" ? 40 : 6 + it() * 26) * L, ct = i ? 2.5 * Math.sin(D * P / 9e3 + z * 1.3 + $ * 2.1) : 0, S = i ? 0.9 * Math.sin(D * P / 6100 + z + $) : 0;
+      const ut = k / 46 * (tt.k === "partly" ? 1 : 0.8 + it() * 0.4), xt = pt + (tt.k === "partly" ? b * 0.12 : (($ + 0.5) / et - 0.5) * b * 0.95 + (it() - 0.5) * b * 0.5 / et), Rt = (tt.k === "partly" ? 40 : 6 + it() * 26) * T, ct = i ? 2.5 * Math.sin(D * P / 9e3 + z * 1.3 + $ * 2.1) : 0, S = i ? 0.9 * Math.sin(D * P / 6100 + z + $) : 0;
       O.clouds.push({ x: xt - 23 * ut + ct, y: Rt - 15.33 * ut + S, w: 46 * ut, h: 30.66 * ut, fill: Q, o: I * (et > 1 && $ === 0 ? 0.85 : 1) });
     }
   }), f.forEach((tt, z) => {
@@ -865,7 +865,7 @@ function af(o, { clock: n = 0, ambient: i = !1, seed: l = 1 }) {
         const Rt = (($ - 44 + P * 0.04) % 36 + 36) % 36;
         I -= 0.21 * (Rt - ($ - 44)), $ = 44 + Rt, ut = Math.min(1, Rt / 6, (36 - Rt) / 6);
       }
-      $ *= L;
+      $ *= T;
       const xt = g(tt.night, I, $) * ut;
       xt >= 0.05 && O.drops.push({ x: I, y: $, o: xt });
     }
@@ -876,22 +876,22 @@ function af(o, { clock: n = 0, ambient: i = !1, seed: l = 1 }) {
         const Rt = (($ - 40 + P * 9e-3) % 44 + 44) % 44;
         $ = 40 + Rt, I += 1.6 * Math.sin(D * P / 2800 + Q * 1.9 + z), ut = Math.min(1, Rt / 6, (44 - Rt) / 6);
       }
-      $ *= L;
+      $ *= T;
       const xt = g(tt.night, I, $) * ut;
       xt >= 0.05 && O.flakes.push({ x: I, y: $, o: xt });
     }
     if (tt.k === "fog") {
       const Q = tt.night ? "#c8ccd6" : "#ffffff", I = tt.night ? 0.28 : 0.62, $ = i ? 4 * Math.sin(D * P / 8e3 + z) : 0;
-      for (let ut = 0; ut < 4; ut++) O.fogs.push({ x: et - b * 0.75 + ut % 2 * b * 0.18 + (ut % 2 ? $ : -$), y: (30 + ut * 13) * L, w: b * 1.3, c: Q, a: I });
+      for (let ut = 0; ut < 4; ut++) O.fogs.push({ x: et - b * 0.75 + ut % 2 * b * 0.18 + (ut % 2 ? $ : -$), y: (30 + ut * 13) * T, w: b * 1.3, c: Q, a: I });
     }
     if (tt.k === "storm") {
       const Q = (P / 3400 + z * 0.37) % 1;
-      O.bolts.push({ x: et + (N() - 0.5) * b * 0.3 - 5, y: 36 * L, o: i && !(Q < 0.05 || Q > 0.09 && Q < 0.12) ? 0.8 : 1 });
+      O.bolts.push({ x: et + (N() - 0.5) * b * 0.3 - 5, y: 36 * T, o: i && !(Q < 0.05 || Q > 0.09 && Q < 0.12) ? 0.8 : 1 });
     }
   }), O;
 }
 function y0(o, n, i, l, f, b, g, v) {
-  const { S: D, C: L, cw: _, yb: P, glowAt: O, soft: k, tw: K, sy: tt } = o, z = new Array(i * l), N = new Uint8Array(i * l), et = new Uint8Array(i * l), it = (Y, nt, st, mt, ot) => {
+  const { S: D, C: T, cw: _, yb: P, glowAt: O, soft: k, tw: K, sy: tt } = o, z = new Array(i * l), N = new Uint8Array(i * l), et = new Uint8Array(i * l), it = (Y, nt, st, mt, ot) => {
     st == null || Y < 0 || nt < 0 || Y >= i || nt >= l || (mt >= 1 || mt > tn(Y + 5, nt + 3)) && (z[nt * i + Y] = st, N[nt * i + Y] = ot);
   }, pt = (Y, nt, st, mt) => {
     for (let ot = Math.max(0, Math.floor(nt - st) - 1); ot <= Math.min(l - 1, nt + st + 1); ot++) for (let lt = Math.max(0, Math.floor(Y - st) - 1); lt <= Math.min(i - 1, Y + st + 1); lt++) mt(lt, ot, lt + 0.5 - Y, ot + 0.5 - nt);
@@ -912,11 +912,11 @@ function y0(o, n, i, l, f, b, g, v) {
       (Vt ? an(((q + 0.5) / l - 0.45) / 0.55) * 0.7 : an(1 - (q + 0.5) / (l * 0.55)) * 0.7) > tn(Y + 2, q + 5) && (ne = Vt ? ja(ne, "#ffffff", 0.18) : ja(ne, "#000000", 0.25)), Vt && Ct >= 0 && Ct < xt && lt.a * 1.3 * (1 - Ct / xt) > tn(Y + 6, q + 1) && (ne = lt.c), z[q * i + Y] = ne, et[q * i + Y] = Vt ? 0 : 1;
     }
   }
-  const Rt = ja(L.sun, "#ffffff", 0.55), ct = ja(L.moon, "#ffffff", 0.6);
+  const Rt = ja(T.sun, "#ffffff", 0.55), ct = ja(T.moon, "#ffffff", 0.6);
   n.stars.forEach((Y) => {
     const nt = Math.floor(Y.x / f), st = Math.floor(Y.y / b);
     if (nt < 0 || st < 0 || nt >= i || st >= l || !et[st * i + nt] || Y.o < 0.15) return;
-    const mt = Y.o > 0.45 ? L.star : ja(L.star, z[st * i + nt], 0.5), ot = Y.big && Y.o > 0.6 ? Math.floor(Y.size / f) : 0;
+    const mt = Y.o > 0.45 ? T.star : ja(T.star, z[st * i + nt], 0.5), ot = Y.big && Y.o > 0.6 ? Math.floor(Y.size / f) : 0;
     it(nt, st, mt, 1, Oc);
     for (let lt = 1; lt <= ot; lt++) [[nt - lt, st], [nt + lt, st], [nt, st - lt], [nt, st + lt]].forEach((q) => {
       q[0] >= 0 && q[1] >= 0 && q[0] < i && q[1] < l && et[q[1] * i + q[0]] && it(q[0], q[1], mt, 1, Oc);
@@ -928,17 +928,17 @@ function y0(o, n, i, l, f, b, g, v) {
       Vt > nt && Vt < ot && !et[q * i + lt] && it(lt, q, Rt, 0.3 * (1 - (Vt - nt) / (ot - nt)), 0);
     }), v) {
       const lt = Math.floor(g / 500) % 2, q = Math.max(1, nt * 0.3);
-      for (let gt = 0; gt < 8; gt++) if (gt % 2 === lt) for (let Ct = nt + 1.2; Ct < nt + 1.2 + q; Ct += 0.7) it(Math.floor(st + Math.cos(gt * Math.PI / 4) * Ct), Math.floor(mt + Math.sin(gt * Math.PI / 4) * Ct), L.sun, 1, tf);
+      for (let gt = 0; gt < 8; gt++) if (gt % 2 === lt) for (let Ct = nt + 1.2; Ct < nt + 1.2 + q; Ct += 0.7) it(Math.floor(st + Math.cos(gt * Math.PI / 4) * Ct), Math.floor(mt + Math.sin(gt * Math.PI / 4) * Ct), T.sun, 1, tf);
     }
     pt(st, mt, nt, (lt, q, gt, Ct) => {
-      gt * gt + Ct * Ct <= nt * nt && it(lt, q, an(((Ct / nt + 1) / 2 - 0.6) / 0.4) > tn(lt, q) ? L.sunEdge : L.sun, 1, Ku);
+      gt * gt + Ct * Ct <= nt * nt && it(lt, q, an(((Ct / nt + 1) / 2 - 0.6) / 0.4) > tn(lt, q) ? T.sunEdge : T.sun, 1, Ku);
     });
   }), n.moons.forEach((Y) => {
     const nt = Math.max(1.5, Y.d * 0.37 / f), st = Y.x / f, mt = Y.y / b, ot = st + 0.547 * nt, lt = mt - 0.503 * nt, q = 0.82 * nt;
     pt(st, mt, nt, (gt, Ct, Vt, ne) => {
       if (Vt * Vt + ne * ne > nt * nt) return;
       const sa = gt + 0.5 - ot, fa = Ct + 0.5 - lt;
-      sa * sa + fa * fa > q * q && it(gt, Ct, an((ne + nt) / (2 * nt) * 1.1 - 0.1) > tn(gt, Ct) ? L.moon : ct, 1, Xu);
+      sa * sa + fa * fa > q * q && it(gt, Ct, an((ne + nt) / (2 * nt) * 1.1 - 0.1) > tn(gt, Ct) ? T.moon : ct, 1, Xu);
     });
   }), n.clouds.forEach((Y) => {
     const nt = Math.max(3, Y.w / f), st = nt * 0.6665, mt = Y.x / f, ot = Y.y / b, lt = ja(Y.fill, "#000000", 0.16);
@@ -956,22 +956,22 @@ function y0(o, n, i, l, f, b, g, v) {
   const S = Math.max(2, Math.round(9 / b));
   n.drops.forEach((Y) => {
     const nt = Y.x / f, st = Math.floor(Y.y / b);
-    for (let mt = 0; mt < S; mt++) it(Math.floor(nt - 0.208 * mt * b / f), st + mt, L.rain, Y.o, Qu);
+    for (let mt = 0; mt < S; mt++) it(Math.floor(nt - 0.208 * mt * b / f), st + mt, T.rain, Y.o, Qu);
   });
   const Ft = Math.max(0, Math.round(4.4 / f / 2.6));
   return n.flakes.forEach((Y) => {
     const nt = Math.floor(Y.x / f), st = Math.floor(Y.y / b);
-    it(nt, st, L.snow, Y.o, Nr);
+    it(nt, st, T.snow, Y.o, Nr);
     for (let mt = 1; mt <= Ft; mt++)
-      it(nt - mt, st, L.snow, Y.o, Nr), it(nt + mt, st, L.snow, Y.o, Nr), it(nt, st - mt, L.snow, Y.o, Nr), it(nt, st + mt, L.snow, Y.o, Nr);
+      it(nt - mt, st, T.snow, Y.o, Nr), it(nt + mt, st, T.snow, Y.o, Nr), it(nt, st - mt, T.snow, Y.o, Nr), it(nt, st + mt, T.snow, Y.o, Nr);
   }), n.bolts.forEach((Y) => {
     if (f <= 3.5)
       for (let nt = Math.floor(Y.y / b); nt <= (Y.y + 24) / b; nt++) for (let st = Math.floor(Y.x / f); st <= (Y.x + 11) / f; st++)
-        d0(w0, (st + 0.5) * f - Y.x, (nt + 0.5) * b - Y.y) && it(st, nt, L.sun, 1, Os);
+        d0(w0, (st + 0.5) * f - Y.x, (nt + 0.5) * b - Y.y) && it(st, nt, T.sun, 1, Os);
     else {
       const nt = Math.round(Y.x / f), st = Math.round(Y.y / b);
       v0.forEach((mt, ot) => mt.split("").forEach((lt, q) => {
-        lt === "#" && it(nt + q, st + ot, L.sun, 1, Os);
+        lt === "#" && it(nt + q, st + ot, T.sun, 1, Os);
       }));
     }
   }), { col: z, ids: N };
@@ -980,14 +980,14 @@ function x0(o, n) {
   const i = n.px, l = Math.max(6, Math.round(n.width / i)), f = Math.max(6, Math.round(n.height / i)), b = n.width / l, g = n.height / f, v = n.ambient ? Math.floor((n.clock || 0) / 100) * 100 : 0, D = (k) => {
     const K = ef(k, n);
     return y0(K, af(K, { clock: v, ambient: n.ambient, seed: n.seed }), l, f, b, g, v, n.ambient);
-  }, L = D(o), _ = n.reveal == null ? 1 : an(n.reveal);
-  let P = L.col, O = L.ids;
+  }, T = D(o), _ = n.reveal == null ? 1 : an(n.reveal);
+  let P = T.col, O = T.ids;
   if (_ < 1) {
     const k = n.prev ? D(n.prev) : null, K = _ * (l + 12);
     P = new Array(l * f), O = new Uint8Array(l * f);
     for (let tt = 0; tt < l * f; tt++) {
       const z = tt % l, N = tt / l | 0;
-      (n.reduce ? _ : an((K - z) / 12)) > tn(z, N) ? (P[tt] = L.col[tt], O[tt] = L.ids[tt]) : k ? (P[tt] = k.col[tt], O[tt] = k.ids[tt]) : (P[tt] = null, O[tt] = 255);
+      (n.reduce ? _ : an((K - z) / 12)) > tn(z, N) ? (P[tt] = T.col[tt], O[tt] = T.ids[tt]) : k ? (P[tt] = k.col[tt], O[tt] = k.ids[tt]) : (P[tt] = null, O[tt] = 255);
     }
   }
   return p0(P, O, l, f, { oneBit: n.oneBit, ink: n.ink || "#26221e", paper: n.paper || "#fbf9f6", snowInk: !1 });
@@ -1007,13 +1007,13 @@ function k0(o, n, i) {
   }
   const v = o.canvas, D = v.__wxOff || (v.__wxOff = document.createElement("canvas"));
   (D.width !== v.width || D.height !== v.height) && (D.width = v.width, D.height = v.height);
-  const L = D.getContext("2d");
-  L.setTransform(o.getTransform()), L.clearRect(0, 0, l, f), g(L, n);
-  const _ = b * (l + 64) - 64, P = L.createLinearGradient(_, 0, _ + 64, 0);
-  P.addColorStop(0, "rgba(0,0,0,1)"), P.addColorStop(1, "rgba(0,0,0,0)"), L.globalCompositeOperation = "destination-in", L.fillStyle = P, L.fillRect(0, 0, l, f), L.globalCompositeOperation = "source-over", o.save(), o.setTransform(1, 0, 0, 1, 0, 0), o.drawImage(D, 0, 0), o.restore();
+  const T = D.getContext("2d");
+  T.setTransform(o.getTransform()), T.clearRect(0, 0, l, f), g(T, n);
+  const _ = b * (l + 64) - 64, P = T.createLinearGradient(_, 0, _ + 64, 0);
+  P.addColorStop(0, "rgba(0,0,0,1)"), P.addColorStop(1, "rgba(0,0,0,0)"), T.globalCompositeOperation = "destination-in", T.fillStyle = P, T.fillRect(0, 0, l, f), T.globalCompositeOperation = "source-over", o.save(), o.setTransform(1, 0, 0, 1, 0, 0), o.drawImage(D, 0, 0), o.restore();
 }
 function M0(o, n, i) {
-  const { W: l, H: f, S: b, C: g, cw: v, yb: D, glowAt: L, soft: _, tw: P, sy: O } = n, k = o.getTransform().a || 1, K = (S) => {
+  const { W: l, H: f, S: b, C: g, cw: v, yb: D, glowAt: T, soft: _, tw: P, sy: O } = n, k = o.getTransform().a || 1, K = (S) => {
     o.shadowColor = S ? "rgba(28,18,8,.22)" : "transparent", o.shadowBlur = S ? 4 * k : 0, o.shadowOffsetY = S ? 1.5 * k : 0;
   }, tt = (S, Ft) => {
     const Y = Es(S);
@@ -1041,7 +1041,7 @@ function M0(o, n, i) {
   o.save(), o.fillStyle = z(b.filter((S) => !S.night).map((S) => S.sky), 0.75), o.fillRect(0, 0, l, f);
   const it = o.createLinearGradient(0, 0, l, 0);
   for (let S = 0; S <= 64; S++) {
-    const Ft = L(l * S / 64);
+    const Ft = T(l * S / 64);
     it.addColorStop(S / 64, tt(Ft.c, Math.min(1, Ft.a)));
   }
   o.fillStyle = it;
@@ -1183,11 +1183,11 @@ function N0(o) {
   const b = [ys, pc, dc, no(za.skyRainDay), na(ys, pa, 0.2), na(o, pa, 0.35)];
   [2, 3, 2, 3, 3].forEach((g, v) => {
     const D = 9 + v * 6;
-    for (let L = 0; L < g; L++) {
-      const _ = b[(v * 2 + L * 3) % b.length];
+    for (let T = 0; T < g; T++) {
+      const _ = b[(v * 2 + T * 3) % b.length];
       for (let P = D; P < D + 5; P++)
-        i(P, 7 + L * 2, na(_, pa, 0.12)), i(P, 8 + L * 2, L === g - 1 ? na(_, tr, 0.3) : _);
-      i(D + 5, 7 + L * 2, pa), i(D + 5, 8 + L * 2, pa);
+        i(P, 7 + T * 2, na(_, pa, 0.12)), i(P, 8 + T * 2, T === g - 1 ? na(_, tr, 0.3) : _);
+      i(D + 5, 7 + T * 2, pa), i(D + 5, 8 + T * 2, pa);
     }
   });
   for (let g = 7; g <= 12; g++) i(5, g, pa);
@@ -1201,13 +1201,13 @@ function N0(o) {
   return i(44, 20, R0), n;
 }
 function O0(o, n, i, l) {
-  const f = Math.max(1, Math.round(o)), b = Math.max(1, Math.round(n)), g = new Uint8ClampedArray(f * b * 4), v = no(l.skyClearDay), D = no(l.skyFogDay), L = N0(v), _ = Math.round(b * 0.55), P = Mi(1 - Math.log(i / Wp) / Math.log(H0 / Wp)), O = na(v, D, P), k = (N) => Mi((N - 0.1) / 0.9), K = Mi((1 - Math.exp(-2 / i) - 0.2) / 0.8), tt = Math.round(f / 2 - on / 2), z = _ + 3;
+  const f = Math.max(1, Math.round(o)), b = Math.max(1, Math.round(n)), g = new Uint8ClampedArray(f * b * 4), v = no(l.skyClearDay), D = no(l.skyFogDay), T = N0(v), _ = Math.round(b * 0.55), P = Mi(1 - Math.log(i / Wp) / Math.log(H0 / Wp)), O = na(v, D, P), k = (N) => Mi((N - 0.1) / 0.9), K = Mi((1 - Math.exp(-2 / i) - 0.2) / 0.8), tt = Math.round(f / 2 - on / 2), z = _ + 3;
   for (let N = 0; N < b; N++) {
     const et = z - 1 - N, it = N - z;
     for (let pt = 0; pt < f; pt++) {
       const Q = pt - tt;
       let I, $;
-      const ut = et >= 0 && et < of && Q >= 0 && Q < on ? L[et][Q] : void 0;
+      const ut = et >= 0 && et < of && Q >= 0 && Q < on ? T[et][Q] : void 0;
       if (ut)
         I = ut, $ = K;
       else if (et >= 0 && et <= 1 && Q >= 4 - et && Q <= 5 - et)
@@ -1400,22 +1400,22 @@ function $0(o, n) {
     _.style.setProperty("--edge-proximity", I.toFixed(3)), _.style.setProperty("--cursor-angle", Q.toFixed(3) + "deg"), _.classList.toggle("mvLitEdge", O || I >= Pe.outline.lightAt);
   }, D = (_) => {
     _.classList.remove("mvLitEdge"), _.style.setProperty("--edge-proximity", "0"), _._down = !1;
-  }, L = (_) => {
+  }, T = (_) => {
     var O;
     const P = (O = _.closest) == null ? void 0 : O.call(_, z0);
     return P && !n.classList.contains("tfEditing") ? P : null;
   };
   o.addEventListener("pointermove", (_) => {
     if (_.pointerType === "touch") return;
-    const P = L(_.target);
+    const P = T(_.target);
     g && g !== P && D(g), g = P, P && !P._down && v(P, _, !1);
   }, { passive: !0 }), o.addEventListener("pointerout", (_) => {
     g && !g.contains(_.relatedTarget) && (D(g), g = null);
   }), o.addEventListener("pointerdown", (_) => {
-    const P = L(_.target);
+    const P = T(_.target);
     P && Pe.outline.press && (P._down = !0, v(P, _, !0));
   }), o.addEventListener("pointerup", (_) => {
-    const P = L(_.target);
+    const P = T(_.target);
     P && (P._down = !1, _.pointerType === "touch" ? D(P) : v(P, _, !1));
   }), new MutationObserver((_) => {
     var P;
@@ -1443,13 +1443,13 @@ function U0(o) {
   if (Ve() || o._warp) return;
   const n = Pe.warp, i = n.amount / 100, l = o.firstElementChild;
   if (!l) return;
-  const f = { squash: { scale: 1 + 0.35 * i + " " + (1 - 0.55 * i) }, pinch: { scale: String(1 - 0.5 * i) }, twist: { rotate: 140 * i + "deg", scale: String(1 - 0.35 * i) }, flip: { rotate: "y 90deg" } }[n.style], b = "blur(" + 2 * i + "px)", g = o.getRootNode(), v = nf(o), D = (k = v.dataset) == null ? void 0 : k.k, L = rf(o, v), _ = o.getAttribute("aria-pressed") + "|" + o.dataset.act;
+  const f = { squash: { scale: 1 + 0.35 * i + " " + (1 - 0.55 * i) }, pinch: { scale: String(1 - 0.5 * i) }, twist: { rotate: 140 * i + "deg", scale: String(1 - 0.35 * i) }, flip: { rotate: "y 90deg" } }[n.style], b = "blur(" + 2 * i + "px)", g = o.getRootNode(), v = nf(o), D = (k = v.dataset) == null ? void 0 : k.k, T = rf(o, v), _ = o.getAttribute("aria-pressed") + "|" + o.dataset.act;
   o._warp = 1;
   const P = l.animate([{ scale: "1", rotate: "none", filter: "blur(0px)" }, { ...f, filter: b }], { duration: n.win, easing: Re.exit, fill: "forwards" }), O = performance.now();
   P.finished.then(() => {
     const K = () => {
       var pt, Q;
-      const tt = D ? v.isConnected ? v : (pt = g.querySelector) == null ? void 0 : pt.call(g, '[data-k="' + CSS.escape(D) + '"]') : v, z = tt && sf(tt, L);
+      const tt = D ? v.isConnected ? v : (pt = g.querySelector) == null ? void 0 : pt.call(g, '[data-k="' + CSS.escape(D) + '"]') : v, z = tt && sf(tt, T);
       if (z === o && o.getAttribute("aria-pressed") + "|" + o.dataset.act === _ && performance.now() - O < 420) {
         requestAnimationFrame(K);
         return;
@@ -1463,7 +1463,7 @@ const lf = (o) => {
   let n = "M" + o[0][0].toFixed(1) + " " + o[0][1].toFixed(1);
   for (let i = 0; i < o.length - 1; i++) {
     const l = o[i - 1] || o[i], f = o[i], b = o[i + 1], g = o[i + 2] || b, v = [f[0] + (b[0] - l[0]) / 6, f[1] + (b[1] - l[1]) / 6], D = [b[0] - (g[0] - f[0]) / 6, b[1] - (g[1] - f[1]) / 6];
-    n += "C" + v.map((L) => L.toFixed(1)).join(" ") + " " + D.map((L) => L.toFixed(1)).join(" ") + " " + b.map((L) => L.toFixed(1)).join(" ");
+    n += "C" + v.map((T) => T.toFixed(1)).join(" ") + " " + D.map((T) => T.toFixed(1)).join(" ") + " " + b.map((T) => T.toFixed(1)).join(" ");
   }
   return n;
 }, cf = (o, n, i, l = "mvGrid") => [0, 1, 2].map((f) => {
@@ -1477,8 +1477,8 @@ function df(o, n = o.querySelector(".mvLine"), i = o.querySelectorAll(".mvArea,.
 }
 function Ps(o, n, i, l, f) {
   if (o.getAnimations().forEach((_) => _.cancel()), o.style.left = l + "px", o.style.width = f + "px", Ve() || n === l && i === f) return;
-  const b = Pe.tabs, g = b.stretch / 100, v = (_, P) => ({ left: _ + "px", width: P + "px" }), L = l > n ? v(n + (l - n) * (0.15 * (1 - g)), l + f - (n + (l - n) * (0.15 * (1 - g)))) : v(l, n + i - l - (n - l) * (0.15 * (1 - g)));
-  o.animate([v(n, i), { offset: 0.5, ...L }, v(l, f)], { duration: b.dur, easing: Re.standard });
+  const b = Pe.tabs, g = b.stretch / 100, v = (_, P) => ({ left: _ + "px", width: P + "px" }), T = l > n ? v(n + (l - n) * (0.15 * (1 - g)), l + f - (n + (l - n) * (0.15 * (1 - g)))) : v(l, n + i - l - (n - l) * (0.15 * (1 - g)));
+  o.animate([v(n, i), { offset: 0.5, ...T }, v(l, f)], { duration: b.dur, easing: Re.standard });
 }
 function Y0(o) {
   const n = ":is(.themeChoice,.wbSegments,.tfHeightTabs,.hcSeg,.tfSeg)", i = (f) => f.querySelector(':scope>[aria-pressed="true"],:scope>[aria-checked="true"],:scope>.active'), l = (f, b) => b ? [...f.children].indexOf(b) : -1;
@@ -1488,7 +1488,7 @@ function Y0(o) {
     if (!g || Ve() || b.disabled) return;
     const v = i(g);
     if (!v || v === b) return;
-    const D = l(g, v), L = g.getBoundingClientRect(), _ = v.getBoundingClientRect(), P = getComputedStyle(v).borderRadius, O = g.getRootNode(), k = nf(g), K = (pt = k.dataset) == null ? void 0 : pt.k, tt = rf(g, k), z = performance.now(), N = () => {
+    const D = l(g, v), T = g.getBoundingClientRect(), _ = v.getBoundingClientRect(), P = getComputedStyle(v).borderRadius, O = g.getRootNode(), k = nf(g), K = (pt = k.dataset) == null ? void 0 : pt.k, tt = rf(g, k), z = performance.now(), N = () => {
       var S, Ft, Y;
       const Q = K && !k.isConnected ? (S = O.querySelector) == null ? void 0 : S.call(O, '[data-k="' + CSS.escape(K) + '"]') : k, I = Q && sf(Q, tt), $ = (Ft = I == null ? void 0 : I.matches) != null && Ft.call(I, n) ? i(I) : null;
       if (!$ || l(I, $) === D) {
@@ -1498,7 +1498,7 @@ function Y0(o) {
       const ut = I.getBoundingClientRect(), xt = $.getBoundingClientRect(), Rt = getComputedStyle($);
       (Y = I.querySelector(":scope>.mvSegInd")) == null || Y.remove();
       const ct = document.createElement("span");
-      ct.className = "mvSegInd", ct.style.cssText = "top:" + (xt.top - ut.top - I.clientTop) + "px;height:" + xt.height + "px;border-radius:" + P + ";background:" + Rt.backgroundColor + ";box-shadow:" + Rt.boxShadow, getComputedStyle(I).position === "static" && (I.style.position = "relative"), I.prepend(ct), I.classList.add("mvSegMoving"), Ps(ct, _.left - L.left - I.clientLeft, _.width, xt.left - ut.left - I.clientLeft, xt.width), clearTimeout(I._seg), I._seg = setTimeout(() => {
+      ct.className = "mvSegInd", ct.style.cssText = "top:" + (xt.top - ut.top - I.clientTop) + "px;height:" + xt.height + "px;border-radius:" + P + ";background:" + Rt.backgroundColor + ";box-shadow:" + Rt.boxShadow, getComputedStyle(I).position === "static" && (I.style.position = "relative"), I.prepend(ct), I.classList.add("mvSegMoving"), Ps(ct, _.left - T.left - I.clientLeft, _.width, xt.left - ut.left - I.clientLeft, xt.width), clearTimeout(I._seg), I._seg = setTimeout(() => {
         ct.remove(), I.classList.remove("mvSegMoving");
       }, Pe.tabs.dur + 20);
     };
@@ -1677,9 +1677,9 @@ function h1() {
   }), Si);
 }
 function m1(o, n, i, l) {
-  const f = Ic, b = 2 ** f, g = o * Math.PI / 180, v = (n + 180) / 360 * b * Qo, D = (1 - Math.log(Math.tan(g) + 1 / Math.cos(g)) / Math.PI) / 2 * b * Qo, L = v - i / 2, _ = D - l / 2, P = [];
-  for (let O = Math.floor(L / Qo); O <= Math.floor((L + i - 1) / Qo); O++) for (let k = Math.floor(_ / Qo); k <= Math.floor((_ + l - 1) / Qo); k++)
-    k < 0 || k >= b || P.push({ x: (O % b + b) % b, y: k, left: O * Qo - L, top: k * Qo - _ });
+  const f = Ic, b = 2 ** f, g = o * Math.PI / 180, v = (n + 180) / 360 * b * Qo, D = (1 - Math.log(Math.tan(g) + 1 / Math.cos(g)) / Math.PI) / 2 * b * Qo, T = v - i / 2, _ = D - l / 2, P = [];
+  for (let O = Math.floor(T / Qo); O <= Math.floor((T + i - 1) / Qo); O++) for (let k = Math.floor(_ / Qo); k <= Math.floor((_ + l - 1) / Qo); k++)
+    k < 0 || k >= b || P.push({ x: (O % b + b) % b, y: k, left: O * Qo - T, top: k * Qo - _ });
   return P;
 }
 const g1 = {
@@ -1794,8 +1794,8 @@ function Mf(o, n, i, l) {
   for (let v = b + au; v <= l.getTime(); v += au) {
     const D = o(new Date(v)) - n;
     if (g < 0 != D < 0) {
-      const L = new Date(b + (v - b) * g / (g - D));
-      D > 0 ? f.rise ?? (f.rise = L) : f.set ?? (f.set = L);
+      const T = new Date(b + (v - b) * g / (g - D));
+      D > 0 ? f.rise ?? (f.rise = T) : f.set ?? (f.set = T);
     }
     b = v, g = D;
   }
@@ -1817,8 +1817,8 @@ const F1 = (o) => {
   return n && he(n.latitude) && he(n.longitude) ? { lat: Number(n.latitude), lon: Number(n.longitude) } : null;
 };
 function Pr(o, n) {
-  var L, _, P;
-  const i = Or(o), l = i ? O1(n, i.lat, i.lon) : {}, f = (L = o == null ? void 0 : o.states) == null ? void 0 : L["sun.sun"], b = Mn(n).getTime(), g = (O) => {
+  var T, _, P;
+  const i = Or(o), l = i ? O1(n, i.lat, i.lon) : {}, f = (T = o == null ? void 0 : o.states) == null ? void 0 : T["sun.sun"], b = Mn(n).getTime(), g = (O) => {
     const k = O ? new Date(O) : null;
     return k && Number.isFinite(k.getTime()) && Mn(k).getTime() === b ? k : null;
   }, v = g((_ = f == null ? void 0 : f.attributes) == null ? void 0 : _.next_rising), D = g((P = f == null ? void 0 : f.attributes) == null ? void 0 : P.next_setting);
@@ -1954,11 +1954,11 @@ const $1 = (o, n) => Object.values(o.states || {}).filter((i) => {
   return i.entity_id.startsWith("sensor.") && Ir(o, i.entity_id) && _f(o, n, i.entity_id) && (((f = (l = o.entities) == null ? void 0 : l[i.entity_id]) == null ? void 0 : f.translation_key) ?? i.entity_id).toLowerCase().includes("pollen");
 }).map((i) => i.entity_id).sort();
 function su(o, n, i) {
-  const l = Math.max(n - o, 1e-6), f = i[i.length - 1], b = i.find((L) => l / L <= 4) ?? f * Math.ceil(l / (4 * f)), g = Math.floor(o / b) * b;
+  const l = Math.max(n - o, 1e-6), f = i[i.length - 1], b = i.find((T) => l / T <= 4) ?? f * Math.ceil(l / (4 * f)), g = Math.floor(o / b) * b;
   let v = Math.ceil(n / b) * b;
   v === g && (v = g + b);
   const D = [];
-  for (let L = g; L <= v + b / 1e3; L += b) D.push(L);
+  for (let T = g; T <= v + b / 1e3; T += b) D.push(T);
   return { min: g, max: v, ticks: D };
 }
 const U1 = (o, n, i) => {
@@ -1967,19 +1967,19 @@ const U1 = (o, n, i) => {
 }, Y1 = (o, n, i, l) => {
   const f = i * Math.abs(1 - 2 * l), b = l < 0.5 ? 0 : 1;
   return "M " + o + " " + (n - i) + " A " + i + " " + i + " 0 0 0 " + o + " " + (n + i) + " A " + f + " " + i + " 0 0 " + b + " " + o + " " + (n - i) + " Z";
-}, da = ({ icon: o, name: n, sub: i, visual: l, double: f, backdrop: b, cls: g, zone: v, callouts: D }) => '<div class="wbCard wbSquare' + (f ? " wbDouble" : "") + (b ? " wbHasBackdrop" : "") + (v != null ? " wbZoned" : "") + (g ? " " + g : "") + '">' + (b ? '<div class="wbBackdrop" aria-hidden="true">' + b + "</div>" : "") + '<div class="wbHead"><div class="wbChip wbPlain">' + hf(o) + '</div><div class="wbText"><span class="wbName">' + Mt(n) + "</span>" + (i ? '<span class="wbSub">' + Mt(i) + "</span>" : "") + "</div></div>" + (v != null ? '<div class="wbZone">' + v + "</div>" + (D != null && D.length ? '<div class="wbCallouts">' + D.slice(0, 3).map((L) => Array.isArray(L) ? '<span class="wbCallout"><span>' + Mt(L[0]) + "</span><span>" + Mt(L[1]) + "</span></span>" : '<span class="wbCallout wbAdvice"><span>' + Mt(L) + "</span></span>").join("") + "</div>" : "") : '<div class="wbVisual">' + l + "</div>") + "</div>", _s = (o) => '<div class="wbZoneM">' + o + "</div>", Wa = (o, n) => '<div class="wbValue"><span class="wbNum">' + Mt(o) + "</span>" + (n ? '<span class="wbUnitV">' + Mt(n) + "</span>" : "") + "</div>";
+}, da = ({ icon: o, name: n, sub: i, visual: l, double: f, backdrop: b, cls: g, zone: v, callouts: D }) => '<div class="wbCard wbSquare' + (f ? " wbDouble" : "") + (b ? " wbHasBackdrop" : "") + (v != null ? " wbZoned" : "") + (g ? " " + g : "") + '">' + (b ? '<div class="wbBackdrop" aria-hidden="true">' + b + "</div>" : "") + '<div class="wbHead"><div class="wbChip wbPlain">' + hf(o) + '</div><div class="wbText"><span class="wbName">' + Mt(n) + "</span>" + (i ? '<span class="wbSub">' + Mt(i) + "</span>" : "") + "</div></div>" + (v != null ? '<div class="wbZone">' + v + "</div>" + (D != null && D.length ? '<div class="wbCallouts">' + D.slice(0, 3).map((T) => Array.isArray(T) ? '<span class="wbCallout"><span>' + Mt(T[0]) + "</span><span>" + Mt(T[1]) + "</span></span>" : '<span class="wbCallout wbAdvice"><span>' + Mt(T) + "</span></span>").join("") + "</div>" : "") : '<div class="wbVisual">' + l + "</div>") + "</div>", _s = (o) => '<div class="wbZoneM">' + o + "</div>", Wa = (o, n) => '<div class="wbValue"><span class="wbNum">' + Mt(o) + "</span>" + (n ? '<span class="wbUnitV">' + Mt(n) + "</span>" : "") + "</div>";
 function Z1(o) {
   const n = o.max - o.min || 1, i = (v) => 100 - (Math.min(o.max, Math.max(o.min, v)) - o.min) / n * 100, l = (v) => v / Li * 100 + "%", f = (v) => v.map((D) => D.t + "," + i(D.v)).join(" "), b = o.kind === "line" ? o.points : [];
   let g = '<div class="wbDayChart"><div class="wbDcSun">' + o.sun.map((v) => '<span class="wbDcSunMark" style="left:' + l(v.t) + '">' + en(v.rise ? le.sunsetUp : le.sunsetDown) + Mt(v.label) + "</span>").join("") + "</div>";
   return g += '<div class="wbDcY">' + o.ticks.map((v) => '<span style="top:' + i(v) + '%">' + Mt(o.format(v)) + "</span>").join("") + "</div>", g += '<div class="wbDcPlot"><svg viewBox="0 0 ' + Li + ' 100" preserveAspectRatio="none">' + o.night.map(([v, D]) => '<rect class="wbDcNight" x="' + v + '" y="0" width="' + (D - v) + '" height="100"></rect>').join("") + o.ticks.map((v) => '<line class="wbDcGrid" x1="0" x2="' + Li + '" y1="' + i(v) + '" y2="' + i(v) + '" vector-effect="non-scaling-stroke"></line>').join("") + o.sun.map((v) => '<line class="wbDcSunLine" x1="' + v.t + '" x2="' + v.t + '" y1="0" y2="100" vector-effect="non-scaling-stroke"></line>').join("") + (o.past && o.past.length > 1 ? '<polyline class="wbDcPast" points="' + f(o.past) + '" vector-effect="non-scaling-stroke"></polyline>' : "") + (b.length > 1 ? '<polygon class="wbDcArea" points="' + b[0].t + ",100 " + f(b) + " " + b[b.length - 1].t + ',100"></polygon><polyline class="wbDcLine" points="' + f(b) + '" vector-effect="non-scaling-stroke"></polyline>' : "") + (o.now ? '<line class="wbDcNow" x1="' + o.now.t + '" x2="' + o.now.t + '" y1="0" y2="100" vector-effect="non-scaling-stroke"></line>' : "") + "</svg>" + (o.kind === "bars" ? o.points.filter((v) => v.v > 0).map((v) => '<i class="wbDcBar" style="left:' + l(v.t + 12) + ";width:" + l(36) + ";height:" + (100 - i(v.v)) + '%"></i>').join("") : "") + (o.now && o.kind === "line" ? '<i class="wbDcDot" style="left:' + l(o.now.t) + ";top:" + i(o.now.v) + '%"></i>' : "") + (o.peak ? '<span class="wbDcPeak" style="left:' + l(o.peak.t) + ";top:" + i(o.peak.v) + '%">' + Mt(o.peak.label) + "</span>" : "") + (o.note ? '<span class="wbDcNote">' + Mt(o.note) + "</span>" : "") + "</div>", g += '<div class="wbDcX">' + o.hours.map((v) => '<span class="' + (v.minor ? "wbMinor" : "") + '" style="left:' + l(v.t) + '">' + Mt(v.label) + "</span>").join("") + "</div></div>", g;
 }
 function lu(o, n, i = 120, l = 300) {
-  const g = o.map((N) => N.value), v = Math.min(...g), D = Math.max(...g), L = D - v || 1, _ = (N) => N / (o.length - 1) * l, P = (N) => 18 + (1 - (N - v) / L) * (i - 18 - 18), O = o.map((N, et) => [_(et), P(N.value)]), k = O.length > 2 ? lf(O) : "M" + O.map((N) => N[0].toFixed(1) + " " + N[1].toFixed(1)).join("L"), K = g.indexOf(D), tt = g.indexOf(v), z = (N) => N === 0 ? "start" : N === o.length - 1 ? "end" : "middle";
+  const g = o.map((N) => N.value), v = Math.min(...g), D = Math.max(...g), T = D - v || 1, _ = (N) => N / (o.length - 1) * l, P = (N) => 18 + (1 - (N - v) / T) * (i - 18 - 18), O = o.map((N, et) => [_(et), P(N.value)]), k = O.length > 2 ? lf(O) : "M" + O.map((N) => N[0].toFixed(1) + " " + N[1].toFixed(1)).join("L"), K = g.indexOf(D), tt = g.indexOf(v), z = (N) => N === 0 ? "start" : N === o.length - 1 ? "end" : "middle";
   return '<svg class="wbChart" viewBox="0 0 ' + l + " " + i + '" aria-hidden="true">' + cf(l, 18, i - 18) + ('<path class="wbArea" d="' + k + "L" + l + " " + (i - 18) + "L0 " + (i - 18) + 'Z"></path>') + '<path class="wbLine" d="' + k + '" vector-effect="non-scaling-stroke"></path><text x="' + _(K) + '" y="' + (P(D) - 6) + '" text-anchor="' + z(K) + '">' + Mt(n(D)) + '</text><text x="' + _(tt) + '" y="' + (P(v) + 14) + '" text-anchor="' + z(tt) + '">' + Mt(n(v)) + '</text><text x="0" y="' + i + '" text-anchor="start">' + Mt(o[0].label) + '</text><text x="' + l + '" y="' + i + '" text-anchor="end">' + Mt(o[o.length - 1].label) + "</text></svg>";
 }
 function K1(o, n) {
-  const b = o.map((P) => P.value).concat([]), g = Math.min(...b) - 2, v = Math.max(...b) + 1, D = v - g || 1, L = 300 / o.length, _ = (P) => (1 - (P - g) / D) * 104;
-  return '<svg class="wbChart" viewBox="0 0 300 120" aria-hidden="true">' + o.map((P, O) => '<rect class="wbBar' + (P.now ? " wbNowBar" : "") + '" x="' + (O * L + L * 0.2) + '" y="' + _(P.value) + '" width="' + L * 0.6 + '" height="' + (104 - _(P.value)) + '" rx="6"></rect><text x="' + (O * L + L / 2) + '" y="120" text-anchor="middle">' + Mt(P.label) + "</text>").join("") + "</svg>";
+  const b = o.map((P) => P.value).concat([]), g = Math.min(...b) - 2, v = Math.max(...b) + 1, D = v - g || 1, T = 300 / o.length, _ = (P) => (1 - (P - g) / D) * 104;
+  return '<svg class="wbChart" viewBox="0 0 300 120" aria-hidden="true">' + o.map((P, O) => '<rect class="wbBar' + (P.now ? " wbNowBar" : "") + '" x="' + (O * T + T * 0.2) + '" y="' + _(P.value) + '" width="' + T * 0.6 + '" height="' + (104 - _(P.value)) + '" rx="6"></rect><text x="' + (O * T + T / 2) + '" y="120" text-anchor="middle">' + Mt(P.label) + "</text>").join("") + "</svg>";
 }
 const X1 = [
   [44.5, 40.1, 16.5, 13.2, -15, 0.7],
@@ -1998,7 +1998,7 @@ const X1 = [
 let tg = 0;
 function du(o, { getHass: n, entityId: i, style: l = "bitmap", motion: f = !0, cards: b, onOpen: g, hoursWindow: v, radarSource: D } = {}) {
   var Ui, Nn;
-  const L = "wb" + ++tg + "-", _ = document.createElement("div");
+  const T = "wb" + ++tg + "-", _ = document.createElement("div");
   _.className = "wb", _.dataset.style = l;
   const P = document.createElement("div");
   P.className = "wbBento", _.appendChild(P), o.replaceChildren(_);
@@ -2139,7 +2139,7 @@ function du(o, { getHass: n, entityId: i, style: l = "bitmap", motion: f = !0, c
   function Ke(c, m, w, x) {
     if (l === "line") return '<span class="wbWx wbS' + m + ' wbLineIcon" aria-hidden="true">' + gc(c, w || c === "clear-night") + "</span>";
     if (l === "smooth") {
-      const H = E0(c, m === 90, w, L + "g-" + x);
+      const H = E0(c, m === 90, w, T + "g-" + x);
       return '<span class="wbWx wbS' + m + " wb" + H.k[0].toUpperCase() + H.k.slice(1) + (H.night ? " wbNight" : "") + '" aria-hidden="true">' + H.svg + "</span>";
     }
     return '<span class="wbWx wbS' + m + '" aria-hidden="true"><canvas data-wb-wx="' + Mt(zu(c, w)) + '" data-size="' + m + '"></canvas></span>';
@@ -2429,7 +2429,7 @@ function du(o, { getHass: n, entityId: i, style: l = "bitmap", motion: f = !0, c
     const _t = document.createElementNS(Et, "path");
     _t.setAttribute("d", bt ? Z : J), c.replaceChildren(_t);
     const Gt = _t.getTotalLength(), Pt = _t.getPointAtLength(Gt * Bt), dt = bt ? Gt : 0;
-    c.innerHTML = '<defs><mask id="' + L + 'sun-day"><path d="' + Z + '" fill="none" stroke="#fff" stroke-width="' + x * 2 + '"></path></mask><mask id="' + L + 'sun-done"><path d="' + Z + '" fill="none" stroke="#fff" stroke-width="' + x * 2 + '" stroke-dasharray="' + (bt ? (dt * Bt).toFixed(1) + " " + (dt + 1).toFixed(1) : "0 99999") + '"></path></mask></defs><path class="wbSunBand" fill-rule="evenodd" d="' + rt + '"></path><path class="wbSunBand wbSunDay" fill-rule="evenodd" d="' + rt + '" mask="url(#' + L + 'sun-day)"></path><path class="wbSunBand wbSunDone" fill-rule="evenodd" d="' + rt + '" mask="url(#' + L + 'sun-done)"></path><circle class="wbSunDot' + (bt ? "" : " wbSunNight") + '" cx="' + Pt.x.toFixed(1) + '" cy="' + Pt.y.toFixed(1) + '" r="' + H + '"></circle>';
+    c.innerHTML = '<defs><mask id="' + T + 'sun-day"><path d="' + Z + '" fill="none" stroke="#fff" stroke-width="' + x * 2 + '"></path></mask><mask id="' + T + 'sun-done"><path d="' + Z + '" fill="none" stroke="#fff" stroke-width="' + x * 2 + '" stroke-dasharray="' + (bt ? (dt * Bt).toFixed(1) + " " + (dt + 1).toFixed(1) : "0 99999") + '"></path></mask></defs><path class="wbSunBand" fill-rule="evenodd" d="' + rt + '"></path><path class="wbSunBand wbSunDay" fill-rule="evenodd" d="' + rt + '" mask="url(#' + T + 'sun-day)"></path><path class="wbSunBand wbSunDone" fill-rule="evenodd" d="' + rt + '" mask="url(#' + T + 'sun-done)"></path><circle class="wbSunDot' + (bt ? "" : " wbSunNight") + '" cx="' + Pt.x.toFixed(1) + '" cy="' + Pt.y.toFixed(1) + '" r="' + H + '"></circle>';
   }
   const Co = typeof ResizeObserver == "function" ? new ResizeObserver((c) => c.forEach((m) => rr(m.target))) : null;
   function Gr() {
@@ -2438,7 +2438,7 @@ function du(o, { getHass: n, entityId: i, style: l = "bitmap", motion: f = !0, c
     });
   }
   function js(c, m, w) {
-    const x = (Z) => L + "moon-" + Z, H = c > 0.995 ? "" : '<path class="wbMoonNight" filter="url(#' + x("terminator") + ')" d="' + Y1(61, 61, 57.9, c) + '"' + (m ? ' transform="translate(122 0) scale(-1 1)"' : "") + "></path>", W = (Z, J, U, at, rt, bt) => '<filter id="' + x(Z) + '" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="' + J + '" numOctaves="' + U + '" seed="' + at + '"></feTurbulence><feColorMatrix values="0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0 0 0 0 1"></feColorMatrix><feComponentTransfer>' + ["R", "G", "B"].map((Bt) => "<feFunc" + Bt + ' type="linear" slope="' + rt + '" intercept="' + bt + '"></feFunc' + Bt + ">").join("") + "</feComponentTransfer></filter>";
+    const x = (Z) => T + "moon-" + Z, H = c > 0.995 ? "" : '<path class="wbMoonNight" filter="url(#' + x("terminator") + ')" d="' + Y1(61, 61, 57.9, c) + '"' + (m ? ' transform="translate(122 0) scale(-1 1)"' : "") + "></path>", W = (Z, J, U, at, rt, bt) => '<filter id="' + x(Z) + '" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="' + J + '" numOctaves="' + U + '" seed="' + at + '"></feTurbulence><feColorMatrix values="0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0 0 0 0 1"></feColorMatrix><feComponentTransfer>' + ["R", "G", "B"].map((Bt) => "<feFunc" + Bt + ' type="linear" slope="' + rt + '" intercept="' + bt + '"></feFunc' + Bt + ">").join("") + "</feComponentTransfer></filter>";
     return '<svg class="wbMoonArt" width="122" height="122" viewBox="0 0 122 122" aria-hidden="true"><defs><radialGradient id="' + x("fill") + '" cx="0.42" cy="0.38" r="0.68"><stop offset="0" stop-color="#ECECE8"></stop><stop offset="0.7" stop-color="#D2D2CD"></stop><stop offset="1" stop-color="#ACACA7"></stop></radialGradient><clipPath id="' + x("clip") + '"><circle cx="61" cy="61" r="54.9"></circle></clipPath><filter id="' + x("soften") + '" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.6"></feGaussianBlur></filter><filter id="' + x("glow") + '" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.2"></feGaussianBlur></filter><filter id="' + x("terminator") + '" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1"></feGaussianBlur></filter>' + W("mottle", "0.045", 4, 3, 1.8, -0.4) + W("grain", "1.2", 2, 7, 2, -0.5) + '</defs><g clip-path="url(#' + x("clip") + ')"><circle cx="61" cy="61" r="54.9" fill="url(#' + x("fill") + ')"></circle><g' + (w ? ' transform="rotate(180 61 61)"' : "") + '><g class="wbMaria" filter="url(#' + x("soften") + ')">' + X1.map(([Z, J, U, at, rt, bt]) => '<ellipse cx="' + Z + '" cy="' + J + '" rx="' + U + '" ry="' + at + '" fill-opacity="' + bt + '" transform="rotate(' + rt + " " + Z + " " + J + ')"></ellipse>').join("") + "</g>" + J1.map(([Z, J, U]) => '<circle class="wbCrater" cx="' + Z + '" cy="' + J + '" r="' + U + '"></circle>').join("") + '<g class="wbRays" filter="url(#' + x("glow") + ')">' + Q1.map(([Z, J]) => '<line x1="54.4" y1="95" x2="' + Z + '" y2="' + J + '"></line>').join("") + '</g><g class="wbBrightSpots" filter="url(#' + x("glow") + ')">' + cu.map(([Z, J, U]) => '<circle cx="' + Z + '" cy="' + J + '" r="' + U * 2 + '"></circle>').join("") + "</g>" + cu.map(([Z, J, U]) => '<circle class="wbBrightCenter" cx="' + Z + '" cy="' + J + '" r="' + U + '"></circle>').join("") + '</g><rect class="wbMottle" width="122" height="122" filter="url(#' + x("mottle") + ')"></rect><rect class="wbGrain" width="122" height="122" filter="url(#' + x("grain") + ')"></rect>' + H + '</g><circle cx="61" cy="61" r="54.9" fill="none" stroke="#B4B4B4" stroke-width="0.2"></circle></svg>';
   }
   function Oi(c) {
@@ -2479,7 +2479,7 @@ function du(o, { getHass: n, entityId: i, style: l = "bitmap", motion: f = !0, c
     if (!w || !he(w.value)) return "";
     const x = Number(w.value), H = wt.uvLevel[nu(x)], W = /* @__PURE__ */ new Date();
     W.setHours(23, 59, 59, 999);
-    const Z = ot("hourly").filter((rt) => rt.uv_index != null && new Date(rt.datetime) > /* @__PURE__ */ new Date() && new Date(rt.datetime) <= W).reduce((rt, bt) => !rt || bt.uv_index > rt.uv ? { uv: bt.uv_index, time: new Date(bt.datetime) } : rt, void 0), J = v1[nu(x)], U = 216 * Math.min(1, Math.max(0.08, 0.4 + (x - 4.5) * (0.5 / 5.5))), at = '<svg class="wbUvArt" viewBox="0 0 216 198" preserveAspectRatio="xMinYMin slice" aria-hidden="true"><defs><radialGradient id="' + L + 'uv-sun" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="' + U.toFixed(1) + '"><stop offset="0" style="stop-color:color-mix(in srgb, ' + J + ' 28%, #fff6dd)"></stop><stop offset=".62" style="stop-color:color-mix(in srgb, ' + J + ' 62%, #fff6dd)"></stop><stop offset="1" style="stop-color:' + J + '"></stop></radialGradient></defs><circle class="wbUvSun" cx="0" cy="0" r="' + U.toFixed(1) + '" fill="url(#' + L + 'uv-sun)"></circle></svg><div class="wbUvBig"><span class="wbUvNum">' + Mt(te(Math.round(x), c.locale)) + '</span><span class="wbUvWord">' + Mt(H) + "</span></div>" + _s(Wa(te(Math.round(x), c.locale), ""));
+    const Z = ot("hourly").filter((rt) => rt.uv_index != null && new Date(rt.datetime) > /* @__PURE__ */ new Date() && new Date(rt.datetime) <= W).reduce((rt, bt) => !rt || bt.uv_index > rt.uv ? { uv: bt.uv_index, time: new Date(bt.datetime) } : rt, void 0), J = v1[nu(x)], U = 216 * Math.min(1, Math.max(0.08, 0.4 + (x - 4.5) * (0.5 / 5.5))), at = '<svg class="wbUvArt" viewBox="0 0 216 198" preserveAspectRatio="xMinYMin slice" aria-hidden="true"><defs><radialGradient id="' + T + 'uv-sun" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="' + U.toFixed(1) + '"><stop offset="0" style="stop-color:color-mix(in srgb, ' + J + ' 28%, #fff6dd)"></stop><stop offset=".62" style="stop-color:color-mix(in srgb, ' + J + ' 62%, #fff6dd)"></stop><stop offset="1" style="stop-color:' + J + '"></stop></radialGradient></defs><circle class="wbUvSun" cx="0" cy="0" r="' + U.toFixed(1) + '" fill="url(#' + T + 'uv-sun)"></circle></svg><div class="wbUvBig"><span class="wbUvNum">' + Mt(te(Math.round(x), c.locale)) + '</span><span class="wbUvWord">' + Mt(H) + "</span></div>" + _s(Wa(te(Math.round(x), c.locale), ""));
     return da({
       icon: le.sunnyAlert,
       name: wt.metrics.uv_index,
@@ -2492,7 +2492,7 @@ function du(o, { getHass: n, entityId: i, style: l = "bitmap", motion: f = !0, c
   function zt(c) {
     const m = ot("daily")[0], w = S.temperatureHistory;
     if (!m || new Date(m.datetime).toDateString() !== (/* @__PURE__ */ new Date()).toDateString() || !he(m.temperature) || !w || w.dailyHighs.length < l1) return "";
-    const x = Number(m.temperature), H = w.dailyHighs.reduce((Pt, dt) => Pt + dt, 0) / w.dailyHighs.length, W = Math.round(x - H) || 0, Z = W > 0 ? "above" : W < 0 ? "below" : "same", J = [...w.days, { date: /* @__PURE__ */ new Date(), high: x, today: !0 }], U = J.map((Pt) => Pt.high).concat(H), at = Math.min(...U) - 1, rt = Math.max(...U) + 1, bt = (Pt) => (1 - (Pt - at) / (rt - at)) * 100, Bt = (Pt) => (Pt + 0.5) / J.length * 100, Et = J.map((Pt, dt) => [Bt(dt), bt(Pt.high)]), _t = Et.map(([Pt, dt], Ot) => (Ot ? "L" : "M") + Pt.toFixed(2) + " " + dt.toFixed(2)).join(""), Gt = '<div class="wbCompareBars wbTrend" aria-hidden="true"><div class="wbTrendPlot"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="' + L + 'trend" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--primary)" stop-opacity=".28"></stop><stop offset="1" style="stop-color:var(--primary)" stop-opacity="0"></stop></linearGradient></defs><path class="wbTrendArea" d="' + _t + "L" + Et[Et.length - 1][0].toFixed(2) + " 100L" + Et[0][0].toFixed(2) + ' 100Z" fill="url(#' + L + 'trend)"></path><line class="wbAvgLine" x1="0" x2="100" y1="' + bt(H).toFixed(2) + '" y2="' + bt(H).toFixed(2) + '" vector-effect="non-scaling-stroke"></line><path class="wbTrendLine" d="' + _t + '" vector-effect="non-scaling-stroke"></path></svg><span class="wbTrendAvg" style="top:' + bt(H).toFixed(2) + '%">' + Mt(Me(c, H)) + "</span>" + J.map((Pt, dt) => {
+    const x = Number(m.temperature), H = w.dailyHighs.reduce((Pt, dt) => Pt + dt, 0) / w.dailyHighs.length, W = Math.round(x - H) || 0, Z = W > 0 ? "above" : W < 0 ? "below" : "same", J = [...w.days, { date: /* @__PURE__ */ new Date(), high: x, today: !0 }], U = J.map((Pt) => Pt.high).concat(H), at = Math.min(...U) - 1, rt = Math.max(...U) + 1, bt = (Pt) => (1 - (Pt - at) / (rt - at)) * 100, Bt = (Pt) => (Pt + 0.5) / J.length * 100, Et = J.map((Pt, dt) => [Bt(dt), bt(Pt.high)]), _t = Et.map(([Pt, dt], Ot) => (Ot ? "L" : "M") + Pt.toFixed(2) + " " + dt.toFixed(2)).join(""), Gt = '<div class="wbCompareBars wbTrend" aria-hidden="true"><div class="wbTrendPlot"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="' + T + 'trend" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--primary)" stop-opacity=".28"></stop><stop offset="1" style="stop-color:var(--primary)" stop-opacity="0"></stop></linearGradient></defs><path class="wbTrendArea" d="' + _t + "L" + Et[Et.length - 1][0].toFixed(2) + " 100L" + Et[0][0].toFixed(2) + ' 100Z" fill="url(#' + T + 'trend)"></path><line class="wbAvgLine" x1="0" x2="100" y1="' + bt(H).toFixed(2) + '" y2="' + bt(H).toFixed(2) + '" vector-effect="non-scaling-stroke"></line><path class="wbTrendLine" d="' + _t + '" vector-effect="non-scaling-stroke"></path></svg><span class="wbTrendAvg" style="top:' + bt(H).toFixed(2) + '%">' + Mt(Me(c, H)) + "</span>" + J.map((Pt, dt) => {
       const Ot = Pt.today ? " wbToday" : "", qt = "left:" + Bt(dt).toFixed(2) + "%;top:" + bt(Pt.high).toFixed(2) + "%";
       return '<i class="wbTrendDot' + Ot + '" style="' + qt + '"></i><span class="wbAvgValue' + Ot + '" style="' + qt + '">' + Mt(Me(c, Pt.high)) + "</span>";
     }).join("") + '</div><div class="wbTrendDays">' + J.map((Pt, dt) => '<span class="wbAvgDay' + (Pt.today ? " wbToday" : "") + '" style="left:' + Bt(dt).toFixed(2) + '%">' + Mt(L1(Pt.date, c)) + "</span>").join("") + "</div></div>";
@@ -3216,20 +3216,20 @@ function ag(o) {
     break;
   }
   const f = (n - i[0]) / (l[0] - i[0]), b = f * f * (3 - 2 * f), g = (v, D) => {
-    const L = parseInt(v.slice(1), 16), _ = parseInt(D.slice(1), 16);
-    return "#" + [16, 8, 0].map((P) => Math.round((L >> P & 255) + ((_ >> P & 255) - (L >> P & 255)) * b).toString(16).padStart(2, "0")).join("");
+    const T = parseInt(v.slice(1), 16), _ = parseInt(D.slice(1), 16);
+    return "#" + [16, 8, 0].map((P) => Math.round((T >> P & 255) + ((_ >> P & 255) - (T >> P & 255)) * b).toString(16).padStart(2, "0")).join("");
   };
   return { top: g(i[1][0], l[1][0]), bot: g(i[1][1], l[1][1]), warm: g(i[1][2], l[1][2]), cool: g(i[1][3], l[1][3]), op: i[1][4] + (l[1][4] - i[1][4]) * b, t: n };
 }
 function og(o) {
   const n = parseInt(o.slice(1), 16), i = (n >> 16 & 255) / 255, l = (n >> 8 & 255) / 255, f = (n & 255) / 255, b = Math.max(i, l, f), g = Math.min(i, l, f);
   let v = 0, D = 0;
-  const L = (b + g) / 2;
+  const T = (b + g) / 2;
   if (b !== g) {
     const _ = b - g;
-    D = L > 0.5 ? _ / (2 - b - g) : _ / (b + g), v = (b === i ? (l - f) / _ + (l < f ? 6 : 0) : b === l ? (f - i) / _ + 2 : (i - l) / _ + 4) / 6;
+    D = T > 0.5 ? _ / (2 - b - g) : _ / (b + g), v = (b === i ? (l - f) / _ + (l < f ? 6 : 0) : b === l ? (f - i) / _ + 2 : (i - l) / _ + 4) / 6;
   }
-  return [v * 360, D * 100, L * 100];
+  return [v * 360, D * 100, T * 100];
 }
 function Cf(o, n, i) {
   n = xo(n, 0, 100) / 100, i = xo(i, 0, 100) / 100;
@@ -3238,7 +3238,7 @@ function Cf(o, n, i) {
 }
 const [Af, Lf, Tf] = og(Ei), uu = Cf(Af, Lf, Math.max(6, Tf - 14)), ng = Cf(Af, Lf, Math.min(96, Tf + 16));
 function rg(o, n, i, l, f) {
-  const b = ie / 2, g = ie * 0.12, v = b - (b - g) * o, D = (K) => K ** 1.3, L = xo(i, -1.5, 1.5), _ = (K) => -(Math.abs(L) * 4.6 * K ** 1.5) * Math.sign(L), P = o * 1.4, O = (K, tt) => {
+  const b = ie / 2, g = ie * 0.12, v = b - (b - g) * o, D = (K) => K ** 1.3, T = xo(i, -1.5, 1.5), _ = (K) => -(Math.abs(T) * 4.6 * K ** 1.5) * Math.sign(T), P = o * 1.4, O = (K, tt) => {
     const z = Math.min(4.8, Math.abs(i) * 2.6) * (tt ? 1 : -1) * Math.sign(i || 1), N = tt ? K + v : K, et = tt ? K : K + v, it = (xt) => N + _(xt) + z * Math.sin(xt * Math.PI * 1.2 + l) * D(xt) * 1.4 + P * Math.sin(xt * Math.PI * 2 + l * 0.6) * D(xt) * (tt ? 1 : -1), pt = [[et, oe]];
     for (let xt = 0; xt <= 12; xt++) pt.push([it(xt / 12), oe + ie * xt / 12]);
     pt.push([et, oe + ie]);
@@ -3264,11 +3264,11 @@ function ig(o, n, i) {
   return { body: f, rails: [{ x: oe, y: oe + ie * (1 - n) - 7, w: ie, h: 11 }], head: 10.4 };
 }
 function sg(o, n, i, l) {
-  const f = 9 - 7 * (i / 100), b = oe + ie * (1 - o), g = Math.ceil(ie / 10) + 1, v = oe + f / 2, D = (oe + ie - f / 2 - v) / (g - 1), L = 0.8, _ = 0.6, P = Array.from({ length: g }, (K, tt) => Math.max(v + tt * _, Math.min(v + tt * D, b - f / 2 - (g - 1 - tt) * _))), O = P.slice(0, -1).map((K, tt) => xo((P[tt + 1] - K - _) / (D - _), 0, 1));
+  const f = 9 - 7 * (i / 100), b = oe + ie * (1 - o), g = Math.ceil(ie / 10) + 1, v = oe + f / 2, D = (oe + ie - f / 2 - v) / (g - 1), T = 0.8, _ = 0.6, P = Array.from({ length: g }, (K, tt) => Math.max(v + tt * _, Math.min(v + tt * D, b - f / 2 - (g - 1 - tt) * _))), O = P.slice(0, -1).map((K, tt) => xo((P[tt + 1] - K - _) / (D - _), 0, 1));
   O.push(O[g - 2]);
   let k = "";
   return P.forEach((K, tt) => {
-    const z = L + (f - L) * O[tt], N = Math.max(0.5, z / 2), et = Math.max(0.4, z * 0.114);
+    const z = T + (f - T) * O[tt], N = Math.max(0.5, z / 2), et = Math.max(0.4, z * 0.114);
     k += nn(oe, K - N, ie, Math.max(1, z), Ei), !l && z > 2.2 && (k += nn(oe, K + N - et, ie, et, uu) + nn(oe, K - N, ie, et * 0.55, ng, 0.75));
   }), l || [0.22, 0.78].forEach((K) => {
     k += nn(oe + ie * K - 0.7, oe, 1.4, Math.max(0, P[g - 1] + 1 - oe), uu, 0.85);
@@ -3285,8 +3285,8 @@ function lg(o, n) {
   }), { lines: i, knobs: l };
 }
 function cg(o, n) {
-  const i = /* @__PURE__ */ new Date(), l = ag(i.getHours() + i.getMinutes() / 60), f = 42 + 18 * Math.sin(l.t * 0.5), b = l.t >= 5 && l.t <= 20 ? 40 - 48 * Math.sin(Math.PI * (l.t - 5) / 15) : 80, g = fu(n.kind, n.pos / 100, n.bar / 100, n.tilt, n.vel, n.ph, !1), v = n.ghostAlpha > 4e-3 && n.ghost != null ? fu(n.kind, n.ghost / 100, n.ghost / 100, n.tilt, 0, 0, !0).body : "", D = n.grip > 4e-3 ? lg(o, g.rails) : null, L = (_) => nn(oe, oe, ie, ie, _);
-  return '<svg viewBox="0 0 200 200" aria-hidden="true" focusable="false"><defs><clipPath id="' + o + 'c"><rect x="14" y="14" width="172" height="172" rx="8"/></clipPath><linearGradient id="' + o + 'l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + l.top + '"/><stop offset="1" stop-color="' + l.bot + '"/></linearGradient><radialGradient id="' + o + 'w" cx="' + _e(f) + '%" cy="' + _e(b) + '%" r="58%"><stop offset="0" stop-color="' + l.warm + '" stop-opacity="' + _e(l.op * 0.8) + '"/><stop offset="1" stop-color="' + l.warm + '" stop-opacity="0"/></radialGradient><radialGradient id="' + o + 'k" cx="' + _e(100 - f * 0.8) + '%" cy="' + _e(100 - b * 0.6) + '%" r="62%"><stop offset="0" stop-color="' + l.cool + '" stop-opacity="' + _e(l.op * 0.64) + '"/><stop offset="1" stop-color="' + l.cool + '" stop-opacity="0"/></radialGradient><filter id="' + o + 's" x="-5%" y="-50%" width="110%" height="300%"><feDropShadow dx="0" dy="1.2" stdDeviation="1.2" flood-color="#000" flood-opacity=".18"/></filter></defs><rect x="6" y="6" width="188" height="188" rx="16" fill="' + pu + '" stroke="#E3E3E3" stroke-width=".4"/><g clip-path="url(#' + o + 'c)">' + L("url(#" + o + "l)") + L("url(#" + o + "w)") + L("url(#" + o + "k)") + (v ? '<g opacity="' + _e(n.ghostAlpha) + '">' + v + "</g>" : "") + g.body + '<rect x="14" y="14" width="172" height="' + g.head + '" fill="' + Ei + '" filter="url(#' + o + 's)"/></g>' + (D ? '<g clip-path="url(#' + o + 'c)" opacity="' + _e(n.grip) + '">' + D.lines + "</g>" : "") + '<rect x="13.5" y="13.5" width="173" height="173" rx="8.5" fill="none" stroke="' + pu + '" stroke-width="3"/>' + (D ? '<g opacity="' + _e(n.grip) + '">' + D.knobs + "</g>" : "") + "</svg>";
+  const i = /* @__PURE__ */ new Date(), l = ag(i.getHours() + i.getMinutes() / 60), f = 42 + 18 * Math.sin(l.t * 0.5), b = l.t >= 5 && l.t <= 20 ? 40 - 48 * Math.sin(Math.PI * (l.t - 5) / 15) : 80, g = fu(n.kind, n.pos / 100, n.bar / 100, n.tilt, n.vel, n.ph, !1), v = n.ghostAlpha > 4e-3 && n.ghost != null ? fu(n.kind, n.ghost / 100, n.ghost / 100, n.tilt, 0, 0, !0).body : "", D = n.grip > 4e-3 ? lg(o, g.rails) : null, T = (_) => nn(oe, oe, ie, ie, _);
+  return '<svg viewBox="0 0 200 200" aria-hidden="true" focusable="false"><defs><clipPath id="' + o + 'c"><rect x="14" y="14" width="172" height="172" rx="8"/></clipPath><linearGradient id="' + o + 'l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + l.top + '"/><stop offset="1" stop-color="' + l.bot + '"/></linearGradient><radialGradient id="' + o + 'w" cx="' + _e(f) + '%" cy="' + _e(b) + '%" r="58%"><stop offset="0" stop-color="' + l.warm + '" stop-opacity="' + _e(l.op * 0.8) + '"/><stop offset="1" stop-color="' + l.warm + '" stop-opacity="0"/></radialGradient><radialGradient id="' + o + 'k" cx="' + _e(100 - f * 0.8) + '%" cy="' + _e(100 - b * 0.6) + '%" r="62%"><stop offset="0" stop-color="' + l.cool + '" stop-opacity="' + _e(l.op * 0.64) + '"/><stop offset="1" stop-color="' + l.cool + '" stop-opacity="0"/></radialGradient><filter id="' + o + 's" x="-5%" y="-50%" width="110%" height="300%"><feDropShadow dx="0" dy="1.2" stdDeviation="1.2" flood-color="#000" flood-opacity=".18"/></filter></defs><rect x="6" y="6" width="188" height="188" rx="16" fill="' + pu + '" stroke="#E3E3E3" stroke-width=".4"/><g clip-path="url(#' + o + 'c)">' + T("url(#" + o + "l)") + T("url(#" + o + "w)") + T("url(#" + o + "k)") + (v ? '<g opacity="' + _e(n.ghostAlpha) + '">' + v + "</g>" : "") + g.body + '<rect x="14" y="14" width="172" height="' + g.head + '" fill="' + Ei + '" filter="url(#' + o + 's)"/></g>' + (D ? '<g clip-path="url(#' + o + 'c)" opacity="' + _e(n.grip) + '">' + D.lines + "</g>" : "") + '<rect x="13.5" y="13.5" width="173" height="173" rx="8.5" fill="none" stroke="' + pu + '" stroke-width="3"/>' + (D ? '<g opacity="' + _e(n.grip) + '">' + D.knobs + "</g>" : "") + "</svg>";
 }
 function dg({ onMove: o, onSet: n }) {
   var Q;
@@ -3295,8 +3295,8 @@ function dg({ onMove: o, onSet: n }) {
   const f = (Q = window.matchMedia) == null ? void 0 : Q.call(window, "(pointer: coarse)").matches;
   let b = null;
   const g = { pos: 0, tilt: 0, vel: 0, ph: 0, grip: 0, ghost: 0, gpos: null, last: 0 };
-  let v = 0, D = !1, L = !1, _ = null, P = 0, O = 0;
-  const k = () => (b == null ? void 0 : b.kind) === "curtain" ? "x" : "y", K = () => _ || D || L || b.moving || b.target != null ? 1 : f ? performance.now() < O ? 1 : 0.4 : 0, tt = () => {
+  let v = 0, D = !1, T = !1, _ = null, P = 0, O = 0;
+  const k = () => (b == null ? void 0 : b.kind) === "curtain" ? "x" : "y", K = () => _ || D || T || b.moving || b.target != null ? 1 : f ? performance.now() < O ? 1 : 0.4 : 0, tt = () => {
     l.innerHTML = cg(i, { kind: b.kind, pos: g.pos, bar: b.target ?? g.pos, tilt: g.tilt, vel: g.vel, ph: g.ph, ghost: g.gpos, ghostAlpha: g.ghost, grip: g.grip });
   };
   function z(I) {
@@ -3350,9 +3350,9 @@ function dg({ onMove: o, onSet: n }) {
   }), l.addEventListener("pointerleave", () => {
     D = !1, N();
   }), l.addEventListener("focus", () => {
-    L = l.matches(":focus-visible"), N();
+    T = l.matches(":focus-visible"), N();
   }), l.addEventListener("blur", () => {
-    L = !1, N();
+    T = !1, N();
   }), l.addEventListener("keydown", (I) => {
     if (!(b != null && b.canSet)) return;
     const $ = Math.round(b.target ?? b.pos), ut = I.shiftKey ? 10 : 1, xt = { ArrowUp: $ + ut, ArrowRight: $ + ut, ArrowDown: $ - ut, ArrowLeft: $ - ut, PageUp: $ + 25, PageDown: $ - 25, Home: 0, End: 100 }[I.key];
@@ -3381,26 +3381,26 @@ const ra = (o) => Math.round(o * 100) / 100, ya = (o) => o * Math.PI / 180, Sn =
   // dead straight on; only the shadows show depth
 };
 function hu(o, n, i, l = 45, f = 35.26) {
-  const b = o * Math.sqrt(1.5), g = Math.cos(ya(l)), v = Math.sin(ya(l)), D = Math.cos(ya(f)), L = Math.sin(ya(f)), _ = 0.68, P = 0.12;
+  const b = o * Math.sqrt(1.5), g = Math.cos(ya(l)), v = Math.sin(ya(l)), D = Math.cos(ya(f)), T = Math.sin(ya(f)), _ = 0.68, P = 0.12;
   return {
     U: o,
     ox: n,
     oy: i,
     yaw: l,
-    V: [v * D, g * D, L],
+    V: [v * D, g * D, T],
     L: [_ * g + P * v, -_ * v + P * g],
     k: b,
     cy: g,
     sy: v,
-    sp: L,
+    sp: T,
     cp: D,
     p: ([O, k, K]) => {
       const tt = O * g - k * v, z = O * v + k * g;
-      return [n + tt * b, i + (z * L - K * D) * b];
+      return [n + tt * b, i + (z * T - K * D) * b];
     },
     // screen point → world x, y on the plane at height z
     ground(O, k, K) {
-      const tt = (O - n) / b, z = ((k - i) / b + K * D) / L;
+      const tt = (O - n) / b, z = ((k - i) / b + K * D) / T;
       return [tt * g + z * v, -tt * v + z * g];
     }
   };
@@ -3409,21 +3409,21 @@ const _n = (o, n = !0) => "M" + o.map(([i, l]) => `${ra(i)} ${ra(l)}`).join("L")
 function oo(o, n, i, l = 7) {
   const f = [], b = [[o / 2 - i, n / 2 - i, 0], [-(o / 2 - i), n / 2 - i, 90], [-(o / 2 - i), -(n / 2 - i), 180], [o / 2 - i, -(n / 2 - i), 270]];
   for (const [g, v, D] of b)
-    for (let L = 0; L <= l; L++) {
-      const _ = ya(D + 90 * L / l);
+    for (let T = 0; T <= l; T++) {
+      const _ = ya(D + 90 * T / l);
       f.push([g + i * Math.cos(_), v + i * Math.sin(_)]);
     }
   return f;
 }
 const Qe = (o, n = 56) => Array.from({ length: n }, (i, l) => [o * Math.cos(2 * Math.PI * l / n), o * Math.sin(2 * Math.PI * l / n)]);
 function He(o, n, i, l = !0, f = (b, g, v) => [b, g, v]) {
-  const b = o.length, g = [...o.map(([D, L]) => f(D, L, n)), ...o.map(([D, L]) => f(D, L, i))], v = [
-    { idx: o.map((D, L) => L), smooth: !1 },
-    { idx: o.map((D, L) => b + L), smooth: !1 }
+  const b = o.length, g = [...o.map(([D, T]) => f(D, T, n)), ...o.map(([D, T]) => f(D, T, i))], v = [
+    { idx: o.map((D, T) => T), smooth: !1 },
+    { idx: o.map((D, T) => b + T), smooth: !1 }
   ];
   for (let D = 0; D < b; D++) {
-    const L = (D + 1) % b;
-    v.push({ idx: [D, L, b + L, b + D], smooth: l });
+    const T = (D + 1) % b;
+    v.push({ idx: [D, T, b + T, b + D], smooth: l });
   }
   return { verts: g, faces: v };
 }
@@ -3454,20 +3454,20 @@ const Mo = (o, n, i) => _n(n.faces[i].idx.map((l) => o.p(n.verts[l])));
 function Ne(o, n, i = "", l = "") {
   const f = n.verts.map(o.p), b = Df(n, o.V);
   let g = "";
-  n.faces.forEach((L, _) => {
-    b[_] && (g += _n(L.idx.map((P) => f[P])));
+  n.faces.forEach((T, _) => {
+    b[_] && (g += _n(T.idx.map((P) => f[P])));
   });
   const v = /* @__PURE__ */ new Map();
-  n.faces.forEach((L, _) => {
-    for (let P = 0; P < L.idx.length; P++) {
-      const O = L.idx[P], k = L.idx[(P + 1) % L.idx.length], K = O < k ? `${O}-${k}` : `${k}-${O}`;
+  n.faces.forEach((T, _) => {
+    for (let P = 0; P < T.idx.length; P++) {
+      const O = T.idx[P], k = T.idx[(P + 1) % T.idx.length], K = O < k ? `${O}-${k}` : `${k}-${O}`;
       v.has(K) || v.set(K, { a: O, b: k, fs: [] }), v.get(K).fs.push(_);
     }
   });
   let D = "";
-  for (const { a: L, b: _, fs: P } of v.values()) {
+  for (const { a: T, b: _, fs: P } of v.values()) {
     const [O, k] = P, K = b[O], tt = k === void 0 ? !1 : b[k], z = k !== void 0 && n.faces[O].smooth && n.faces[k].smooth;
-    (K !== tt || K && tt && !z) && (D += `M${ra(f[L][0])} ${ra(f[L][1])}L${ra(f[_][0])} ${ra(f[_][1])}`);
+    (K !== tt || K && tt && !z) && (D += `M${ra(f[T][0])} ${ra(f[T][1])}L${ra(f[_][0])} ${ra(f[_][1])}`);
   }
   return `<g${i ? ` data-part="${i}"` : ""}${l ? ` class="${l}"` : ""}><path class="face" d="${g}"/><path class="edge" d="${D}"/></g>`;
 }
@@ -3485,7 +3485,7 @@ function fg(o) {
 }
 let hg = 0;
 function ia(o, n, i, l, f = "") {
-  const b = n.verts.filter((D) => D[2] >= i - 0.01).map(([D, L, _]) => o.p([D + (_ - i) * o.L[0], L + (_ - i) * o.L[1], i]));
+  const b = n.verts.filter((D) => D[2] >= i - 0.01).map(([D, T, _]) => o.p([D + (_ - i) * o.L[0], T + (_ - i) * o.L[1], i]));
   if (b.length < 3) return "";
   const g = _n(fg(b));
   if (!f) return `<path class="shade" fill="url(#${l})" d="${g}"/>`;
@@ -3497,7 +3497,7 @@ const ar = (o, n, i = "edge", l = !0) => `<path class="${i}" d="${_n(n.map(o.p),
   return `<path class="${l}" d="M${ra(f)} ${ra(b)}L${ra(g)} ${ra(v)}"/>`;
 };
 function Ws(o, n, i, l, { part: f = "", cls: b = "", w: g = 0 } = {}) {
-  const [v, D] = o.p(n), L = o.k, _ = `matrix(${ra(L * o.cy)} ${ra(L * o.sy * o.sp)} ${ra(-L * o.sy)} ${ra(L * o.cy * o.sp)} ${ra(v)} ${ra(D)})`, P = g ? `<rect x="${-g / 2}" y="${-l * 0.9}" width="${g}" height="${l * 1.8}" fill="transparent"/>` : "";
+  const [v, D] = o.p(n), T = o.k, _ = `matrix(${ra(T * o.cy)} ${ra(T * o.sy * o.sp)} ${ra(-T * o.sy)} ${ra(T * o.cy * o.sp)} ${ra(v)} ${ra(D)})`, P = g ? `<rect x="${-g / 2}" y="${-l * 0.9}" width="${g}" height="${l * 1.8}" fill="transparent"/>` : "";
   return `<g transform="${_}"${f ? ` data-part="${f}"` : ""}>${P}<text class="st ${b}" font-size="${l}" text-anchor="middle" dominant-baseline="central">${i}</text></g>`;
 }
 class mg {
@@ -3523,8 +3523,8 @@ class or {
     this.yaw = this.spring(l.yaw, 0.12, 0.7), this.pitch = this.spring(l.pitch, 0.12, 0.7), this.fillAmt = this.spring(i.fill ? 1 : 0, 0.14, 0.7), this.lift = 20;
     const f = this.svg = document.createElementNS(gg, "svg");
     this.box = [400, 400], f.setAttribute("viewBox", "0 0 400 400"), f.setAttribute("class", "iso"), f.tabIndex = 0, n.prepend(f), f.addEventListener("pointerdown", (g) => {
-      var D, L, _, P;
-      const v = (_ = (L = (D = g.target).closest) == null ? void 0 : L.call(D, "[data-part]")) == null ? void 0 : _.dataset.part;
+      var D, T, _, P;
+      const v = (_ = (T = (D = g.target).closest) == null ? void 0 : T.call(D, "[data-part]")) == null ? void 0 : _.dataset.part;
       if (v) {
         try {
           f.setPointerCapture(g.pointerId);
@@ -3561,8 +3561,8 @@ class or {
   }
   // the view is worked out from the camera springs each frame, so a camera change glides
   get v() {
-    const [n, i, l] = this.base, [f, b] = this.box, g = this.fillAmt.x, v = i + (f - 400) / 2, D = l + (b - 400) / 2, L = hu(n, v, D, this.yaw.x, this.pitch.x);
-    return g < 1e-3 ? L : hu(n, Sn(v, f / 2, g), Sn(D, b / 2 + this.lift * L.cp * L.k / 2, g), this.yaw.x, this.pitch.x);
+    const [n, i, l] = this.base, [f, b] = this.box, g = this.fillAmt.x, v = i + (f - 400) / 2, D = l + (b - 400) / 2, T = hu(n, v, D, this.yaw.x, this.pitch.x);
+    return g < 1e-3 ? T : hu(n, Sn(v, f / 2, g), Sn(D, b / 2 + this.lift * T.cp * T.k / 2, g), this.yaw.x, this.pitch.x);
   }
   // the cell it's drawn in (a light's fader is a tall column beside its dial): the short side stays 400 units
   setBox(n, i) {
@@ -3580,7 +3580,7 @@ class or {
     if (l < 1e-3) return [n, i];
     const f = this.v, b = f.cy, g = Math.abs(f.sy), v = b * b - g * g;
     if (v < 0.4) return [n, i];
-    const D = (this.box[0] - 48) / f.k, L = ((this.box[1] - 48) / f.k - this.lift * f.cp) / f.sp, _ = Math.max(n * 0.6, (D * b - L * g) / v), P = Math.max(i * 0.6, (L * b - D * g) / v);
+    const D = (this.box[0] - 48) / f.k, T = ((this.box[1] - 48) / f.k - this.lift * f.cp) / f.sp, _ = Math.max(n * 0.6, (D * b - T * g) / v), P = Math.max(i * 0.6, (T * b - D * g) / v);
     return [Sn(n, _, l), Sn(i, P, l)];
   }
   setCamera(n) {
@@ -3621,8 +3621,8 @@ class vg extends or {
   show() {
   }
   render(n) {
-    const i = this.v, l = 11 + this.h.x, [f, b] = this.size(68, 68), g = Math.min(f, b) / 68, v = He(oo(f, b, 18 * g), 0, 8), D = He(Qe(25 * g), 8, 11), L = He(Qe(18.5 * g), 11, l), _ = Qe(12.5 * g).map(([O, k]) => [O, k, l]), P = Math.max(0, Math.min(1, this.glow.x));
-    return ia(i, v, 0, n) + Ne(i, v) + Ne(i, D, "cap") + ia(i, L, 11, n, Mo(i, D, 1)) + Ne(i, L, "cap") + ar(i, _) + (P > 0.01 ? `<g style="opacity:${P.toFixed(3)}">${ar(i, _, "accent")}</g>` : "");
+    const i = this.v, l = 11 + this.h.x, [f, b] = this.size(68, 68), g = Math.min(f, b) / 68, v = He(oo(f, b, 18 * g), 0, 8), D = He(Qe(25 * g), 8, 11), T = He(Qe(18.5 * g), 11, l), _ = Qe(12.5 * g).map(([O, k]) => [O, k, l]), P = Math.max(0, Math.min(1, this.glow.x));
+    return ia(i, v, 0, n) + Ne(i, v) + Ne(i, D, "cap") + ia(i, T, 11, n, Mo(i, D, 1)) + Ne(i, T, "cap") + ar(i, _) + (P > 0.01 ? `<g style="opacity:${P.toFixed(3)}">${ar(i, _, "accent")}</g>` : "");
   }
 }
 class bu extends or {
@@ -3643,8 +3643,8 @@ class bu extends or {
     this.held || (this.on = n, this.t.t = n ? 1 : 0, this.svg.setAttribute("aria-checked", n), this.kick());
   }
   render(n) {
-    const i = this.v, l = this.t.x, [f, b] = this.size(72, 96), g = f / 72, v = b / 96, D = Math.min(g, v), L = 9, _ = Sn(3, 12, l), P = Sn(12, 3, l), O = (_ + P) / 2 - 1.4, k = 31 * v, K = He(oo(f, b, 16 * D), 0, 6), tt = He(oo(48 * g, 72 * v, 9 * D), 6, L), z = [[-k, L], [k, L], [k, L + P], [0, L + O], [-k, L + _]], N = He(z, -20 * g, 20 * g, !1, (Q, I, $) => [$, Q, I]), et = (Q) => L + (Q < 0 ? Sn(_, O, (Q + k) / k) : Sn(O, P, Q / k)) + 0.05, it = Qe(4.2 * D, 36).map(([Q, I]) => [Q, I - k / 2, et(I - k / 2)]), pt = [[0, k * 0.32], [0, k * 0.68]].map(([Q, I]) => [Q, I, et(I)]);
-    return ia(i, K, 0, n) + Ne(i, K) + Ne(i, tt, "paddle") + ia(i, N, L, n, Mo(i, tt, 1)) + Ne(i, N, "paddle") + ar(i, it, this.on ? "edge mark" : "accent mark") + yo(i, pt[0], pt[1], this.on ? "accent mark" : "edge mark");
+    const i = this.v, l = this.t.x, [f, b] = this.size(72, 96), g = f / 72, v = b / 96, D = Math.min(g, v), T = 9, _ = Sn(3, 12, l), P = Sn(12, 3, l), O = (_ + P) / 2 - 1.4, k = 31 * v, K = He(oo(f, b, 16 * D), 0, 6), tt = He(oo(48 * g, 72 * v, 9 * D), 6, T), z = [[-k, T], [k, T], [k, T + P], [0, T + O], [-k, T + _]], N = He(z, -20 * g, 20 * g, !1, (Q, I, $) => [$, Q, I]), et = (Q) => T + (Q < 0 ? Sn(_, O, (Q + k) / k) : Sn(O, P, Q / k)) + 0.05, it = Qe(4.2 * D, 36).map(([Q, I]) => [Q, I - k / 2, et(I - k / 2)]), pt = [[0, k * 0.32], [0, k * 0.68]].map(([Q, I]) => [Q, I, et(I)]);
+    return ia(i, K, 0, n) + Ne(i, K) + Ne(i, tt, "paddle") + ia(i, N, T, n, Mo(i, tt, 1)) + Ne(i, N, "paddle") + ar(i, it, this.on ? "edge mark" : "accent mark") + yo(i, pt[0], pt[1], this.on ? "accent mark" : "edge mark");
   }
 }
 class yg extends or {
@@ -3673,16 +3673,16 @@ class yg extends or {
     this.held || (this.level = Math.max(0, Math.min(1, n)), this.L.t = this.level, this.svg.setAttribute("aria-valuenow", Math.round(this.level * 100)), this.kick());
   }
   render(n) {
-    const i = this.v, l = this.size(44, 136)[1], f = 44, b = 1, g = l / 136, v = 1, D = 48 * g, L = 6 + this.kh.x, _ = D - this.L.x * 2 * D;
+    const i = this.v, l = this.size(44, 136)[1], f = 44, b = 1, g = l / 136, v = 1, D = 48 * g, T = 6 + this.kh.x, _ = D - this.L.x * 2 * D;
     this.travel = 2 * D;
-    const P = Math.min(32 * b, f - 12), O = P / 32, k = He(oo(f, l, 16 * v), 0, 6), K = ko(He(oo(P, 16 * v, 5 * v), 6, L), Ti(0, _, 0));
+    const P = Math.min(32 * b, f - 12), O = P / 32, k = He(oo(f, l, 16 * v), 0, 6), K = ko(He(oo(P, 16 * v, 5 * v), 6, T), Ti(0, _, 0));
     let tt = "";
     for (let et = 0; et <= 10; et++) {
       const it = D - et * (2 * D) / 10, pt = (et % 5 === 0 ? 7 : 4) * b, Q = 9 * v;
       tt += yo(i, [Q, it, 6], [Q + pt, it, 6]) + yo(i, [-Q, it, 6], [-Q - pt, it, 6]);
     }
     const z = oo(6 * v, 2 * D + 6 * v, 3 * v).map(([et, it]) => [et, it, 6]), N = [[-3 * v, D + 3 * v, 6], [3 * v, D + 3 * v, 6], [3 * v, _, 6], [-3 * v, _, 6]];
-    return ia(i, k, 0, n) + Ne(i, k, "plate") + `<g class="deco">${tt}${ar(i, z)}<path class="level" d="${_n(N.map(i.p))}"/></g>` + ia(i, K, 6, n, Mo(i, k, 1)) + Ne(i, K, "knob") + `<g class="deco">${yo(i, [-12 * O, _, L], [12 * O, _, L])}${yo(i, [-8 * O, _ - 3.5 * v, L], [8 * O, _ - 3.5 * v, L])}${yo(i, [-8 * O, _ + 3.5 * v, L], [8 * O, _ + 3.5 * v, L])}</g>`;
+    return ia(i, k, 0, n) + Ne(i, k, "plate") + `<g class="deco">${tt}${ar(i, z)}<path class="level" d="${_n(N.map(i.p))}"/></g>` + ia(i, K, 6, n, Mo(i, k, 1)) + Ne(i, K, "knob") + `<g class="deco">${yo(i, [-12 * O, _, T], [12 * O, _, T])}${yo(i, [-8 * O, _ - 3.5 * v, T], [8 * O, _ - 3.5 * v, T])}${yo(i, [-8 * O, _ + 3.5 * v, T], [8 * O, _ + 3.5 * v, T])}</g>`;
   }
 }
 class Sc extends or {
@@ -3740,23 +3740,23 @@ class Sc extends or {
     this.held || (i != null && (this.now = i), n != null && (this.value = n, this.val.t = n, this.svg.setAttribute("aria-valuenow", n)), this.kick());
   }
   render(n) {
-    const i = this.v, l = 7 + this.kh.x, f = this.ang(this.val.x), [b, g] = this.size(92, 92), v = b / 92, D = g / 92, L = Math.min(v, D), _ = (Q, I, $) => [Q * Math.cos(I) * v, Q * Math.sin(I) * D, $], P = He(Qe(46, 72).map(([Q, I]) => [Q * v, I * D]), 0, 7), O = He(Qe(22 * L, 64), 7, l), k = Math.min(this.now ?? this.value, this.value), K = Math.max(this.now ?? this.value, this.value);
+    const i = this.v, l = 7 + this.kh.x, f = this.ang(this.val.x), [b, g] = this.size(92, 92), v = Math.min(b, g) / 92, D = v, T = v, _ = (Q, I, $) => [Q * Math.cos(I) * D, Q * Math.sin(I) * T, $], P = He(Qe(46 * v, 72), 0, 7), O = He(Qe(22 * v, 64), 7, l), k = Math.min(this.now ?? this.value, this.value), K = Math.max(this.now ?? this.value, this.value);
     let tt = "";
     const z = Math.round((this.max - this.min) / this.tickStep), N = Math.max(1, Math.round(this.major / 2));
     for (let Q = 0; Q <= z; Q++) {
       const I = this.min + Q * this.tickStep, $ = ya(this.ang(I)), ut = Q % this.major === 0, xt = ut ? 36.5 : Q % N === 0 ? 34.5 : 33.2, Rt = !this.tint && this.now != null && I >= k && I <= K && this.value > this.now, ct = this.tint ? 'edge tint" style="stroke:' + this.tint(I) : Rt ? "accent" : "edge";
       tt += yo(i, _(30, $, 7), _(this.tint ? 37 : xt, $, 7), ct);
       const S = ut ? this.labelOf(I) : null;
-      S != null && S !== "" && (tt += Ws(i, _(41.5, $, 7), S, 4 * L));
+      S != null && S !== "" && (tt += Ws(i, _(41.5, $, 7), S, 4 * v));
     }
     let et = "";
     for (let Q = 0; Q < 40; Q++) {
-      const I = ya(f + Q * 9), $ = Math.cos(I), ut = Math.sin(I), xt = 22 * L;
+      const I = ya(f + Q * 9), $ = Math.cos(I), ut = Math.sin(I), xt = 22 * v;
       $ * i.V[0] + ut * i.V[1] > 0.12 * Math.hypot(i.V[0], i.V[1]) && (et += yo(i, [xt * $, xt * ut, 9], [xt * $, xt * ut, l - 2.2]));
     }
-    this.title && (tt += Ws(i, _(37, ya(90 - this.yaw.x), 7), this.title, 4.6 * L, { cls: "sel" }));
-    const it = ya(f), pt = Qe(18.5 * L, 64).map(([Q, I]) => [Q, I, l]);
-    return ia(i, P, 0, n) + Ne(i, P, "knob") + `<g class="deco">${tt}</g>` + ia(i, O, 7, n, Mo(i, P, 1)) + Ne(i, O, "knob") + `<g class="deco">${et}${ar(i, pt)}` + (this.tint ? `<path class="swatch" style="fill:${this.tint(this.value)}" d="${_n(Qe(8 * L, 40).map(([Q, I]) => i.p([Q, I, l])))}"/>` : "") + `${yo(i, [(this.tint ? 10 : 5) * L * Math.cos(it), (this.tint ? 10 : 5) * L * Math.sin(it), l], [15.5 * L * Math.cos(it), 15.5 * L * Math.sin(it), l], "edge pointer")}</g>`;
+    this.title && (tt += Ws(i, _(37, ya(90 - this.yaw.x), 7), this.title, 4.6 * v, { cls: "sel" }));
+    const it = ya(f), pt = Qe(18.5 * v, 64).map(([Q, I]) => [Q, I, l]);
+    return ia(i, P, 0, n) + Ne(i, P, "knob") + `<g class="deco">${tt}</g>` + ia(i, O, 7, n, Mo(i, P, 1)) + Ne(i, O, "knob") + `<g class="deco">${et}${ar(i, pt)}` + (this.tint ? `<path class="swatch" style="fill:${this.tint(this.value)}" d="${_n(Qe(8 * v, 40).map(([Q, I]) => i.p([Q, I, l])))}"/>` : "") + `${yo(i, [(this.tint ? 10 : 5) * v * Math.cos(it), (this.tint ? 10 : 5) * v * Math.sin(it), l], [15.5 * v * Math.cos(it), 15.5 * v * Math.sin(it), l], "edge pointer")}</g>`;
   }
 }
 class xg extends or {
@@ -3810,12 +3810,12 @@ class xg extends or {
     this.held || n === this.index || (this.index = n, this.A.t = this.positions[n].a, this.svg.setAttribute("aria-valuetext", this.positions[n].label), this.kick());
   }
   render(n) {
-    const i = this.v, l = this.A.x - this.yaw.x, f = 12 + this.ph.x, [b, g] = this.size(92, 92), v = b / 92, D = g / 92, L = Math.min(v, D), _ = He(oo(b, g, 20 * L), 0, 7), P = He(Qe(15 * L, 48), 7, 12), O = ko(He([[-12, -5], [16, -5], [24, 0], [16, 5], [-12, 5]].map(([K, tt]) => [K * L, tt * L]), 12, f, !1), Hs(l));
+    const i = this.v, l = this.A.x - this.yaw.x, f = 12 + this.ph.x, [b, g] = this.size(92, 92), v = b / 92, D = g / 92, T = Math.min(v, D), _ = He(oo(b, g, 20 * T), 0, 7), P = He(Qe(15 * T, 48), 7, 12), O = ko(He([[-12, -5], [16, -5], [24, 0], [16, 5], [-12, 5]].map(([K, tt]) => [K * T, tt * T]), 12, f, !1), Hs(l));
     let k = "";
     return this.positions.forEach((K, tt) => {
-      const z = ya(K.a - this.yaw.x), N = tt === this.index, et = Math.cos(z), it = Math.sin(z), pt = Qe(1.7 * L, 20).map(([Q, I]) => [Q + 26.5 * et * v, I + 26.5 * it * D, 7]);
-      k += N ? `<path class="dotfill" d="${_n(pt.map(i.p))}"/>` : ar(i, pt), k += Ws(i, [37.5 * et * v, 37.5 * it * D, 7], K.label, 5.6 * L, { part: `pos-${tt}`, cls: N ? "sel" : "", w: 26 });
-    }), ia(i, _, 0, n) + Ne(i, _) + k + ia(i, O, 7, n, Mo(i, _, 1)) + Ne(i, P, "knob") + Ne(i, O, "knob") + `<g class="deco">${yo(i, Hs(l)([6 * L, 0, f]), Hs(l)([19 * L, 0, f]))}</g>`;
+      const z = ya(K.a - this.yaw.x), N = tt === this.index, et = Math.cos(z), it = Math.sin(z), pt = Qe(1.7 * T, 20).map(([Q, I]) => [Q + 26.5 * et * v, I + 26.5 * it * D, 7]);
+      k += N ? `<path class="dotfill" d="${_n(pt.map(i.p))}"/>` : ar(i, pt), k += Ws(i, [37.5 * et * v, 37.5 * it * D, 7], K.label, 5.6 * T, { part: `pos-${tt}`, cls: N ? "sel" : "", w: 26 });
+    }), ia(i, _, 0, n) + Ne(i, _) + k + ia(i, O, 7, n, Mo(i, _, 1)) + Ne(i, P, "knob") + Ne(i, O, "knob") + `<g class="deco">${yo(i, Hs(l)([6 * T, 0, f]), Hs(l)([19 * T, 0, f]))}</g>`;
   }
 }
 class kg extends or {
@@ -3842,7 +3842,7 @@ class kg extends or {
     this.held || (this.on = n, this.phi.t = n ? 24 : -24, this.svg.setAttribute("aria-checked", n), this.kick());
   }
   render(n) {
-    const i = this.v, l = 6, f = l - 23, b = 6, [g, v] = this.size(86, 104), D = Math.min(g / 86, v / 104), L = ([I, $, ut]) => [I * D, $ * D, 6 + (ut - 6) * D], _ = He(oo(g, v, 18 * D), 0, 6), P = ko(He(Qe(8, 40), 6, 10), (I) => L(Ti(0, l, 0)(I))), O = (I) => L(Ti(0, l, 10)(Fc(this.phi.x)(I))), k = ko(He(Qe(2.2, 20), 0, 13.5), O), K = ko(He(Qe(3.8, 24), 12.5, 17.5), O), tt = (I) => L(Fc(-this.lid.x, f, b)(I)), z = ko(He(oo(40, 46, 7), 6, 30), (I) => tt(Ti(0, l, 0)(I))), N = Df(z, i.V);
+    const i = this.v, l = 6, f = l - 23, b = 6, [g, v] = this.size(86, 104), D = Math.min(g / 86, v / 104), T = ([I, $, ut]) => [I * D, $ * D, 6 + (ut - 6) * D], _ = He(oo(g, v, 18 * D), 0, 6), P = ko(He(Qe(8, 40), 6, 10), (I) => T(Ti(0, l, 0)(I))), O = (I) => T(Ti(0, l, 10)(Fc(this.phi.x)(I))), k = ko(He(Qe(2.2, 20), 0, 13.5), O), K = ko(He(Qe(3.8, 24), 12.5, 17.5), O), tt = (I) => T(Fc(-this.lid.x, f, b)(I)), z = ko(He(oo(40, 46, 7), 6, 30), (I) => tt(Ti(0, l, 0)(I))), N = Df(z, i.V);
     let et = "";
     if (N[1]) {
       let I = "";
@@ -3878,8 +3878,8 @@ class _c extends or {
     return n.key !== " " && n.key !== "Enter" ? !1 : (i && !n.repeat ? this.down("lever") : i || this.up(), !0);
   }
   render(n) {
-    const i = this.v, [l, f] = this.size(64, 84), b = Math.min(l / 64, f / 84), g = ([z, N, et]) => [z * b, N * b, 6 + (et - 6) * b], v = this.press.x * 1.2, D = He(oo(l, f, 16 * b), 0, 6), L = ko(He(Qe(10, 6).map(([z, N]) => [z, N]), 6, 9 - v, !1), (z) => g(Hs(30)(z))), _ = ko(He(Qe(6.5, 36), 9 - v, 12 - v), g), P = (z) => g(Ti(0, 0, 12 - v)(Fc(this.phi.x)(z))), O = ko(He(Qe(2.3, 20), 0, 15), P), k = ko(He(Qe(4, 24), 14, 19), P), K = f / 2 - 13 * b, tt = (z, N, et) => Ws(i, [0, N, 6], z, (this.opts.textSize || 6) * b, { part: "lever", cls: et ? "sel" : "", w: 30 });
-    return ia(i, D, 0, n) + Ne(i, D) + tt(this.labels[0], -K, this.on) + tt(this.labels[1], K, !this.on) + ia(i, k, 6, n, Mo(i, D, 1)) + ia(i, O, 6, n, Mo(i, D, 1)) + `<g data-part="lever">${Ne(i, L)}${Ne(i, _)}${Ne(i, O)}${Ne(i, k)}</g>`;
+    const i = this.v, [l, f] = this.size(64, 84), b = Math.min(l / 64, f / 84), g = ([z, N, et]) => [z * b, N * b, 6 + (et - 6) * b], v = this.press.x * 1.2, D = He(oo(l, f, 16 * b), 0, 6), T = ko(He(Qe(10, 6).map(([z, N]) => [z, N]), 6, 9 - v, !1), (z) => g(Hs(30)(z))), _ = ko(He(Qe(6.5, 36), 9 - v, 12 - v), g), P = (z) => g(Ti(0, 0, 12 - v)(Fc(this.phi.x)(z))), O = ko(He(Qe(2.3, 20), 0, 15), P), k = ko(He(Qe(4, 24), 14, 19), P), K = f / 2 - 13 * b, tt = (z, N, et) => Ws(i, [0, N, 6], z, (this.opts.textSize || 6) * b, { part: "lever", cls: et ? "sel" : "", w: 30 });
+    return ia(i, D, 0, n) + Ne(i, D) + tt(this.labels[0], -K, this.on) + tt(this.labels[1], K, !this.on) + ia(i, k, 6, n, Mo(i, D, 1)) + ia(i, O, 6, n, Mo(i, D, 1)) + `<g data-part="lever">${Ne(i, T)}${Ne(i, _)}${Ne(i, O)}${Ne(i, k)}</g>`;
   }
 }
 const wu = "homecore-density", vu = "homecore-physical", yu = "homecore-physical-view", xu = "homecore-physical-fit", ku = "homecore-physical-binary", Mu = "homecore-physical-preview-at", We = {
@@ -3925,7 +3925,7 @@ const wu = "homecore-density", vu = "homecore-physical", yu = "homecore-physical
 function Wg(o, { config: n, getHass: i }) {
   var yp, xp, kp;
   const l = (t) => o.getElementById(t), f = l("app"), b = n || {}, g = String(b.layout || "").toLowerCase().replace("_", "-") === "test-focus", v = String(b.page || "").toLowerCase() === "overview";
-  let D = We.get(wu) === "1", L = We.get(vu) === "1", _ = We.get(yu) || "front", P = We.get(xu) || "fill", O = We.get(ku) || "toggle", k = {};
+  let D = We.get(wu) === "1", T = We.get(vu) === "1", _ = We.get(yu) || "front", P = We.get(xu) || "fill", O = We.get(ku) || "toggle", k = {};
   const K = (t) => {
     var e;
     return (e = i()) == null ? void 0 : e.callWS(t);
@@ -3942,7 +3942,7 @@ function Wg(o, { config: n, getHass: i }) {
     ["alarm", "Alarm", "The alarm in the Security popup.", (t) => t.startsWith("alarm_control_panel.")]
   ], et = (t, e, a, r) => '<div class="themeChoice" id="' + t + '" role="group" aria-label="' + e + '">' + r.map(([s, p]) => '<button class="wxLayoutBtn" type="button" aria-pressed="false" ' + a + '="' + s + '">' + p + "</button>").join("") + "</div>", it = (t, e, a, r) => '<div class="toggleRow"' + (r ? ' id="' + r + '"' : "") + "><div><strong>" + t + "</strong>" + (e ? '<div class="status">' + e + "</div>" : "") + "</div>" + a + "</div>";
   function pt() {
-    var T, X;
+    var L, X;
     if (!g || l("housePane")) return;
     const t = l("settingsView");
     t.querySelector(".settingsTitle").textContent = "HomeCore settings";
@@ -3956,11 +3956,11 @@ function Wg(o, { config: n, getHass: i }) {
     p && (p.hidden = !0), [s(l("moreInfoChoice")), s(l("namesChoice"))].forEach((C) => C && r("house").appendChild(C)), r("house").insertAdjacentHTML("beforeend", it("Lights", "How lights show on the house page.", et("lightsChoice", "Lights", "data-lights", [["tile", "HomeCore tile"], ["dac", "Dual Axis Controller"]]), "lightsRow") + it("Pad", "What the Dual Axis Controller’s pad sets on its tile.", et("dacPadChoice", "Pad", "data-dac-pad", [["temperature", "Temperature"], ["colour", "Colour"]]), "dacPadRow")), r("house").insertAdjacentHTML("beforeend", it("Physical controls", "Buttons, rockers, faders, dials and switches you press, drawn in lines, in the more info space.", '<button class="switch" type="button" role="switch" id="physToggle" aria-label="Physical controls"></button>') + it("Angle", "Where the physical controls are seen from.", et("physViewChoice", "Angle", "data-phys-view", [["iso", "Isometric"], ["three", "Three-quarter"], ["tilted", "Tilted"], ["front", "Front"], ["flat", "Flat"]]), "physViewRow") + it("Fit", "Keep each control’s drawn size, or stretch it to fill the space.", et("physFitChoice", "Fit", "data-phys-fit", [["drawn", "As drawn"], ["fill", "Fill"]]), "physFitRow") + it("On and off", "How anything that is only on or off shows: switches, plugs, locks, simple lights and fans.", et("physBinaryChoice", "On and off", "data-phys-binary", [["toggle", "Toggle"], ["rocker", "Rocker"]]), "physBinaryRow"));
     const d = () => {
       const C = l("physToggle");
-      C.classList.toggle("on", L), C.setAttribute("aria-checked", String(L)), l("physViewRow").hidden = l("physFitRow").hidden = l("physBinaryRow").hidden = !L, t.querySelectorAll("[data-phys-view]").forEach((V) => V.setAttribute("aria-pressed", String(V.dataset.physView === _))), t.querySelectorAll("[data-phys-fit]").forEach((V) => V.setAttribute("aria-pressed", String(V.dataset.physFit === P))), t.querySelectorAll("[data-phys-binary]").forEach((V) => V.setAttribute("aria-pressed", String(V.dataset.physBinary === O)));
+      C.classList.toggle("on", T), C.setAttribute("aria-checked", String(T)), l("physViewRow").hidden = l("physFitRow").hidden = l("physBinaryRow").hidden = !T, t.querySelectorAll("[data-phys-view]").forEach((V) => V.setAttribute("aria-pressed", String(V.dataset.physView === _))), t.querySelectorAll("[data-phys-fit]").forEach((V) => V.setAttribute("aria-pressed", String(V.dataset.physFit === P))), t.querySelectorAll("[data-phys-binary]").forEach((V) => V.setAttribute("aria-pressed", String(V.dataset.physBinary === O)));
     };
     r("house").addEventListener("click", (C) => {
       const V = C.target.closest("#physToggle,[data-phys-view],[data-phys-fit],[data-phys-binary]");
-      V && (V.id === "physToggle" && (L = !L, We.set(vu, L ? "1" : "0"), bn.clear()), V.dataset.physView && (_ = V.dataset.physView, We.set(yu, _), bn.forEach((yt) => yt.ctls.forEach((Tt) => Tt.setCamera(_)))), V.dataset.physFit && (P = V.dataset.physFit, We.set(xu, P), bn.forEach((yt) => yt.ctls.forEach((Tt) => Tt.setFill(P === "fill")))), V.dataset.physBinary && (O = V.dataset.physBinary, We.set(ku, O), bn.clear()), d(), (V.id === "physToggle" || V.dataset.physBinary) && Na(), A(V.closest(".toggleRow")));
+      V && (V.id === "physToggle" && (T = !T, We.set(vu, T ? "1" : "0"), bn.clear()), V.dataset.physView && (_ = V.dataset.physView, We.set(yu, _), bn.forEach((yt) => yt.ctls.forEach((Tt) => Tt.setCamera(_)))), V.dataset.physFit && (P = V.dataset.physFit, We.set(xu, P), bn.forEach((yt) => yt.ctls.forEach((Tt) => Tt.setFill(P === "fill")))), V.dataset.physBinary && (O = V.dataset.physBinary, We.set(ku, O), bn.clear()), d(), (V.id === "physToggle" || V.dataset.physBinary) && Na(), A(V.closest(".toggleRow")));
     }), d();
     let u = null;
     const h = () => {
@@ -4021,7 +4021,7 @@ function Wg(o, { config: n, getHass: i }) {
       } else u.ctls.forEach((At) => {
         At.setCamera(_), At.setFill(P === "fill");
       });
-      u.classList.toggle("off", !L), u.hidden && (u.hidden = !1, yt && y(yt[0], yt[1]), u.offsetWidth), u.classList.add("in"), (C && !u.classList.contains("placed") ? C.getBoundingClientRect().bottom - (u.getBoundingClientRect().top - 16) : 0) > 0 && C.scrollIntoView({ block: "center", behavior: Ve() ? "instant" : "smooth" });
+      u.classList.toggle("off", !T), u.hidden && (u.hidden = !1, yt && y(yt[0], yt[1]), u.offsetWidth), u.classList.add("in"), (C && !u.classList.contains("placed") ? C.getBoundingClientRect().bottom - (u.getBoundingClientRect().top - 16) : 0) > 0 && C.scrollIntoView({ block: "center", behavior: Ve() ? "instant" : "smooth" });
     }
     ["#homeNav", "#settingsBack", "#tvNav"].forEach((C) => {
       var V;
@@ -4033,7 +4033,7 @@ function Wg(o, { config: n, getHass: i }) {
     E(We.get(G) === "table" ? "table" : "cards"), M.querySelector(".tfLightView").addEventListener("click", (C) => {
       const V = C.target.closest("[data-light-view]");
       V && E(V.dataset.lightView);
-    }), new ResizeObserver(() => I()).observe(M), (X = (T = document.fonts) == null ? void 0 : T.ready) == null || X.then(() => I());
+    }), new ResizeObserver(() => I()).observe(M), (X = (L = document.fonts) == null ? void 0 : L.ready) == null || X.then(() => I());
     const F = (C) => {
       const V = R.querySelector(".tab.active");
       B.style.transition = "none", C ? Ps(B, B.offsetLeft, B.offsetWidth, V.offsetLeft, V.offsetWidth) : (B.style.left = V.offsetLeft + "px", B.style.width = V.offsetWidth + "px");
@@ -4083,7 +4083,7 @@ function Wg(o, { config: n, getHass: i }) {
     t.querySelectorAll("[data-lights]").forEach((B) => B.setAttribute("aria-pressed", String(B.dataset.lights === Xt.lights))), l("lightsRow").querySelector(".status").textContent = e || !ai() ? "How lights show on the house page." : Ka === "failed" ? "The Dual Axis Controller didn't load. Check the connection, or install it from HACS." : "Getting the Dual Axis Controller…", t.querySelectorAll("[data-dac-pad]").forEach((B) => B.setAttribute("aria-pressed", String(B.dataset.dacPad === Xt.dacPad))), l("dacPadRow").hidden = !ai();
     for (const B of t.querySelectorAll("[data-source]")) {
       if (B === o.activeElement) continue;
-      const [G] = N.find(([F]) => F === B.dataset.source), E = Object.keys(k).filter(N.find(([F]) => F === G)[3]).sort((F, T) => vt(F).localeCompare(vt(T)));
+      const [G] = N.find(([F]) => F === B.dataset.source), E = Object.keys(k).filter(N.find(([F]) => F === G)[3]).sort((F, L) => vt(F).localeCompare(vt(L)));
       B.dataset.sig !== E.join(",") && (B.innerHTML = '<option value="">Automatic</option>' + E.map((F) => '<option value="' + j(F) + '">' + j(vt(F)) + "</option>").join(""), B.dataset.sig = E.join(",")), B.value = E.includes((M = kt.sources) == null ? void 0 : M[G]) ? kt.sources[G] : "";
     }
     t.querySelectorAll("[data-sum-toggle]").forEach((B) => {
@@ -4096,9 +4096,9 @@ function Wg(o, { config: n, getHass: i }) {
       return;
     }
     const d = new Set($t()), u = (B, G, E, F) => '<option value="' + B + '"' + (B === E ? " selected" : "") + ">" + G + "</option>", h = Object.keys(k).filter((B) => B.startsWith("light.")).sort((B, G) => !Se.get(B) - !Se.get(G) || (Se.get(B) || "").localeCompare(Se.get(G) || "") || vt(B).localeCompare(vt(G))).map((B) => {
-      const G = Xt.lightStyles[B] || "", E = Xt.lightPads[B] || "", F = d.has(B), T = j(vt(B));
-      return "<tr><td><strong>" + T + "</strong></td><td>" + j(Se.get(B) || "—") + "</td><td>" + j(Oe(B)) + '</td><td class="metaSwitchCol"><button class="switch' + (F ? " on" : "") + '" type="button" role="switch" aria-checked="' + F + '" data-light-fav="' + j(B) + '" aria-label="' + T + ' is a favourite"></button></td><td><select class="settingsSelect" data-light-style="' + j(B) + '" aria-label="' + T + ' tile">' + u("", "Default", G) + u("tile", "HomeCore tile", G) + u("dac", "Dual Axis Controller", G) + '</select></td><td><select class="settingsSelect" data-light-pad="' + j(B) + '" aria-label="' + T + ' pad"' + (Hn(B) ? "" : " disabled") + ">" + u("", "Default", E) + u("temperature", "Temperature", E) + u("colour", "Colour", E) + "</select></td></tr>";
-    }).join(""), y = (B, G, E, F, T) => '<div class="themeChoice" role="group" aria-label="' + E + '">' + F.map(([X, C]) => '<button class="wxLayoutBtn" type="button" aria-pressed="' + (X === T) + '" data-light-pick="' + B + "|" + j(G) + '" data-v="' + X + '">' + C + "</button>").join("") + "</div>", A = Object.keys(k).filter((B) => B.startsWith("light.")).sort((B, G) => !Se.get(B) - !Se.get(G) || (Se.get(B) || "").localeCompare(Se.get(G) || "") || vt(B).localeCompare(vt(G))).map((B) => {
+      const G = Xt.lightStyles[B] || "", E = Xt.lightPads[B] || "", F = d.has(B), L = j(vt(B));
+      return "<tr><td><strong>" + L + "</strong></td><td>" + j(Se.get(B) || "—") + "</td><td>" + j(Oe(B)) + '</td><td class="metaSwitchCol"><button class="switch' + (F ? " on" : "") + '" type="button" role="switch" aria-checked="' + F + '" data-light-fav="' + j(B) + '" aria-label="' + L + ' is a favourite"></button></td><td><select class="settingsSelect" data-light-style="' + j(B) + '" aria-label="' + L + ' tile">' + u("", "Default", G) + u("tile", "HomeCore tile", G) + u("dac", "Dual Axis Controller", G) + '</select></td><td><select class="settingsSelect" data-light-pad="' + j(B) + '" aria-label="' + L + ' pad"' + (Hn(B) ? "" : " disabled") + ">" + u("", "Default", E) + u("temperature", "Temperature", E) + u("colour", "Colour", E) + "</select></td></tr>";
+    }).join(""), y = (B, G, E, F, L) => '<div class="themeChoice" role="group" aria-label="' + E + '">' + F.map(([X, C]) => '<button class="wxLayoutBtn" type="button" aria-pressed="' + (X === L) + '" data-light-pick="' + B + "|" + j(G) + '" data-v="' + X + '">' + C + "</button>").join("") + "</div>", A = Object.keys(k).filter((B) => B.startsWith("light.")).sort((B, G) => !Se.get(B) - !Se.get(G) || (Se.get(B) || "").localeCompare(Se.get(G) || "") || vt(B).localeCompare(vt(G))).map((B) => {
       const G = d.has(B), E = j(vt(B)), F = [Se.get(B), Oe(B)].filter(Boolean).map(j).join(" · ");
       return '<div class="toggleList"><div class="toggleRow"><div><strong>' + E + '</strong><div class="status">' + F + "</div></div></div>" + it("Favourite", "", '<button class="switch' + (G ? " on" : "") + '" type="button" role="switch" aria-checked="' + G + '" data-light-fav="' + j(B) + '" aria-label="' + E + ' is a favourite"></button>') + it("Tile", "", y("lightStyles", B, E + " tile", [["", "Default"], ["tile", "HomeCore tile"], ["dac", "Dual Axis Controller"]], Xt.lightStyles[B] || "")) + (Hn(B) ? it("Pad", "", y("lightPads", B, E + " pad", [["", "Default"], ["temperature", "Temperature"], ["colour", "Colour"]], Xt.lightPads[B] || "")) : "") + "</div>";
     }).join("");
@@ -4330,8 +4330,8 @@ function Wg(o, { config: n, getHass: i }) {
   }
   function ir(t, e, a = !1) {
     const [r, s, p] = t.map((G) => G / 255), d = Math.max(r, s, p), u = Math.min(r, s, p), h = d - u, y = h ? (d === r ? (s - p) / h + (s < p ? 6 : 0) : d === s ? (p - r) / h + 2 : (r - s) / h + 4) * 60 : 0, A = (d + u) / 2, M = h ? h / (1 - Math.abs(2 * A - 1)) : 0, R = h < 0.1 ? Math.min(M, 0.25) : 1, B = (G) => {
-      const E = (T) => (T + y / 30) % 12, F = R * Math.min(G, 1 - G);
-      return [0, 8, 4].map((T) => Math.round(255 * (G - F * Math.max(-1, Math.min(E(T) - 3, 9 - E(T), 1)))));
+      const E = (L) => (L + y / 30) % 12, F = R * Math.min(G, 1 - G);
+      return [0, 8, 4].map((L) => Math.round(255 * (G - F * Math.max(-1, Math.min(E(L) - 3, 9 - E(L), 1)))));
     };
     for (let G = 0.5; a ? G < 0.96 : G > 0.04; G += a ? 0.01 : -0.01) {
       const E = B(G);
@@ -4495,7 +4495,7 @@ function Wg(o, { config: n, getHass: i }) {
     return null;
   };
   function Vi(t) {
-    var B, G, E, F, T, X, C;
+    var B, G, E, F, L, X, C;
     const e = t.localName === "svg" ? t : Wi(t), a = e ? [...e.querySelectorAll("path,rect,circle,ellipse,polygon,polyline,line")].filter((V) => !V.closest("defs,mask")) : [];
     if (!a.length) return !e;
     const r = (B = t.closest(".tfIcon")) == null ? void 0 : B.offsetWidth;
@@ -4507,7 +4507,7 @@ function Wg(o, { config: n, getHass: i }) {
     for (const V of a) {
       const yt = V.getBBox(), Tt = getComputedStyle(V), Nt = Tt.stroke !== "none" ? (parseFloat(Tt.strokeWidth) || 0) / 2 : 0;
       if (!yt.width && !yt.height) continue;
-      const At = (T = (F = (E = (G = V.transform) == null ? void 0 : G.baseVal) == null ? void 0 : E.consolidate) == null ? void 0 : F.call(E)) == null ? void 0 : T.matrix, ft = At ? (() => {
+      const At = (L = (F = (E = (G = V.transform) == null ? void 0 : G.baseVal) == null ? void 0 : E.consolidate) == null ? void 0 : F.call(E)) == null ? void 0 : L.matrix, ft = At ? (() => {
         const Lt = [[yt.x, yt.y], [yt.x + yt.width, yt.y], [yt.x, yt.y + yt.height], [yt.x + yt.width, yt.y + yt.height]].map(([fe, ye]) => [At.a * fe + At.c * ye + At.e, At.b * fe + At.d * ye + At.f]), Qt = Lt.map((fe) => fe[0]), me = Lt.map((fe) => fe[1]);
         return { x: Math.min(...Qt), y: Math.min(...me), width: Math.max(...Qt) - Math.min(...Qt), height: Math.max(...me) - Math.min(...me) };
       })() : yt;
@@ -4725,24 +4725,24 @@ function Wg(o, { config: n, getHass: i }) {
   const x = (t) => (Number.isInteger(Number(t)) ? String(Number(t)) : Fe(t)) + "°";
   function H(t) {
     var F;
-    const e = (T) => t.readings.find((X) => Ut(X).device_class === T), a = e("temperature"), r = e("humidity"), s = (T) => {
+    const e = (L) => t.readings.find((X) => Ut(X).device_class === L), a = e("temperature"), r = e("humidity"), s = (L) => {
       var X;
-      return Number((X = k[T]) == null ? void 0 : X.state);
-    }, p = (T) => t.actions.filter((X) => T.test(X)), d = t.lights.filter((T) => {
+      return Number((X = k[L]) == null ? void 0 : X.state);
+    }, p = (L) => t.actions.filter((X) => L.test(X)), d = t.lights.filter((L) => {
       var X;
-      return ((X = k[T]) == null ? void 0 : X.state) === "on";
-    }), u = p(/^cover\./), h = u.filter((T) => {
+      return ((X = k[L]) == null ? void 0 : X.state) === "on";
+    }), u = p(/^cover\./), h = u.filter((L) => {
       var X;
-      return ((X = k[T]) == null ? void 0 : X.state) !== "closed";
-    }), y = [...new Set(u.map((T) => kc(k[T])))], A = p(/^climate\./)[0], M = p(/^humidifier\./)[0], R = p(/^media_player\./), B = R.find((T) => {
+      return ((X = k[L]) == null ? void 0 : X.state) !== "closed";
+    }), y = [...new Set(u.map((L) => kc(k[L])))], A = p(/^climate\./)[0], M = p(/^humidifier\./)[0], R = p(/^media_player\./), B = R.find((L) => {
       var X;
-      return ((X = k[T]) == null ? void 0 : X.state) === "playing";
-    }) || R.find((T) => {
+      return ((X = k[L]) == null ? void 0 : X.state) === "playing";
+    }) || R.find((L) => {
       var X;
-      return ((X = k[T]) == null ? void 0 : X.state) === "paused";
-    }), G = t.plugs.filter((T) => {
+      return ((X = k[L]) == null ? void 0 : X.state) === "paused";
+    }), G = t.plugs.filter((L) => {
       var X;
-      return ((X = k[T]) == null ? void 0 : X.state) === "on";
+      return ((X = k[L]) == null ? void 0 : X.state) === "on";
     }), E = [];
     if (a && Number.isFinite(s(a)) && E.push({ key: "temp", id: a, kind: "reading", icon: wo(a), label: "Temperature", value: Fe(s(a)) + "°" }), r && Number.isFinite(s(r)) && E.push({ key: "hum", id: r, kind: "reading", icon: wo(r), label: "Humidity", value: Math.round(s(r)) + "%" }), t.lights.length && E.push({
       key: "lights",
@@ -4754,70 +4754,70 @@ function Wg(o, { config: n, getHass: i }) {
       short: d.length ? d.length + " on" : "Off",
       on: d.length > 0,
       light: d.length ? lr(d[0]) : "",
-      acts: t.lights.map((T) => ["light", d.length ? "turn_off" : "turn_on", T]),
+      acts: t.lights.map((L) => ["light", d.length ? "turn_off" : "turn_on", L]),
       aria: (d.length ? "Turn off" : "Turn on") + " the lights in " + t.name
     }), u.length) {
-      const T = y.length === 1 ? Ag[y[0]] : "covers", X = Math.round(u.reduce((C, V) => C + Ua(V), 0) / u.length);
+      const L = y.length === 1 ? Ag[y[0]] : "covers", X = Math.round(u.reduce((C, V) => C + Ua(V), 0) / u.length);
       E.push({
         key: "covers",
         kind: "control",
         tone: "blue",
         light: h.length ? io([146, 107, 199]) : "",
         icon: wo("", ((F = Pu[y[0]]) == null ? void 0 : F[h.length ? 0 : 1]) || "mdi:window-shutter"),
-        label: zt(T),
+        label: zt(L),
         value: X <= 0 ? "Closed" : X >= 100 ? "Open" : X + "% open",
         short: X <= 0 ? "Closed" : X + "%",
         on: h.length > 0,
         acts: u.map((C) => ["cover", h.length ? "close_cover" : "open_cover", C]),
-        aria: (h.length ? "Close the " : "Open the ") + T + " in " + t.name
+        aria: (h.length ? "Close the " : "Open the ") + L + " in " + t.name
       });
     }
     if (A) {
-      const T = Ut(A), X = k[A].state === "off";
+      const L = Ut(A), X = k[A].state === "off";
       E.push({
         key: "climate",
         kind: "control",
-        tone: T.hvac_action === "cooling" ? "cool" : "heat",
+        tone: L.hvac_action === "cooling" ? "cool" : "heat",
         light: To(A) ? io(To(A)) : "",
         icon: wo(A),
         label: vt(A),
-        value: X ? "Off" : zt(T.hvac_action || k[A].state) + " · " + x(T.temperature),
-        short: X ? "Off" : x(T.temperature),
+        value: X ? "Off" : zt(L.hvac_action || k[A].state) + " · " + x(L.temperature),
+        short: X ? "Off" : x(L.temperature),
         on: !X,
         acts: [["climate", "toggle", A]],
         aria: "Turn " + vt(A) + (X ? " on" : " off")
       });
     }
     if (M) {
-      const T = k[M].state === "on";
+      const L = k[M].state === "on";
       E.push({
         key: "humidifier",
         kind: "control",
         tone: "blue",
-        light: T ? io([33, 150, 243]) : "",
+        light: L ? io([33, 150, 243]) : "",
         icon: wo("", "mdi:air-humidifier"),
         label: vt(M),
-        value: T ? "On · " + Ut(M).humidity + "%" : "Off",
-        short: T ? Ut(M).humidity + "%" : "Off",
-        on: T,
+        value: L ? "On · " + Ut(M).humidity + "%" : "Off",
+        short: L ? Ut(M).humidity + "%" : "Off",
+        on: L,
         acts: [["humidifier", "toggle", M]],
-        aria: "Turn " + vt(M) + (T ? " off" : " on")
+        aria: "Turn " + vt(M) + (L ? " off" : " on")
       });
     }
     if (R.length) {
-      const T = B || R[0], X = k[T], C = X.state === "playing";
+      const L = B || R[0], X = k[L], C = X.state === "playing";
       E.push({
         key: "media",
         kind: "control",
         tone: "blue",
-        light: To(T) ? io(To(T)) : "",
-        icon: wo(T),
-        label: vt(T),
-        value: Oe(T),
+        light: To(L) ? io(To(L)) : "",
+        icon: wo(L),
+        label: vt(L),
+        value: Oe(L),
         short: C ? "Playing" : X.state === "paused" ? "Paused" : zt(X.state),
         on: C,
-        acts: [["media_player", X.state === "playing" || X.state === "paused" ? "media_play_pause" : "toggle", T]],
-        aria: (C ? "Pause " : "Play ") + vt(T)
+        acts: [["media_player", X.state === "playing" || X.state === "paused" ? "media_play_pause" : "toggle", L]],
+        aria: (C ? "Pause " : "Play ") + vt(L)
       });
     }
     return t.plugs.length && E.push({
@@ -4830,9 +4830,9 @@ function Wg(o, { config: n, getHass: i }) {
       value: G.length ? G.length + " of " + t.plugs.length + " on" : "All off",
       short: G.length ? G.length + " on" : "Off",
       on: G.length > 0,
-      acts: t.plugs.map((T) => ["switch", G.length ? "turn_off" : "turn_on", T]),
+      acts: t.plugs.map((L) => ["switch", G.length ? "turn_off" : "turn_on", L]),
       aria: (G.length ? "Turn off" : "Turn on") + " the plugs in " + t.name
-    }), t.alerts.forEach((T) => E.push(Ut(T).device_class === "moisture" ? { key: "alert:" + T, kind: "alert", icon: wo(T), label: "Water leak" } : { key: "note:" + T, kind: "note", icon: wo(T), label: vt(T) + " " + Oe(T).toLowerCase() })), E;
+    }), t.alerts.forEach((L) => E.push(Ut(L).device_class === "moisture" ? { key: "alert:" + L, kind: "alert", icon: wo(L), label: "Water leak" } : { key: "note:" + L, kind: "note", icon: wo(L), label: vt(L) + " " + Oe(L).toLowerCase() })), E;
   }
   const W = (t, e) => {
     const a = (r) => t.actions.filter((s) => r.test(s));
@@ -4908,10 +4908,10 @@ function Wg(o, { config: n, getHass: i }) {
     return '<div class="tfAreas" data-tf data-k="areas" style="order:' + t + '"><section class="hcAreaGallery tfAreaGallery" aria-label="Areas">' + e.map(bt).join("") + '</section><div class="tfAreaPhone"><div class="tfAreaStage">' + (a ? ve(a, null, ' data-cols="2" data-rows="' + On("areas") + '"') : "") + '</div><div class="tfAreaPicks" role="group" aria-label="Areas">' + e.map(Pt).join("") + "</div></div></div>";
   }, Ot = (t) => t.startsWith("room:"), qt = (t) => Bt.find((e) => "room:" + e.id === t);
   function ve(t, e, a = "") {
-    const r = H(t), s = J(t), p = s && at(s), d = s ? rt(t, s, r) : "", u = p ? p.text + (p.unit ? " " + p.unit : "") : "", h = (T) => {
-      const X = W(t, T.key);
-      return X.length === 1 ? X[0] : "group:" + t.id + ":" + T.key;
-    }, y = r.filter((T) => T.kind === "control").slice(0, 4), A = (T) => T.on && T.light ? ' data-light style="' + T.light + '"' : "", M = (T) => '<button class="tfIcon' + (T.on ? " on" : "") + '" type="button" data-tone="' + T.tone + '"' + A(T) + ' data-acts="' + ur(T.acts) + '" aria-label="' + j(T.aria) + '" aria-pressed="' + T.on + '">' + T.icon + "</button>", R = (T) => '<button class="tfIcon' + (T.on ? " on" : "") + '" type="button" data-tone="' + T.tone + '"' + A(T) + ' data-more="' + j(h(T)) + '" aria-label="' + j(t.name + " " + T.label.toLowerCase() + ", " + T.value + ". Open") + '">' + T.icon + "</button>", B = y.map(R), G = y.map((T) => '<div class="tfRoomDev' + (T.on ? " on" : "") + '" data-more="' + j(h(T)) + '">' + (T.acts ? M(T) : R(T)) + '<button class="tfName tfRoomDevName" type="button" data-more="' + j(h(T)) + '" aria-label="' + j(t.name + " " + T.label.toLowerCase() + ", " + T.value + ". Open") + '"><span class="activityRowName">' + j(T.label) + '</span><span class="activityRowMeta">' + j(T.value) + "</span></button></div>"), E = '<span class="tfAreaGlyph"' + we("area:" + t.id, t.icon || "mdi:texture-box", t.name) + "></span>", F = '<button class="tfIcon tfIconOpen tfRoomIcon" type="button" data-go="' + j(t.id) + '" aria-label="Open ' + j(t.name) + '">' + E + "</button>";
+    const r = H(t), s = J(t), p = s && at(s), d = s ? rt(t, s, r) : "", u = p ? p.text + (p.unit ? " " + p.unit : "") : "", h = (L) => {
+      const X = W(t, L.key);
+      return X.length === 1 ? X[0] : "group:" + t.id + ":" + L.key;
+    }, y = r.filter((L) => L.kind === "control").slice(0, 4), A = (L) => L.on && L.light ? ' data-light style="' + L.light + '"' : "", M = (L) => '<button class="tfIcon' + (L.on ? " on" : "") + '" type="button" data-tone="' + L.tone + '"' + A(L) + ' data-acts="' + ur(L.acts) + '" aria-label="' + j(L.aria) + '" aria-pressed="' + L.on + '">' + L.icon + "</button>", R = (L) => '<button class="tfIcon' + (L.on ? " on" : "") + '" type="button" data-tone="' + L.tone + '"' + A(L) + ' data-more="' + j(h(L)) + '" aria-label="' + j(t.name + " " + L.label.toLowerCase() + ", " + L.value + ". Open") + '">' + L.icon + "</button>", B = y.map(R), G = y.map((L) => '<div class="tfRoomDev' + (L.on ? " on" : "") + '" data-more="' + j(h(L)) + '">' + (L.acts ? M(L) : R(L)) + '<button class="tfName tfRoomDevName" type="button" data-more="' + j(h(L)) + '" aria-label="' + j(t.name + " " + L.label.toLowerCase() + ", " + L.value + ". Open") + '"><span class="activityRowName">' + j(L.label) + '</span><span class="activityRowMeta">' + j(L.value) + "</span></button></div>"), E = '<span class="tfAreaGlyph"' + we("area:" + t.id, t.icon || "mdi:texture-box", t.name) + "></span>", F = '<button class="tfIcon tfIconOpen tfRoomIcon" type="button" data-go="' + j(t.id) + '" aria-label="Open ' + j(t.name) + '">' + E + "</button>";
     return '<div class="tfAction tfRoomTile"' + (e ? ' data-k="' + j(e) + '"' : "") + a + ' data-go="' + j(t.id) + '"><div class="tfActionHead">' + F + '<button class="tfName" type="button" data-go="' + j(t.id) + '" aria-label="Open ' + j(t.name) + '"><span class="activityRowName">' + j(t.name) + "</span>" + (u || d ? '<span class="activityRowMeta">' + (u ? '<span class="tfRoomInline">' + j(u) + (d ? " · " : "") + "</span>" : "") + j(d) + "</span>" : "") + "</button></div>" + // the reading opens its more-info (the thermometer's, say)
     (u ? '<button class="tfRoomReading" type="button" data-more="' + j(s) + '" aria-label="' + j(vt(s) + ", " + Oe(s) + ". More info") + '"><span class="tfRoomBig">' + j(u) + "</span>" + (d ? '<span class="tfRoomSub">' + j(d) + "</span>" : "") + "</button>" : "") + (B.length ? '<div class="tfRoomDevices">' + B.join("") + '</div><div class="tfRoomHeads">' + G.join("") + "</div>" : "") + "</div>";
   }
@@ -4944,8 +4944,8 @@ function Wg(o, { config: n, getHass: i }) {
     return '<button class="tfStar" type="button" data-star="' + j(t) + '" aria-pressed="' + e + '" aria-label="Favourite: ' + j(vt(t)) + '">' + Hg(e) + "</button>";
   };
   function uo(t, { area: e = !1, star: a = !1, plain: r = !1, say: s = null, alert: p = !1 } = {}) {
-    var G, E, F, T, X, C;
-    const d = r && ((X = (G = i()) == null ? void 0 : G.devices) == null ? void 0 : X[(T = (F = (E = i()) == null ? void 0 : E.entities) == null ? void 0 : F[t]) == null ? void 0 : T.device_id]), u = d && (d.name_by_user || d.name) || vt(t), h = t.split(".")[0], y = !r && Rr.includes(h) ? w(t) : null, A = y ? y.on : ["on", "open", "playing"].includes((C = k[t]) == null ? void 0 : C.state), M = r ? null : y ? y.button : Ci.includes(h) ? { act: Ht(h, "toggle", t), label: "Turn " + vt(t) + (A ? " off" : " on") } : h === "scene" || h === "script" ? { act: Ht(h, "turn_on", t), label: "Run " + vt(t) } : null, R = (s ?? Oe(t)) + (e && Se.get(t) ? " · " + Se.get(t) : ""), B = (y == null ? void 0 : y.icon) || Ea(t);
+    var G, E, F, L, X, C;
+    const d = r && ((X = (G = i()) == null ? void 0 : G.devices) == null ? void 0 : X[(L = (F = (E = i()) == null ? void 0 : E.entities) == null ? void 0 : F[t]) == null ? void 0 : L.device_id]), u = d && (d.name_by_user || d.name) || vt(t), h = t.split(".")[0], y = !r && Rr.includes(h) ? w(t) : null, A = y ? y.on : ["on", "open", "playing"].includes((C = k[t]) == null ? void 0 : C.state), M = r ? null : y ? y.button : Ci.includes(h) ? { act: Ht(h, "toggle", t), label: "Turn " + vt(t) + (A ? " off" : " on") } : h === "scene" || h === "script" ? { act: Ht(h, "turn_on", t), label: "Run " + vt(t) } : null, R = (s ?? Oe(t)) + (e && Se.get(t) ? " · " + Se.get(t) : ""), B = (y == null ? void 0 : y.icon) || Ea(t);
     return '<div class="activityRow' + (M ? " tfPlug" : "") + (A ? " on" : "") + (a ? " tfPick" : "") + (p ? " alert" : "") + '" data-k="' + j((e ? "fav:" : "row:") + t) + '" data-tone="' + (h === "light" ? "light" : (y == null ? void 0 : y.tone) || "blue") + '"' + Do(t) + ">" + (M && !a ? '<button class="tfIcon" type="button" data-act="' + M.act + '" aria-label="' + j(M.label) + '"' + we(t, B) + "></button>" : '<div class="tfIcon" aria-hidden="true"' + we(t, B) + "></div>") + '<button class="tfName" type="button" data-more="' + j(t) + '" aria-label="' + j(u + ", " + R + ". More info") + '"><span class="activityRowName">' + j(u) + '</span><span class="activityRowMeta">' + j(R) + "</span></button>" + (a ? Oo(t) : "") + "</div>";
   }
   const Io = () => {
@@ -4973,38 +4973,38 @@ function Wg(o, { config: n, getHass: i }) {
   }
   function wr() {
     var F;
-    const t = ((F = i()) == null ? void 0 : F.entities) || {}, e = (T) => Ut(T).device_class, a = Object.keys(k).filter((T) => T.startsWith("sensor.") && e(T) === "battery" || T.startsWith("binary_sensor.") && ["battery", "problem"].includes(e(T))), r = jt.rooms.flatMap((T) => T.plants.map((X) => X.id));
+    const t = ((F = i()) == null ? void 0 : F.entities) || {}, e = (L) => Ut(L).device_class, a = Object.keys(k).filter((L) => L.startsWith("sensor.") && e(L) === "battery" || L.startsWith("binary_sensor.") && ["battery", "problem"].includes(e(L))), r = jt.rooms.flatMap((L) => L.plants.map((X) => X.id));
     if (!a.length && !r.length) return null;
-    const s = (T) => {
+    const s = (L) => {
       var C;
-      const X = (C = t[T]) == null ? void 0 : C.device_id;
+      const X = (C = t[L]) == null ? void 0 : C.device_id;
       return !!X && Object.keys(k).some((V) => {
         var yt;
         return V.startsWith("binary_sensor.") && ((yt = t[V]) == null ? void 0 : yt.device_id) === X && e(V) === "battery_charging" && k[V].state === "on";
       });
-    }, p = (T) => T.startsWith("vacuum.") ? Ut(T).battery_level <= 20 && k[T].state !== "docked" : T.startsWith("binary_sensor.") ? e(T) === "battery" && k[T].state === "on" : parseFloat(k[T].state) <= 20 && !s(T), d = [...a, ...jt.vacuums].filter((T) => k[T] && p(T)), u = [...a.filter((T) => e(T) === "problem" && k[T].state === "on"), ...r.filter((T) => {
+    }, p = (L) => L.startsWith("vacuum.") ? Ut(L).battery_level <= 20 && k[L].state !== "docked" : L.startsWith("binary_sensor.") ? e(L) === "battery" && k[L].state === "on" : parseFloat(k[L].state) <= 20 && !s(L), d = [...a, ...jt.vacuums].filter((L) => k[L] && p(L)), u = [...a.filter((L) => e(L) === "problem" && k[L].state === "on"), ...r.filter((L) => {
       var X;
-      return ((X = k[T]) == null ? void 0 : X.state) === "problem";
-    })], h = a.filter((T) => k[T].state === "unavailable"), y = [.../* @__PURE__ */ new Set([...d, ...u, ...h])], A = (T) => {
-      const X = parseFloat(k[T].state);
-      return e(T) === "battery" && Number.isFinite(X) ? X : 101;
-    }, M = [...r, ...jt.vacuums, ...[...a].sort((T, X) => A(T) - A(X))].filter((T) => k[T] && !y.includes(T)), R = /* @__PURE__ */ new Map();
-    M.forEach((T) => {
+      return ((X = k[L]) == null ? void 0 : X.state) === "problem";
+    })], h = a.filter((L) => k[L].state === "unavailable"), y = [.../* @__PURE__ */ new Set([...d, ...u, ...h])], A = (L) => {
+      const X = parseFloat(k[L].state);
+      return e(L) === "battery" && Number.isFinite(X) ? X : 101;
+    }, M = [...r, ...jt.vacuums, ...[...a].sort((L, X) => A(L) - A(X))].filter((L) => k[L] && !y.includes(L)), R = /* @__PURE__ */ new Map();
+    M.forEach((L) => {
       var C;
-      const X = ((C = jt.areaOf) == null ? void 0 : C.call(jt, T)) || "";
-      R.set(X, [...R.get(X) || [], T]);
+      const X = ((C = jt.areaOf) == null ? void 0 : C.call(jt, L)) || "";
+      R.set(X, [...R.get(X) || [], L]);
     });
-    const B = (T) => {
-      const X = jt.rooms.findIndex((C) => C.id === T);
-      return T === "" ? 1 / 0 : X < 0 ? jt.rooms.length : X;
-    }, G = [...R.keys()].sort((T, X) => B(T) - B(X)), E = (T) => {
+    const B = (L) => {
+      const X = jt.rooms.findIndex((C) => C.id === L);
+      return L === "" ? 1 / 0 : X < 0 ? jt.rooms.length : X;
+    }, G = [...R.keys()].sort((L, X) => B(L) - B(X)), E = (L) => {
       var X, C, V, yt;
-      return ((X = jt.rooms.find((Tt) => Tt.id === T)) == null ? void 0 : X.name) || ((yt = (V = (C = i()) == null ? void 0 : C.areas) == null ? void 0 : V[T]) == null ? void 0 : yt.name) || T;
+      return ((X = jt.rooms.find((Tt) => Tt.id === L)) == null ? void 0 : X.name) || ((yt = (V = (C = i()) == null ? void 0 : C.areas) == null ? void 0 : V[L]) == null ? void 0 : yt.name) || L;
     };
     return {
       value: [d.length && re(d.length, "low battery", "low batteries"), u.length && re(u.length, "problem", "problems"), h.length && re(h.length, "unavailable device", "unavailable devices")].filter(Boolean).join(", ") || "All good",
       plain: !0,
-      groups: [{ name: "Needs attention", ids: y, alert: !0 }, ...G.map((T) => ({ name: T ? E(T) : G.length > 1 ? "Other devices" : "Devices", ids: R.get(T) }))].filter((T) => T.ids.length)
+      groups: [{ name: "Needs attention", ids: y, alert: !0 }, ...G.map((L) => ({ name: L ? E(L) : G.length > 1 ? "Other devices" : "Devices", ids: R.get(L) }))].filter((L) => L.ids.length)
     };
   }
   const ea = () => v ? kt.home || {} : kt, Xs = (t) => Ru.includes(t) ? (ea().shownSums || []).includes(t) : !(ea().hiddenSums || []).includes(t);
@@ -5038,10 +5038,10 @@ function Wg(o, { config: n, getHass: i }) {
     }).length, E = a.alarms.filter((ft) => {
       var Lt;
       return ((Lt = k[ft]) == null ? void 0 : Lt.state) === "disarmed";
-    }).length, F = B ? re(B, "warning", "warnings") : null, T = G ? G + " unlocked" : E ? E + " disarmed" : F ? null : "All secure", X = wr(), C = e.flatMap((ft) => ft.solar), V = C.find((ft) => ft.endsWith("_power")), yt = {
+    }).length, F = B ? re(B, "warning", "warnings") : null, L = G ? G + " unlocked" : E ? E + " disarmed" : F ? null : "All secure", X = wr(), C = e.flatMap((ft) => ft.solar), V = C.find((ft) => ft.endsWith("_power")), yt = {
       light: p.length && { value: d ? d + " on" : "All off", groups: s((ft) => ft.lights) },
       climate: u.length && { value: h === y ? h + "°" : h + " - " + y + "°", groups: s((ft) => [...ft.readings.filter((Lt) => ["temperature", "humidity"].includes(Ut(Lt).device_class)), ...r(ft, /^(climate|humidifier)\./)]) },
-      security: (a.alarms.length || a.locks.length) && { value: [F, T].filter(Boolean).join(", "), groups: [{ name: "Alarm and locks", ids: [...a.alarms, ...a.locks] }, { name: "Doors and windows", ids: a.openings }].filter((ft) => ft.ids.length) },
+      security: (a.alarms.length || a.locks.length) && { value: [F, L].filter(Boolean).join(", "), groups: [{ name: "Alarm and locks", ids: [...a.alarms, ...a.locks] }, { name: "Doors and windows", ids: a.openings }].filter((ft) => ft.ids.length) },
       media_players: A.length && { value: M ? M + " playing" : "No media playing", groups: s((ft) => r(ft, /^media_player\./)) },
       maintenance: X,
       energy: jt.grid && { value: Bo(Number(((At = k[V]) == null ? void 0 : At.state) || 0) * 1e3 + Number(k[jt.grid].state)) + " now", groups: [{ name: "Energy", ids: [...C, jt.grid] }] },
@@ -5220,7 +5220,7 @@ function Wg(o, { config: n, getHass: i }) {
     const a = await Vf(e);
     if (!t.isConnected) return;
     const r = Math.max(120, t.clientWidth || 260), s = Math.max(60, t.clientHeight || 130), p = 18, d = s - 18, u = r / 24, h = u * 0.72, y = (/* @__PURE__ */ new Date()).getHours(), A = a.map((F) => F ?? 0), M = Math.max(0, ...A), R = (F) => d - (M > 0 ? F / M * (d - p) : 0), B = (F) => F.toLocaleString(void 0, { maximumFractionDigits: F < 10 ? 2 : 1 }) + " " + e.unit, G = (F) => String(F).padStart(2, "0") + ":00", E = M > 0 ? A.indexOf(M) : -1;
-    t.setAttribute("viewBox", "0 0 " + r + " " + s), t.setAttribute("aria-label", e.name + " today by the hour: " + B(e.value) + (E >= 0 ? ", most " + B(M) + " at " + G(E) : "")), t.innerHTML = [p, (p + d) / 2, d].map((F) => '<line x1="0" x2="' + r + '" y1="' + F + '" y2="' + F + '" stroke="var(--line)" stroke-width="1"/>').join("") + a.map((F, T) => F > 0 ? '<rect x="' + (T * u + (u - h) / 2).toFixed(1) + '" y="' + R(F).toFixed(1) + '" width="' + h.toFixed(1) + '" height="' + (d - R(F)).toFixed(1) + '" rx="2" fill="' + (T === y ? "var(--primary)" : "var(--text)") + '"' + (T === y ? "" : ' fill-opacity=".5"') + "/>" : "").join("") + [0, 6, 12, 18].map((F) => '<text x="' + (F * u).toFixed(1) + '" y="' + (s - 3) + '">' + String(F).padStart(2, "0") + "</text>").join("") + (E >= 0 ? '<text x="0" y="11">Most: ' + j(B(M)) + " at " + G(E) + "</text>" : "");
+    t.setAttribute("viewBox", "0 0 " + r + " " + s), t.setAttribute("aria-label", e.name + " today by the hour: " + B(e.value) + (E >= 0 ? ", most " + B(M) + " at " + G(E) : "")), t.innerHTML = [p, (p + d) / 2, d].map((F) => '<line x1="0" x2="' + r + '" y1="' + F + '" y2="' + F + '" stroke="var(--line)" stroke-width="1"/>').join("") + a.map((F, L) => F > 0 ? '<rect x="' + (L * u + (u - h) / 2).toFixed(1) + '" y="' + R(F).toFixed(1) + '" width="' + h.toFixed(1) + '" height="' + (d - R(F)).toFixed(1) + '" rx="2" fill="' + (L === y ? "var(--primary)" : "var(--text)") + '"' + (L === y ? "" : ' fill-opacity=".5"') + "/>" : "").join("") + [0, 6, 12, 18].map((F) => '<text x="' + (F * u).toFixed(1) + '" y="' + (s - 3) + '">' + String(F).padStart(2, "0") + "</text>").join("") + (E >= 0 ? '<text x="0" y="11">Most: ' + j(B(M)) + " at " + G(E) + "</text>" : "");
   }
   function zf(t) {
     var e;
@@ -5381,18 +5381,18 @@ function Wg(o, { config: n, getHass: i }) {
   function ud(t, e, a = null) {
     const r = ce().cells, s = t.every((u) => !r[u.key] || r[u.key].col + u.cols <= e), p = (u) => r[u.key] || { row: 1e9, col: 0 };
     return (() => {
-      const u = /* @__PURE__ */ new Set(), h = /* @__PURE__ */ new Map(), y = (E, F, T, X) => {
-        for (let C = F; C < F + X; C++) for (let V = E; V < E + T; V++) if (u.has(V + "," + C)) return !1;
+      const u = /* @__PURE__ */ new Set(), h = /* @__PURE__ */ new Map(), y = (E, F, L, X) => {
+        for (let C = F; C < F + X; C++) for (let V = E; V < E + L; V++) if (u.has(V + "," + C)) return !1;
         return !0;
-      }, A = (E, F, T) => {
-        for (let X = T; X < T + E.rows; X++) for (let C = F; C < F + E.cols; C++) u.add(C + "," + X);
-        h.set(E.key, { col: F, row: T, cols: E.cols, rows: E.rows });
-      }, M = (E, F, T) => {
-        for (F = Math.max(0, Math.min(e - E.cols, F)), T = Math.max(0, T); !y(F, T, E.cols, E.rows); ) T++;
-        A(E, F, T);
+      }, A = (E, F, L) => {
+        for (let X = L; X < L + E.rows; X++) for (let C = F; C < F + E.cols; C++) u.add(C + "," + X);
+        h.set(E.key, { col: F, row: L, cols: E.cols, rows: E.rows });
+      }, M = (E, F, L) => {
+        for (F = Math.max(0, Math.min(e - E.cols, F)), L = Math.max(0, L); !y(F, L, E.cols, E.rows); ) L++;
+        A(E, F, L);
       }, R = (E) => {
-        for (let F = 0; ; F++) for (let T = 0; T <= e - E.cols; T++) if (y(T, F, E.cols, E.rows)) {
-          A(E, T, F);
+        for (let F = 0; ; F++) for (let L = 0; L <= e - E.cols; L++) if (y(L, F, E.cols, E.rows)) {
+          A(E, L, F);
           return;
         }
       };
@@ -5516,8 +5516,8 @@ function Wg(o, { config: n, getHass: i }) {
       const ft = Nt.getBoundingClientRect().top - Tt.getBoundingClientRect().top, Lt = yt.rows === 1 ? yt.h : Math.floor(yt.h - ft - parseFloat(getComputedStyle(Tt).paddingBottom)), Qt = Math.max(1, Math.floor(Lt / ld));
       Nt.style.setProperty("--fill-gap", (Qt > 1 ? (Lt - Qt * ld) / (Qt - 1) : 0).toFixed(2) + "px"), Nt.style.maxHeight = Lt + "px";
     }), Xi = Math.max(0, ...[...F.values()].map((C) => C.row + C.rows));
-    let T = mn + Xi * Ba - ue;
-    T = ml(ma && !e, R, F, T, r, s), S.style.height = T + "px", requestAnimationFrame(() => f.classList.add("tfBoardReady")), u.forEach((C) => hl.observe(C.el)), Id(), De();
+    let L = mn + Xi * Ba - ue;
+    L = ml(ma && !e, R, F, L, r, s), S.style.height = L + "px", requestAnimationFrame(() => f.classList.add("tfBoardReady")), u.forEach((C) => hl.observe(C.el)), Id(), De();
   }
   const qo = { row: 337, nameGap: 16, sumsGap: 16, full: 1336, floorTop: 12, floorHead: 24, floorGap: 16 }, fd = { s: { w: 252, h: 136, rows: 2 }, m: { w: 252, h: 212, rows: 3 }, l: { w: 252, h: 288, rows: 4 } }, hd = () => {
     var t;
@@ -5566,12 +5566,12 @@ function Wg(o, { config: n, getHass: i }) {
       Ce.on || (Ce.on = !0, e.classList.add("tfDragging"), Ve() || e.animate([{ scale: "1" }, { scale: "1.05" }, { scale: "1.02" }], { duration: 260, easing: "cubic-bezier(.2,1.35,.4,1)" })), Object.assign(e.style, { left: Ce.left + h + "px", top: Ce.top + y + "px" });
       const A = u.clientX - r.left, M = u.clientY - r.top + S.scrollTop;
       let R = null, B = 1 / 0;
-      if (ci.forEach((T, X) => {
+      if (ci.forEach((L, X) => {
         if (X === a.key || !Ce.order.includes(X)) return;
-        const C = Math.hypot(A - (T.x + T.w / 2), M - (T.y + T.h / 2));
-        C < B && (B = C, R = { key: X, b: T });
+        const C = Math.hypot(A - (L.x + L.w / 2), M - (L.y + L.h / 2));
+        C < B && (B = C, R = { key: X, b: L });
       }), !R) return;
-      const G = Ce.order.filter((T) => T !== a.key), E = G.indexOf(R.key) + (A > R.b.x + R.b.w / 2 ? 1 : 0), F = [...G.slice(0, E), a.key, ...G.slice(E)];
+      const G = Ce.order.filter((L) => L !== a.key), E = G.indexOf(R.key) + (A > R.b.x + R.b.w / 2 ? 1 : 0), F = [...G.slice(0, E), a.key, ...G.slice(E)];
       F.join() !== Ce.order.join() ? (Ce.order = F, Ue()) : fl(ci.get(a.key));
     }, d = () => {
       removeEventListener("pointermove", p), removeEventListener("pointerup", d), removeEventListener("pointercancel", d);
@@ -5607,11 +5607,11 @@ function Wg(o, { config: n, getHass: i }) {
         return;
       }
       Object.assign(ht.el.style, { left: It.x + "px", top: It.y + "px" });
-    }, F = a ? e : 2 * d.w + p, T = qo.row, X = md() === "stacked" && !a && G.length > 0;
+    }, F = a ? e : 2 * d.w + p, L = qo.row, X = md() === "stacked" && !a && G.length > 0;
     let C = 0, V = 0, yt = h;
     G.forEach((ht) => {
       ht.el.classList.add("tfBoardItem"), ht.el.dataset.rows = 5, ht.el.dataset.cols = 2, ht.el.toggleAttribute("data-narrow", !1), !X && C && C + F > e && (h += V + p, C = 0, V = 0);
-      let It = T;
+      let It = L;
       if ((a || ht.key === "favs") && (Object.assign(ht.el.style, { width: F + "px", height: "" }), It = ht.el.offsetHeight), X) {
         E(ht, { x: 0, y: yt, w: F, h: It }), yt += It + p;
         return;
@@ -5763,7 +5763,7 @@ function Wg(o, { config: n, getHass: i }) {
     ma = t, t || (ae = null, Vo = jo = !1, fo()), Ue(), t ? (gl = JSON.stringify(kt), kr(Yt, "Edit custom dashboard", null)) : gl && JSON.stringify(kt) !== gl && Ra("Changes saved");
   }
   function mh(t, e) {
-    var F, T;
+    var F, L;
     fo();
     const a = In.get(t), { n: r } = gn(S.clientWidth), s = ce(), p = s.spans[t] ?? (Ot(t) ? 1 : 2);
     if (!a) return;
@@ -5772,7 +5772,7 @@ function Wg(o, { config: n, getHass: i }) {
     const y = S.querySelector('.tfDashTiles > [data-k="' + CSS.escape(t) + '"]'), A = id(t), M = On(t), R = '<div class="tfHeight" role="group" aria-label="Height"><span class="tfHeightLabel" aria-hidden="true">Height</span><div class="tfHeightTabs">' + nd.map((X, C) => '<button type="button" role="menuitemradio" aria-checked="' + (C + 1 === M) + '" aria-label="' + X + ", " + (C + 1) + (C ? " rows" : " row") + '" data-board-act="h:' + (C + 1) + '"' + (C < A ? "" : " disabled") + ">" + X + "</button>").join("") + "</div></div>", B = Qf.includes(t) || Ot(t) ? '<div class="tfHeight tfWidth" role="group" aria-label="Width"><span class="tfHeightLabel" aria-hidden="true">Width</span><div class="tfHeightTabs">' + th.map((X, C) => '<button type="button" role="menuitemradio" aria-checked="' + (C + 1 === Math.min(p, r)) + '" aria-label="' + X + ", " + (C + 1) + (C ? " columns" : " column") + '" data-board-act="w:' + (C + 1) + '"' + (C < r ? "" : " disabled") + ">" + X + "</button>").join("") + "</div></div>" : "", G = t === "radar" ? '<div class="tfHeight tfSource" role="group" aria-label="Source"><span class="tfHeightLabel" aria-hidden="true">Source</span><div class="tfSourceList">' + js().map(([X, C]) => '<button type="button" role="menuitemradio" aria-checked="' + (X === Gr()) + '" data-board-act="src:' + j(X) + '">' + j(C) + "</button>").join("") + "</div></div>" : "";
     h.innerHTML = R + B + G + (t === "energy" ? u("graph", (((F = s.opts.energy) == null ? void 0 : F.graph) || "above") === "above" ? "Graph below" : "Graph above") : "") + u("left", "Move left", d || a.col === 0) + u("right", "Move right", d || a.col + a.cols >= r) + u("up", "Move up", a.row <= 0) + u("down", "Move down") + (y ? u("remove", "Remove") : u("hide", "Hide")), S.appendChild(h);
     const E = Math.min(a.x + a.w - h.offsetWidth, S.clientWidth - h.offsetWidth);
-    Object.assign(h.style, { left: Math.max(0, E) + "px", top: a.y + 28 + "px" }), la = { key: t, menu: h, opener: e }, (T = h.querySelector("button:not([disabled])")) == null || T.focus();
+    Object.assign(h.style, { left: Math.max(0, E) + "px", top: a.y + 28 + "px" }), la = { key: t, menu: h, opener: e }, (L = h.querySelector("button:not([disabled])")) == null || L.focus();
   }
   function fo(t) {
     if (!la) return;
@@ -6104,7 +6104,7 @@ function Wg(o, { config: n, getHass: i }) {
       a.focus(), a.setSelectionRange(e, e);
     }
   }), xe.addEventListener("click", (t) => {
-    var F, T, X, C;
+    var F, L, X, C;
     const e = t.target, a = e.closest("[data-info]");
     if (a) {
       Td(a);
@@ -6131,7 +6131,7 @@ function Wg(o, { config: n, getHass: i }) {
     }
     const p = e.closest("[data-he-card]");
     if (p) {
-      const V = p.dataset.heCard, yt = ["sums", "favs"].includes(V) ? ((F = kt.home) == null ? void 0 : F[V]) !== !1 : !!((T = kt.home) != null && T[V]);
+      const V = p.dataset.heCard, yt = ["sums", "favs"].includes(V) ? ((F = kt.home) == null ? void 0 : F[V]) !== !1 : !!((L = kt.home) != null && L[V]);
       _a({ [V]: !yt });
       return;
     }
@@ -6326,9 +6326,9 @@ function Wg(o, { config: n, getHass: i }) {
       const B = S.querySelector(".tfDash-favs"), G = B == null ? void 0 : B.getBoundingClientRect();
       if (ca = null, G && !R && M.clientX >= G.left && M.clientX <= G.right && M.clientY >= G.top && M.clientY <= G.bottom) {
         let E = 1 / 0;
-        B.querySelectorAll('[data-k^="fav:"]').forEach((F, T) => {
+        B.querySelectorAll('[data-k^="fav:"]').forEach((F, L) => {
           const X = F.getBoundingClientRect(), C = Math.hypot(M.clientX - (X.left + X.width / 2), M.clientY - (X.top + X.height / 2));
-          C < E && (E = C, ca = { i: T, r: X, after: M.clientX > X.left + X.width / 2 });
+          C < E && (E = C, ca = { i: L, r: X, after: M.clientX > X.left + X.width / 2 });
         }), ca || (ca = { i: 0, r: null, after: !1 });
       }
       ca != null && ca.r ? (h.isConnected || f.appendChild(h), Object.assign(h.style, { left: (ca.after ? ca.r.right : ca.r.left) - 2 + "px", top: ca.r.top + 8 + "px", height: ca.r.height - 16 + "px" })) : h.remove();
@@ -6337,8 +6337,8 @@ function Wg(o, { config: n, getHass: i }) {
         if (!d) wl(r);
         else if (ae != null && ae.fromTray) {
           Ue();
-          const E = Pa(r) + vd(r), F = ce(), T = Wn();
-          ae = null, yr({ ...F, hidden: F.hidden.filter((X) => X !== r) }, T), Ra(E);
+          const E = Pa(r) + vd(r), F = ce(), L = Wn();
+          ae = null, yr({ ...F, hidden: F.hidden.filter((X) => X !== r) }, L), Ra(E);
         }
         ae = null, Ue(), Ee(), De();
         return;
@@ -6439,23 +6439,23 @@ function Wg(o, { config: n, getHass: i }) {
   function Hl(t, e, a, r, s) {
     t.preventDefault();
     const p = Pe.drag, d = Ve(), u = 1 + p.lift / 100, h = [...e.parentElement.children].filter((Lt) => Lt.dataset[a]), y = h.indexOf(e), A = h.map((Lt) => Lt.getBoundingClientRect()), M = h.length - 1, R = A[y].height + (h.length > 1 ? A[1].top - A[0].bottom : 0), B = (Lt) => A[Lt].top + A[Lt].height / 2, G = t.clientY, E = A[0].top - A[y].top, F = A[M].top - A[y].top;
-    let T = 0, X = 0, C = 0, V = 1, yt = y, Tt = 0;
+    let L = 0, X = 0, C = 0, V = 1, yt = y, Tt = 0;
     e.classList.add("hcListDragging"), h.forEach((Lt) => {
       Lt !== e && (Lt.style.transition = d ? "none" : "transform " + p.gap + "ms " + Re.land);
     });
     const Nt = () => {
       if (Tt = requestAnimationFrame(Nt), d) {
-        X = T, e.style.transform = "translateY(" + X + "px)";
+        X = L, e.style.transform = "translateY(" + X + "px)";
         return;
       }
-      C = hc(C, T - X, p.pull / 100, p.keep / 100), X += C, V += (u - V) * 0.25;
+      C = hc(C, L - X, p.pull / 100, p.keep / 100), X += C, V += (u - V) * 0.25;
       const Lt = Math.min(Math.abs(C) / 48, 1);
       e.style.transform = "translateY(" + X.toFixed(2) + "px) scale(" + (V * (1 - 0.063 * Lt)).toFixed(4) + "," + (V * (1 + 0.1 * Lt)).toFixed(4) + ")";
     };
     Tt = requestAnimationFrame(Nt);
     const At = (Lt) => {
-      T = Math.max(E, Math.min(F, Lt.clientY - G));
-      const Qt = B(y) + T, me = h.filter((fe, ye) => ye !== y && B(ye) < Qt).length;
+      L = Math.max(E, Math.min(F, Lt.clientY - G));
+      const Qt = B(y) + L, me = h.filter((fe, ye) => ye !== y && B(ye) < Qt).length;
       me !== yt && (yt = me, h.forEach((fe, ye) => {
         fe !== e && (fe.style.transform = y < yt && ye > y && ye <= yt ? "translateY(" + -R + "px)" : yt < y && ye >= yt && ye < y ? "translateY(" + R + "px)" : "");
       }));
@@ -6505,7 +6505,7 @@ function Wg(o, { config: n, getHass: i }) {
     const p = t.clientX, d = t.clientY;
     let u = !1, h = 0;
     const y = Pe.drag, A = Ve();
-    let M = 0, R = 0, B = 0, G = 0, E = 0, F = 0, T = A || y.stick === 0, X = 0;
+    let M = 0, R = 0, B = 0, G = 0, E = 0, F = 0, L = A || y.stick === 0, X = 0;
     const C = (Nt, At, ft, Lt) => {
       e.style.transform = "translate(" + B.toFixed(2) + "px," + G.toFixed(2) + "px) rotate(" + Nt.toFixed(2) + "deg) rotate(" + At + "rad) scale(" + ft.toFixed(4) + "," + Lt.toFixed(4) + ") rotate(" + -At + "rad)";
     }, V = () => {
@@ -6513,7 +6513,7 @@ function Wg(o, { config: n, getHass: i }) {
         B = M, G = R, C(0, 0, 1, 1);
         return;
       }
-      if (!T) {
+      if (!L) {
         const Qt = Math.min(Math.hypot(M, R) / Math.max(1, y.stick), 1);
         B = M * 0.35, G = R * 0.35, C(0, Math.atan2(R, M), 1 + 0.155 * Qt, 1 - 0.1 * Qt);
         return;
@@ -6526,7 +6526,7 @@ function Wg(o, { config: n, getHass: i }) {
         if (Math.hypot(M, R) < 4) return;
         u = !0, ae = { key: a.key, col: r.col, row: r.row }, e.classList.add("tfDragging", "mvDrag"), X = requestAnimationFrame(V);
       }
-      !T && Math.hypot(M, R) > y.stick && (T = !0, E = M * 0.085, F = R * 0.085), ae.col = Math.round((r.x + M) / (s + ue)), ae.row = Math.round((r.y + R - mn) / Ba), h || (h = requestAnimationFrame(() => {
+      !L && Math.hypot(M, R) > y.stick && (L = !0, E = M * 0.085, F = R * 0.085), ae.col = Math.round((r.x + M) / (s + ue)), ae.row = Math.round((r.y + R - mn) / Ba), h || (h = requestAnimationFrame(() => {
         h = 0, Ue();
       }));
     }, Tt = () => {
@@ -6814,33 +6814,33 @@ function Wg(o, { config: n, getHass: i }) {
   function Gh(t) {
     const e = (E, F = "") => '<div class="tfMoreHead">' + (q != null && q.back ? '<button class="tfBack" type="button" data-more-back aria-label="Back">' + Su + "</button>" : "") + '<div class="activityTitle" id="tfMoreTitle">' + j(E) + "</div>" + F + '<button class="tfBack" type="button" data-more-close aria-label="Close">' + Ac + "</button></div>", a = (E, F) => '<div class="tfMoreNow"><div class="tfMoreState">' + j(E) + "</div></div>", r = Vh;
     if (t === "favourites") {
-      const E = $t(), F = new Set(E), T = [{ name: "Starred", ids: E }, { name: "Home", ids: jt.homeVacuums }, { name: "Security", ids: [...jt.security.alarms, ...jt.security.locks] }, ...jt.rooms.map((X) => ({ name: X.name, ids: [...X.actions, ...X.plugs] }))].map((X, C) => C ? { ...X, ids: X.ids.filter((V) => !F.has(V)) } : X).filter((X) => X.ids.length);
-      return [e("Favourites"), a(E.length ? E.length + " starred" : "None starred"), r(T, { star: !0 }, !0)];
+      const E = $t(), F = new Set(E), L = [{ name: "Starred", ids: E }, { name: "Home", ids: jt.homeVacuums }, { name: "Security", ids: [...jt.security.alarms, ...jt.security.locks] }, ...jt.rooms.map((X) => ({ name: X.name, ids: [...X.actions, ...X.plugs] }))].map((X, C) => C ? { ...X, ids: X.ids.filter((V) => !F.has(V)) } : X).filter((X) => X.ids.length);
+      return [e("Favourites"), a(E.length ? E.length + " starred" : "None starred"), r(L, { star: !0 }, !0)];
     }
-    const s = (E, { name: F = "", alert: T = !1, plain: X = !1 } = {}) => {
+    const s = (E, { name: F = "", alert: L = !1, plain: X = !1 } = {}) => {
       const C = X ? [] : E.filter((Tt) => Rr.includes(Tt.split(".")[0])), V = E.filter((Tt) => !C.includes(Tt)), yt = (Tt) => Tt.startsWith("vacuum.") && Ut(Tt).battery_level != null ? Ut(Tt).battery_level + "%" : null;
-      return '<div class="tfMoreGroup">' + (F ? '<div class="tfMoreGroupName">' + j(F) + "</div>" : "") + '<div class="tfMoreActions">' + C.map((Tt) => un(Tt, !0)).join("") + V.map((Tt) => uo(Tt, { plain: X, alert: T, say: X ? yt(Tt) : null })).join("") + "</div></div>";
+      return '<div class="tfMoreGroup">' + (F ? '<div class="tfMoreGroupName">' + j(F) + "</div>" : "") + '<div class="tfMoreActions">' + C.map((Tt) => un(Tt, !0)).join("") + V.map((Tt) => uo(Tt, { plain: X, alert: L, say: X ? yt(Tt) : null })).join("") + "</div></div>";
     };
     if (t.startsWith("summary:")) {
       const E = Zi().find((C) => C.key === t.slice(8));
       if (!E) return null;
-      const F = E.key === "light" ? (E.groups || []).flatMap((C) => C.ids) : [], T = F.some((C) => {
+      const F = E.key === "light" ? (E.groups || []).flatMap((C) => C.ids) : [], L = F.some((C) => {
         var V;
         return ((V = k[C]) == null ? void 0 : V.state) === "on";
-      }), X = F.length ? '<button class="primary" type="button" data-acts="' + ur(F.map((C) => ["light", T ? "turn_off" : "turn_on", C])) + '">' + (T ? "Turn all off" : "Turn all on") + "</button>" : "";
+      }), X = F.length ? '<button class="primary" type="button" data-acts="' + ur(F.map((C) => ["light", L ? "turn_off" : "turn_on", C])) + '">' + (L ? "Turn all off" : "Turn all on") + "</button>" : "";
       return [e(E.name), '<div class="tfMoreNowRow">' + a(E.value) + X + "</div>", ...(E.groups || []).map((C) => s(C.ids, { name: C.name === E.name ? "" : C.name, alert: C.alert, plain: E.plain }))];
     }
     if (t.startsWith("group:")) {
-      const [, E, F] = t.split(":"), T = jt.rooms.find((V) => V.id === E), X = T && H(T).find((V) => V.key === F);
+      const [, E, F] = t.split(":"), L = jt.rooms.find((V) => V.id === E), X = L && H(L).find((V) => V.key === F);
       if (!X) return null;
       const C = X.acts ? '<button class="primary" type="button" data-acts="' + ur(X.acts) + '">' + (X.on ? "Turn all off" : "Turn all on") + "</button>" : "";
-      return [e(T.name + " " + X.label.toLowerCase()), '<div class="tfMoreNowRow">' + a(X.value) + C + "</div>", s(W(T, F))];
+      return [e(L.name + " " + X.label.toLowerCase()), '<div class="tfMoreNowRow">' + a(X.value) + C + "</div>", s(W(L, F))];
     }
     const p = t.split(".")[0];
     k[t];
     const d = Rr.includes(p) || Ci.includes(p) ? w(t) : Wl(t), u = dm(t), h = [...u ? u.pages.map((E) => ({ name: E.name, svg: E.svg, tabs: E.tabs, html: E.space + '<div class="tfMoreCtl"' + Do(t).replace(" data-light", "") + ">" + E.rows.filter(Boolean).join("") + "</div>" })) : [{ name: "Control", svg: oa, ...wn(t) ? { tabs: Qd() } : {}, html: Zh(t) + (wn(t) ? ls(t) : "") + (p === "plant" ? bm(t).join("") : "") + d.sections.filter(Boolean).join("") }], { name: "Info", svg: Dc, html: fm(t) }];
     q && q.page == null && (q.page = 0), q && (q.pages = h.length);
-    const y = (q == null ? void 0 : q.page) || 0, A = (q == null ? void 0 : q.mode) || "", M = h.length - 1, R = !!(u != null && u.infoButton), B = h.flatMap((E, F) => (R && F === M ? [] : E.tabs || [{ name: E.name, svg: E.svg }]).map((T) => ({ ...T, page: F }))), G = (E) => E.page === y && (E.mode == null || E.mode === A);
+    const y = (q == null ? void 0 : q.page) || 0, A = (q == null ? void 0 : q.mode) || "", M = h.length - 1, R = !!(u != null && u.infoButton), B = h.flatMap((E, F) => (R && F === M ? [] : E.tabs || [{ name: E.name, svg: E.svg }]).map((L) => ({ ...L, page: F }))), G = (E) => E.page === y && (E.mode == null || E.mode === A);
     return [
       Uh(t, d),
       '<div class="tfMorePages' + (u ? " tfMorePop" : "") + (A && y === 0 ? " tfMoreHold" : "") + '" data-more-pages>' + h.map((E) => '<section class="tfMorePage" aria-label="' + E.name + '" data-mode="' + A + '">' + E.html + "</section>").join("") + "</div>",
@@ -6878,7 +6878,7 @@ function Wg(o, { config: n, getHass: i }) {
   }
   const Kh = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5,12A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 17.5,9A1.5,1.5 0 0,1 19,10.5A1.5,1.5 0 0,1 17.5,12M14.5,8A1.5,1.5 0 0,1 13,6.5A1.5,1.5 0 0,1 14.5,5A1.5,1.5 0 0,1 16,6.5A1.5,1.5 0 0,1 14.5,8M9.5,8A1.5,1.5 0 0,1 8,6.5A1.5,1.5 0 0,1 9.5,5A1.5,1.5 0 0,1 11,6.5A1.5,1.5 0 0,1 9.5,8M6.5,12A1.5,1.5 0 0,1 5,10.5A1.5,1.5 0 0,1 6.5,9A1.5,1.5 0 0,1 8,10.5A1.5,1.5 0 0,1 6.5,12M12,3A9,9 0 0,0 3,12A9,9 0 0,0 12,21A1.5,1.5 0 0,0 13.5,19.5C13.5,19.11 13.35,18.76 13.11,18.5C12.88,18.23 12.73,17.88 12.73,17.5A1.5,1.5 0 0,1 14.23,16H16A5,5 0 0,0 21,11C21,6.58 16.97,3 12,3Z"/></svg>', Xh = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="4"/></svg>', Jh = ["light", "climate", "fan", "humidifier", "water_heater", "alarm_control_panel", "cover", "lock", "valve", "switch", "input_boolean"], go = (t, e) => '<div class="tfMoreField"><div class="tfMoreLabel">' + j(t) + "</div>" + e + "</div>", Oa = (t, e) => Ge("tfSeg", t, e), Vl = (t, e, a, r, s, p) => '<div class="tfBar tfPopBar ' + t + '" role="slider" tabindex="0" aria-label="' + j(r) + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(a) + '" aria-valuetext="' + j(s) + '" data-drag="' + j(t + "|" + e) + '"><i style="width:' + Math.max(0, Math.min(100, a)) + '%"><output class="tfBarVal">' + j(s) + "</output></i>" + (p ? '<span class="tfBarIcon"' + we("", p, r) + "></span>" : "") + "</div>", Cr = (t, e) => '<div class="tfMoreSpace tfMoreSwitch' + (e.on ? " on" : "") + '"' + (e.tone ? ' data-tone="' + e.tone + '"' : "") + Do(t) + ">" + ka(t, e) + "</div>", jl = (t, e, a) => '<div class="tfMoreSpace"><div class="tfMoreBig"><span class="tfMoreNum">' + j(t) + "</span>" + (e ? '<span class="tfMoreUnit">' + j(e) + "</span>" : "") + '</div><div class="tfMoreFacts">' + a.filter(([, r]) => r != null && r !== "").map(([r, s]) => '<div class="tfMoreFact"><span>' + j(r) + "</span><span>" + j(s) + "</span></div>").join("") + "</div></div>", Zd = () => '<input class="tfMoreCode" type="password" inputmode="numeric" autocomplete="off" placeholder="Code" aria-label="Code" data-code value="' + j((q == null ? void 0 : q.code) || "") + '">', ss = (t, e, a, r, s) => ({ label: r, pressed: s, html: null, coded: [t, e, a].join("|") }), Kd = (t, e) => '<div class="tfSeg" role="group" aria-label="' + j(t) + '">' + e.map((a) => '<button type="button" data-coded="' + j(a.coded) + '" aria-pressed="' + !!a.pressed + '">' + j(a.label) + "</button>").join("") + "</div>", Xd = (t, e, a) => Oa(vt(t), [{ label: "Off", act: Ht(e, "turn_off", t), pressed: !a }, { label: "On", act: Ht(e, "turn_on", t), pressed: a }]), bn = /* @__PURE__ */ new Map(), Qh = [0, 33, 67, 100], tm = [{ label: "Off", a: 180 }, { label: "Low", a: 240 }, { label: "Medium", a: 300 }, { label: "High", a: 360 }];
   function wn(t, e = "phys") {
-    if (!L || !k[t]) return null;
+    if (!T || !k[t]) return null;
     const a = t.split(".")[0], r = k[t].attributes, s = O === "rocker" ? "rocker" : "toggle";
     return a === "light" ? e === "physon" ? s : Dn(t).some((p) => p !== "onoff") ? "lightdial" : s : a === "climate" ? Number.isFinite(Number(r.temperature)) ? "dial" : null : a === "fan" ? r.percentage != null ? "rotary" : s : ["switch", "input_boolean", "lock", "automation", "siren"].includes(a) ? s : a === "cover" ? r.current_position == null ? s : null : a === "valve" ? "guarded" : a === "scene" || a === "script" || a === "button" ? "push" : null;
   }
@@ -6956,8 +6956,8 @@ function Wg(o, { config: n, getHass: i }) {
   function np(t, e, a, r) {
     const s = a ? Dn(a) : ["hs", "color_temp"], p = s.some((E) => Ao.includes(E)), d = s.includes("color_temp"), u = (E) => {
       if (!a) return { bright: 64, colour: 30, warm: 3e3 }[E];
-      const [F, , T, X] = lm(a);
-      return E === "bright" ? Math.round(F * 100) : E === "colour" ? T ?? 30 : X ?? Math.round(ln(a).reduce((C, V) => C + V) / 2);
+      const [F, , L, X] = lm(a);
+      return E === "bright" ? Math.round(F * 100) : E === "colour" ? L ?? 30 : X ?? Math.round(ln(a).reduce((C, V) => C + V) / 2);
     };
     let h = p ? "colour" : d ? "warm" : null, y = "bright";
     const A = (E) => ({ ...op[E](a), label: (e.label || "Light") + " " + op[E](a).title.toLowerCase() }), M = document.createElement("div");
@@ -6982,8 +6982,8 @@ function Wg(o, { config: n, getHass: i }) {
         on: !0,
         labels: ["Colour", "White"],
         textSize: 11,
-        onChange: (T) => {
-          h = T ? "colour" : "warm", y !== "bright" && (y = h, B.setConfig(A(y), u(y)));
+        onChange: (L) => {
+          h = L ? "colour" : "warm", y !== "bright" && (y = h, B.setConfig(A(y), u(y)));
         }
       });
       G.push(F);
@@ -7016,11 +7016,11 @@ function Wg(o, { config: n, getHass: i }) {
     if (!Jh.includes(e)) return null;
     const s = Rr.includes(e) || Ci.includes(e) ? w(t) : Wl(t);
     if (e === "light") {
-      const h = a.state === "on", y = Dn(t), [A, M] = ln(t), R = m("bright", t, h ? Ga(a) : 0), B = m("ctf", t, h && r.color_mode === "color_temp" ? r.color_temp_kelvin : null), G = m("huev", t, h && Ao.includes(r.color_mode) && r.hs_color ? r.hs_color[0] : null), E = y.includes("color_temp"), F = y.some((Qt) => Ao.includes(Qt)), T = gr(t), X = (Qt, me, fe, ye) => '<div class="tfBar tfVBar ' + Qt + '" data-axis="y" role="slider" tabindex="0" aria-orientation="vertical" aria-label="' + j(vt(t) + " " + me.toLowerCase()) + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(fe) + '" data-drag="' + Qt + "|" + j(t) + '">' + ye + "</div>", C = (Qt, me, fe = "") => '<div class="tfVCol' + fe + '">' + me + "</div>", V = C("Brightness", X("bright", "Brightness", R, '<i style="height:' + R + '%"></i><span class="tfBarIcon"' + we("", "mdi:white-balance-sunny", "Brightness") + "></span>")), yt = B == null ? null : (M - B) / (M - A), Tt = E ? C("Warmth", X("ctf", "Warmth", yt == null ? 0 : yt * 100, yt == null ? "" : '<b style="top:' + Math.round((1 - yt) * 1e3) / 10 + '%"></b>'), " tfVWarm") : "", Nt = F ? C("Colour", X("huev", "Colour", G == null ? 0 : (1 - G / 360) * 100, G == null ? "" : '<b style="top:' + Math.round(G / 360 * 1e3) / 10 + '%"></b>'), " tfVColour") : "", At = '<div class="tfVCols">' + V + (Tt || Nt ? '<div class="tfVSwap">' + Tt + Nt + "</div>" : "") + "</div>", ft = T ? '<div class="tfLightPad"><div class="tfDacPad" data-dac="more:' + j(t) + '"></div></div>' : "", Lt = [F && { name: "Colour", svg: Kh, mode: "colour" }, T && { name: "Dual Axis Controller", svg: Xh, mode: "dac" }, { name: "Sliders", svg: oa, mode: "" }].filter(Boolean);
+      const h = a.state === "on", y = Dn(t), [A, M] = ln(t), R = m("bright", t, h ? Ga(a) : 0), B = m("ctf", t, h && r.color_mode === "color_temp" ? r.color_temp_kelvin : null), G = m("huev", t, h && Ao.includes(r.color_mode) && r.hs_color ? r.hs_color[0] : null), E = y.includes("color_temp"), F = y.some((Qt) => Ao.includes(Qt)), L = gr(t), X = (Qt, me, fe, ye) => '<div class="tfBar tfVBar ' + Qt + '" data-axis="y" role="slider" tabindex="0" aria-orientation="vertical" aria-label="' + j(vt(t) + " " + me.toLowerCase()) + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(fe) + '" data-drag="' + Qt + "|" + j(t) + '">' + ye + "</div>", C = (Qt, me, fe = "") => '<div class="tfVCol' + fe + '">' + me + "</div>", V = C("Brightness", X("bright", "Brightness", R, '<i style="height:' + R + '%"></i><span class="tfBarIcon"' + we("", "mdi:white-balance-sunny", "Brightness") + "></span>")), yt = B == null ? null : (M - B) / (M - A), Tt = E ? C("Warmth", X("ctf", "Warmth", yt == null ? 0 : yt * 100, yt == null ? "" : '<b style="top:' + Math.round((1 - yt) * 1e3) / 10 + '%"></b>'), " tfVWarm") : "", Nt = F ? C("Colour", X("huev", "Colour", G == null ? 0 : (1 - G / 360) * 100, G == null ? "" : '<b style="top:' + Math.round(G / 360 * 1e3) / 10 + '%"></b>'), " tfVColour") : "", At = '<div class="tfVCols">' + V + (Tt || Nt ? '<div class="tfVSwap">' + Tt + Nt + "</div>" : "") + "</div>", ft = L ? '<div class="tfLightPad"><div class="tfDacPad" data-dac="more:' + j(t) + '"></div></div>' : "", Lt = [F && { name: "Colour", svg: Kh, mode: "colour" }, L && { name: "Dual Axis Controller", svg: Xh, mode: "dac" }, { name: "Sliders", svg: oa, mode: "" }].filter(Boolean);
       return { infoButton: !0, pages: [{ name: "Control", svg: oa, space: '<div class="tfMoreSpace tfLightSpace">' + At + ft + "</div>", rows: [], tabs: Lt.length > 1 ? Lt : [] }] };
     }
     if (e === "climate") {
-      const h = r.target_temp_step || 0.5, y = Number(r.temperature), A = Number(r.target_temp_low), M = Number(r.target_temp_high), R = (F) => Ht("climate", "set_temperature", t, F), B = (F, T, X, C, V) => (T == null ? void 0 : T.length) && go(F, Oa(F, T.map((yt) => ({ label: zt(yt), act: Ht("climate", C, t, { [V]: yt }), pressed: (X === "state" ? a.state : r[X]) === yt })))), G = Number.isFinite(A) && Number.isFinite(M) && go("Range", '<div class="tfMoreRange">' + ha("Low", Fe(A) + " °C", R({ target_temp_low: A - h, target_temp_high: M }), R({ target_temp_low: A + h, target_temp_high: M })) + ha("High", Fe(M) + " °C", R({ target_temp_low: A, target_temp_high: M - h }), R({ target_temp_low: A, target_temp_high: M + h })) + "</div>"), E = Number(r.humidity);
+      const h = r.target_temp_step || 0.5, y = Number(r.temperature), A = Number(r.target_temp_low), M = Number(r.target_temp_high), R = (F) => Ht("climate", "set_temperature", t, F), B = (F, L, X, C, V) => (L == null ? void 0 : L.length) && go(F, Oa(F, L.map((yt) => ({ label: zt(yt), act: Ht("climate", C, t, { [V]: yt }), pressed: (X === "state" ? a.state : r[X]) === yt })))), G = Number.isFinite(A) && Number.isFinite(M) && go("Range", '<div class="tfMoreRange">' + ha("Low", Fe(A) + " °C", R({ target_temp_low: A - h, target_temp_high: M }), R({ target_temp_low: A + h, target_temp_high: M })) + ha("High", Fe(M) + " °C", R({ target_temp_low: A, target_temp_high: M - h }), R({ target_temp_low: A, target_temp_high: M + h })) + "</div>"), E = Number(r.humidity);
       return { pages: [{
         name: "Control",
         svg: oa,
@@ -7113,7 +7113,7 @@ function Wg(o, { config: n, getHass: i }) {
       ["Integration", (r == null ? void 0 : r.platform) && zt(r.platform.replace(/_/g, " "))],
       ["Entity", t]
     ].filter(([, F]) => F != null && F !== "");
-    return p + '<div class="tfMoreRows">' + h.map(([F, T]) => '<div class="tfMoreRow"><span>' + j(F) + "</span><span>" + j(T) + "</span></div>").join("") + "</div>" + Wh(t) + (s ? '<button class="tfDetailsBtn tfMoreLink" type="button" data-path="/config/devices/device/' + j(r.device_id) + '"><span>Device page</span>' + Ec + "</button>" : "");
+    return p + '<div class="tfMoreRows">' + h.map(([F, L]) => '<div class="tfMoreRow"><span>' + j(F) + "</span><span>" + j(L) + "</span></div>").join("") + "</div>" + Wh(t) + (s ? '<button class="tfDetailsBtn tfMoreLink" type="button" data-path="/config/devices/device/' + j(r.device_id) + '"><span>Device page</span>' + Ec + "</button>" : "");
   }
   const hm = () => "";
   let Gl = "";
@@ -7357,10 +7357,10 @@ function Wg(o, { config: n, getHass: i }) {
       yt && M == null ? M = Math.max(C, d) : !yt && M != null && (A.push([M, Math.max(C, d)]), M = null);
     }), M != null && A.push([M, p]);
     const R = tl(t) ? "var(--danger)" : t.startsWith("light.") ? "#ffaa00" : "var(--primary)", B = vm(t), G = "tfDayClip" + ++ym, E = A.map(([C, V]) => B + (V >= p - 1e3 && C <= d + 1e3 ? " all day" : V >= p - 1e3 ? " since " + so(C) : C <= d + 1e3 ? " until " + so(V) : " " + so(C) + "–" + so(V)));
-    let F = "", T = -1 / 0;
+    let F = "", L = -1 / 0;
     A.forEach(([C], V) => {
       const yt = E[V].length * 5.4, Tt = Math.min(y(C), u - yt);
-      Tt < T + 8 || (F += '<text x="' + Tt.toFixed(1) + '" y="10">' + j(E[V]) + "</text>", T = Tt + yt);
+      Tt < L + 8 || (F += '<text x="' + Tt.toFixed(1) + '" y="10">' + j(E[V]) + "</text>", L = Tt + yt);
     });
     let X = '<text x="' + u + '" y="' + (h - 2) + '" text-anchor="end">Now</text>';
     [0, 6, 12, 18].forEach((C) => {
@@ -7392,7 +7392,7 @@ function Wg(o, { config: n, getHass: i }) {
     else if (ao(t)) r = { at: Date.now(), points: fp(t) };
     else if (!r || Date.now() - r.at > 5 * 60 * 1e3) {
       try {
-        const F = new Date(Date.now() - 864e5).toISOString(), T = await K({ type: "history/history_during_period", start_time: F, entity_ids: [t], minimal_response: !0, no_attributes: !0, significant_changes_only: !1 }), X = ((T == null ? void 0 : T[t]) || []).map((C) => [C.lu != null ? C.lu * 1e3 : Date.parse(C.last_updated || C.last_changed), Number(C.s ?? C.state)]).filter(([C, V]) => Number.isFinite(C) && Number.isFinite(V));
+        const F = new Date(Date.now() - 864e5).toISOString(), L = await K({ type: "history/history_during_period", start_time: F, entity_ids: [t], minimal_response: !0, no_attributes: !0, significant_changes_only: !1 }), X = ((L == null ? void 0 : L[t]) || []).map((C) => [C.lu != null ? C.lu * 1e3 : Date.parse(C.last_updated || C.last_changed), Number(C.s ?? C.state)]).filter(([C, V]) => Number.isFinite(C) && Number.isFinite(V));
         r = { at: Date.now(), points: X };
       } catch {
         r = { at: Date.now(), points: [] };
@@ -7451,8 +7451,8 @@ function Wg(o, { config: n, getHass: i }) {
     const a = t.dataset.blocks;
     (E = t.setPointerCapture) == null || E.call(t, e.pointerId), ne.add("pos|" + a), R("pos|" + a);
     const r = (F) => {
-      const T = t.getBoundingClientRect();
-      return Math.max(0, Math.min(100, (F.clientX - T.left) / T.width * 100));
+      const L = t.getBoundingClientRect();
+      return Math.max(0, Math.min(100, (F.clientX - L.left) / L.width * 100));
     }, s = r(e), p = e.clientX;
     let d = !1, u = En(a), h = s, y = 0;
     const A = () => {
@@ -7636,7 +7636,7 @@ function Wg(o, { config: n, getHass: i }) {
         return Math.max(0, Math.min(1, M ? 1 - (At.clientY - ft.top) / R() : (At.clientX - ft.left - A) / R()));
       };
       let G = u ? "waiting" : h ? "pressed" : "dragging", E = 0;
-      const F = e.clientX, T = e.clientY, X = (At, ft) => Math.hypot(At.clientX - F, At.clientY - T) > ft, C = () => {
+      const F = e.clientX, L = e.clientY, X = (At, ft) => Math.hypot(At.clientX - F, At.clientY - L) > ft, C = () => {
         try {
           r.setPointerCapture(e.pointerId);
         } catch {
@@ -7647,7 +7647,7 @@ function Wg(o, { config: n, getHass: i }) {
         var At, ft;
         G = "sliding", Wt = r, r.classList.add("held"), C(), (At = navigator.userActivation) != null && At.hasBeenActive && ((ft = navigator.vibrate) == null || ft.call(navigator, 8)), E = h ? (co[p] ?? 100) / 100 : Number(r.getAttribute("aria-valuenow")) / 100;
       }, yt = (At) => {
-        G === "waiting" && X(At, Cn) ? !d && (M ? Math.abs(At.clientY - T) > Math.abs(At.clientX - F) : Math.abs(At.clientX - F) > Math.abs(At.clientY - T)) ? V() : G = "gone" : G === "pressed" && X(At, 4) && (G = "dragging"), G === "sliding" ? hs(r, s, p, Math.max(0, Math.min(1, E + (M ? T - At.clientY : At.clientX - F) / R()))) : G === "dragging" && hs(r, s, p, B(At));
+        G === "waiting" && X(At, Cn) ? !d && (M ? Math.abs(At.clientY - L) > Math.abs(At.clientX - F) : Math.abs(At.clientX - F) > Math.abs(At.clientY - L)) ? V() : G = "gone" : G === "pressed" && X(At, 4) && (G = "dragging"), G === "sliding" ? hs(r, s, p, Math.max(0, Math.min(1, E + (M ? L - At.clientY : At.clientX - F) / R()))) : G === "dragging" && hs(r, s, p, B(At));
       }, Tt = (At) => {
         ["pointermove", "pointerup", "pointercancel"].forEach((ft, Lt) => r.removeEventListener(ft, Lt ? Tt : yt)), r.classList.remove("held"), Wt === r && (Wt = null), ne.delete(y), G === "sliding" || G === "dragging" ? vi(s, p) : At.type === "pointerup" && d ? ec(Ht("light", "toggle", p)) : At.type === "pointerup" && h && (G === "waiting" || G === "pressed") && je("light", "turn_on", p).catch(() => {
         }), La && G !== "sliding" && G !== "dragging" && Ee();
@@ -7694,7 +7694,7 @@ function Wg(o, { config: n, getHass: i }) {
     }
   };
 }
-const Vg = "0.19.0";
+const Vg = "0.19.1";
 function jg() {
   if (document.getElementById("homecore-fonts")) return;
   const o = document.createElement("link");

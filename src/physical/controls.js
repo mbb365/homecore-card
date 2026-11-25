@@ -310,9 +310,11 @@ export class Dial extends Control {
   show(val, now) { if (this.held) return; if (now != null) this.now = now; if (val != null) { this.value = val; this.val.t = val; this.svg.setAttribute('aria-valuenow', val); } this.kick(); }
   render(h) {
     const v = this.v, top = 7 + this.kh.x, a = this.ang(this.val.x);
-    const [W, D] = this.size(92, 92), rx = W / 92, ry = D / 92, m = Math.min(rx, ry);
+    // a dial stays round (Matt, 25 Nov: "it should be a circle still"): Fill grows it to the shorter side of its room,
+    // never stretches it; what looks oval is only the camera looking down at it
+    const [W, D] = this.size(92, 92), m = Math.min(W, D) / 92, rx = m, ry = m;
     const at = (r, t, z) => [r * Math.cos(t) * rx, r * Math.sin(t) * ry, z];
-    const plinth = prism(circle(46, 72).map(([x, y]) => [x * rx, y * ry]), 0, 7);
+    const plinth = prism(circle(46 * m, 72), 0, 7);
     const knob = prism(circle(22 * m, 64), 7, top);
     const lo = Math.min(this.now ?? this.value, this.value), hi = Math.max(this.now ?? this.value, this.value);
     let scale = '';
