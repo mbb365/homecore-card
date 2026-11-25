@@ -629,7 +629,7 @@ export class LightDial extends Control {
     const bv = this.vals.bright.x, bn = Math.round((B.max - B.min) / B.tick);
     for (let k = 0; k <= bn; k++) {
       const val = B.min + k * B.tick, t = rad(this.angF(this.frac('bright', val))), major = k % B.major === 0;
-      inner += seg(v, at(24, t, 7), at(major ? 29.5 : 28, t, 7), val <= bv + 1e-6 && bv > B.min ? 'accent' : 'edge');
+      inner += seg(v, at(22, t, 7), at(major ? 28.5 : 27, t, 7), val <= bv + 1e-6 && bv > B.min ? 'accent' : 'edge');
     }
     // outer ring: colour or warmth in its own colours, a marker at its value
     let outer = '';
@@ -637,15 +637,14 @@ export class LightDial extends Control {
       const sn = Math.round((S.max - S.min) / S.tick);
       for (let k = 0; k <= sn; k++) {
         const val = S.min + k * S.tick, t = rad(this.angF(this.frac('second', val))), major = k % S.major === 0;
-        outer += seg(v, at(33, t, 7), at(38, t, 7), S.tint ? 'edge tint" style="stroke:' + S.tint(val) : 'edge');
-        const lab = major && S.labelOf ? S.labelOf(val) : null;
-        if (lab != null && lab !== '') outer += surfText(v, at(43.5, t, 7), lab, 3.6 * m);
+        // out to the edge, long and bold, so the two rings read as two things (Matt, 25 Nov); no numbers on it
+        outer += seg(v, at(34, t, 7), at(47, t, 7), S.tint ? 'edge tint" style="stroke-width:' + (3.4 * Math.min(1.6, m)).toFixed(2) + ';stroke:' + S.tint(val) : 'edge');
       }
       const mt = rad(this.angF(this.frac('second', this.vals.second.x)));
-      outer += seg(v, at(31.5, mt, 7), at(40, mt, 7), 'edge pointer');
+      outer += seg(v, at(32, mt, 7), at(48.5, mt, 7), 'edge pointer');
     }
     const dim = (s, on) => (on ? s : '<g class="dim">' + s + '</g>');
-    const title = surfText(v, at(38, rad(90 - this.yaw.x), 7), (bOn ? B : S || B).title, 4.4 * m, { cls: 'sel' });
+    const title = surfText(v, at(40, rad(90 - this.yaw.x), 7), (bOn ? B : S || B).title, 4.4 * m, { cls: 'sel' });
     let knurl = '';
     const a = this.angF(this.knobF.x);
     for (let j = 0; j < 40; j++) {
