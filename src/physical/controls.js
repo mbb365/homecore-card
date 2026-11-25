@@ -257,6 +257,9 @@ export class Dial extends Control {
     // gives each tick's colour and the knob's top shows the chosen one; step, tick and major set its divisions
     this.step = opts.step ?? 0.5; this.tickStep = opts.tick ?? 0.5; this.major = opts.major ?? 10; // (tickStep: `tick` is the animation)
     this.tint = opts.tint || null; this.labelOf = opts.labelOf || ((val) => val);
+    // a name printed on the plinth in the gap facing you, and a press (a tap that doesn't turn it) for onPress: a
+    // light's dial (Matt, 25 Nov) presses between brightness and its colour or temperature
+    this.title = opts.title || '';
     this.base = [2.85, 200, 194]; this.lift = 22;
     this.val = this.spring(this.value, 0.35, 0.5);
     this.kh = this.spring(15, 0.3, 0.55);
@@ -272,19 +275,33 @@ export class Dial extends Control {
     this.val.t = snapped;
     this.svg.setAttribute('aria-valuenow', snapped);
   }
+  // what it sets, swapped in place: the knob turns from where it points now to where the new value sits
+  setConfig(cfg, value) {
+    const f = (this.val.x - this.min) / (this.max - this.min || 1);
+    Object.assign(this, { min: cfg.min, max: cfg.max, step: cfg.step, tickStep: cfg.tick, major: cfg.major, tint: cfg.tint || null,
+      labelOf: cfg.labelOf || ((x) => x), now: 'now' in cfg ? cfg.now : null, title: cfg.title || '' });
+    this.val.x = this.min + Math.max(0, Math.min(1, f)) * (this.max - this.min);
+    this.value = Math.max(this.min, Math.min(this.max, value));
+    this.val.t = this.value;
+    this.svg.setAttribute('aria-label', cfg.label || this.opts.label);
+    this.svg.setAttribute('aria-valuenow', this.value);
+    this.kick();
+  }
   angleAt(p) { const [x, y] = this.v.ground(p[0], p[1], 7 + this.kh.x); return (Math.atan2(y, x) * 180) / Math.PI; }
-  down(part, p) { this.grab = { last: this.angleAt(p), raw: this.value }; this.kh.t = 11.5; }
+  down(part, p) { this.grab = { last: this.angleAt(p), raw: this.value, moved: 0 }; this.kh.t = 11.5; }
   drag(p) {
     if (!this.grab) return;
     const a = this.angleAt(p);
     let d = a - this.grab.last;
     if (d > 180) d -= 360; if (d < -180) d += 360;
     this.grab.last = a;
+    this.grab.moved += Math.abs(d);
     this.grab.raw = Math.max(this.min, Math.min(this.max, this.grab.raw + (d / 270) * (this.max - this.min)));
     this.set(this.grab.raw);
   }
-  up() { this.grab = null; this.kh.t = 15; }
+  up() { const g = this.grab; this.grab = null; this.kh.t = 15; if (g && g.moved < 3) this.opts.onPress?.(); }
   key(e, isDown) {
+    if ((e.key === 'Enter' || e.key === ' ') && this.opts.onPress) { if (isDown && !e.repeat) this.opts.onPress(); return true; }
     const step = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key];
     if (step === undefined) return false;
     if (isDown) { this.set(this.value + step * this.step); this.kh.t = 12.5; } else this.kh.t = 15;
@@ -314,6 +331,7 @@ export class Dial extends Control {
       const t = rad(a + j * 9), c = Math.cos(t), s = Math.sin(t), r = 22 * m;
       if (c * v.V[0] + s * v.V[1] > 0.12 * Math.hypot(v.V[0], v.V[1])) knurl += seg(v, [r * c, r * s, 9], [r * c, r * s, top - 2.2]);
     }
+    if (this.title) scale += surfText(v, at(37, rad(90 - this.yaw.x), 7), this.title, 4.6 * m, { cls: 'sel' });
     const t = rad(a);
     const ring = circle(18.5 * m, 64).map(([x, y]) => [x, y, top]);
     return (
@@ -506,7 +524,7 @@ export class Toggle extends Control {
     const bat = move(prism(circle(2.3, 20), 0, 15), tilt);
     const tip = move(prism(circle(4, 24), 14, 19), tilt);
     const ly = D / 2 - 13 * m;
-    const label = (txt, y, sel) => surfText(v, [0, y, 6], txt, 6 * m, { part: 'lever', cls: sel ? 'sel' : '', w: 30 });
+    const label = (txt, y, sel) => surfText(v, [0, y, 6], txt, (this.opts.textSize || 6) * m, { part: 'lever', cls: sel ? 'sel' : '', w: 30 });
     return (
       shadow(v, plate, 0, h) + draw(v, plate) +
       label(this.labels[0], -ly, this.on) + label(this.labels[1], ly, !this.on) +

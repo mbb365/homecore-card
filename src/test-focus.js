@@ -275,7 +275,7 @@ export function mountTestFocus(root, { config, getHass }) {
         const spaces = row.querySelectorAll('.tfPhys'), opts = { camera: physView, fill: physFit === 'fill' };
         preview.ctls = [
           physBinary === 'rocker' ? new Rocker(spaces[0], { ...opts, on: true, label: 'Sample switch' }) : new Toggle(spaces[0], { ...opts, on: true, label: 'Sample switch' }),
-          new Fader(spaces[1], { ...opts, value: 0.64, label: 'Sample light brightness' }),
+          ...lightDial(spaces[1], { ...opts, label: 'Sample light' }, null, () => {}).ctls,
           new Dial(spaces[2], { ...opts, value: 21.5, now: 19.5, min: 10, max: 30, label: 'Sample thermostat target' }),
         ];
       } else preview.ctls.forEach((c) => { c.setCamera(physView); c.setFill(physFit === 'fill'); });
@@ -3984,12 +3984,13 @@ export function mountTestFocus(root, { config, getHass }) {
   const physs = new Map();
   const FAN_STEPS = [0, 33, 67, 100];
   const FAN_POSITIONS = [{ label: 'Off', a: 180 }, { label: 'Low', a: 240 }, { label: 'Medium', a: 300 }, { label: 'High', a: 360 }];
-  function physKind(id) {
+  function physKind(id, pv = 'phys') {
     if (!physOn || !states[id]) return null;
     const d = id.split('.')[0], a = states[id].attributes;
     // anything only on or off (Matt, 25 Nov: "a toggle for binary things too"): a toggle switch, or a rocker
     const binary = physBinary === 'rocker' ? 'rocker' : 'toggle';
-    if (d === 'light') return modesOf(id).some((m) => m !== 'onoff') ? 'light' : binary;
+    // a light (Matt, 25 Nov): its dial on one page, its on and off switch on the next
+    if (d === 'light') return pv === 'physon' ? binary : modesOf(id).some((m) => m !== 'onoff') ? 'lightdial' : binary;
     if (d === 'climate') return Number.isFinite(Number(a.temperature)) ? 'dial' : null;
     if (d === 'fan') return a.percentage != null ? 'rotary' : binary;
     if (['switch', 'input_boolean', 'lock', 'automation', 'siren'].includes(d)) return binary;
@@ -3998,7 +3999,7 @@ export function mountTestFocus(root, { config, getHass }) {
     if (d === 'scene' || d === 'script' || d === 'button') return 'push';
     return null;
   }
-  const physSlot = (id) => '<div class="tfMoreSpace tfPhys" data-phys="' + esc(id) + '"></div>';
+  const physSlot = (id, pv = 'phys') => '<div class="tfMoreSpace tfPhys" data-pv="' + pv + '" data-phys="' + esc(id) + '"></div>';
   // what On means for each: a lock is On when locked, a cover when it isn't closed
   const isOnish = (id) => { const d = id.split('.')[0], st = states[id].state; return d === 'lock' ? st === 'locked' : d === 'cover' ? st !== 'closed' : st === 'on'; };
   const binarySend = (d, id, on) => (d === 'lock' ? send('lock', on ? 'lock' : 'unlock', id) : d === 'cover' ? send('cover', on ? 'open_cover' : 'close_cover', id) : send(d, on ? 'turn_on' : 'turn_off', id)).catch(() => {});
@@ -4016,11 +4017,11 @@ export function mountTestFocus(root, { config, getHass }) {
     if (kind === 'guarded') return [st.state === 'open' || st.state === 'opening'];
     return [isOnish(id)];
   }
-  function makePhys(id, kind) {
+  function makePhys(id, kind, pv = 'phys') {
     const el = document.createElement('div');
     el.className = 'tfMoreSpace tfPhys';
     const d = id.split('.')[0], a = states[id].attributes;
-    const p = { id, kind, el, quiet: 0, timers: {} };
+    const p = { id, kind, pv, el, quiet: 0, timers: {} };
     // a change made here sends once the hand settles, and the device's own state is ignored for a moment so the control
     // doesn't jump back while it catches up
     const later = (fn, ms = 260, k = 'one') => { p.quiet = performance.now() + 2500; clearTimeout(p.timers[k]); p.timers[k] = setTimeout(fn, ms); };
@@ -4028,33 +4029,9 @@ export function mountTestFocus(root, { config, getHass }) {
     if (kind === 'push') p.ctl = new PushButton(el, { ...opts, onChange: () => send(d, d === 'button' ? 'press' : 'turn_on', id).catch(() => {}) });
     if (kind === 'rocker') p.ctl = new Rocker(el, { ...opts, on: isOnish(id), onChange: (on) => later(() => binarySend(d, id, on), 0) });
     if (kind === 'toggle') p.ctl = new Toggle(el, { ...opts, on: isOnish(id), labels: binaryLabels(d), onChange: (on) => later(() => binarySend(d, id, on), 0) });
-    /* a light (Matt, 25 Nov): its on and off control as well as its brightness, and a thermostat-style dial for its
-       colour (the spectrum, or warm to cool for a white light) beside the fader: the fader a tall column on the left,
-       the dial above the switch on the right */
-    if (kind === 'light') {
-      const modes = modesOf(id), colourOk = modes.some((m) => COLOUR_MODES.includes(m)), warmOk = modes.includes('color_temp');
-      const grid = document.createElement('div');
-      grid.className = 'tfPhysGrid' + (colourOk || warmOk ? '' : ' two');
-      el.appendChild(grid);
-      const cell = (k) => { const c = document.createElement('div'); c.className = 'tfPhysCell ' + k; grid.appendChild(c); return c; };
-      const bCell = cell('bright'), cCell = (colourOk || warmOk) && cell('colour'), pCell = cell('power');
-      const [b, on] = lightPhys(id);
-      const bright = new Fader(bCell, { ...opts, label: nameOf(id) + ' brightness', value: on ? b : 0,
-        onChange: (l) => later(() => (Math.round(l * 100) ? send('light', 'turn_on', id, { brightness_pct: Math.round(l * 100) }) : send('light', 'turn_off', id)).catch(() => {}), 260, 'b') });
-      const Power = physBinary === 'rocker' ? Rocker : Toggle;
-      const power = new Power(pCell, { ...opts, label: nameOf(id), on, labels: ['On', 'Off'], onChange: (v) => later(() => binarySend('light', id, v), 0, 'p') });
-      let colour = null;
-      if (colourOk) {
-        const sat = () => (states[id].attributes.hs_color?.[1] || 100);
-        colour = new Dial(cCell, { ...opts, label: nameOf(id) + ' colour', min: 0, max: 360, step: 5, tick: 10, major: 3, now: null, value: lightPhys(id)[2] ?? 30,
-          tint: (h) => 'hsl(' + h + ',100%,55%)', labelOf: () => null, onChange: (h) => later(() => send('light', 'turn_on', id, { hs_color: [h % 360, sat()] }).catch(() => {}), 300, 'c') });
-      } else if (warmOk) {
-        const [kMin, kMax] = kelvinRange(id);
-        colour = new Dial(cCell, { ...opts, label: nameOf(id) + ' warmth', min: kMin, max: kMax, step: 50, tick: 100, major: 5, now: null, value: lightPhys(id)[3] ?? Math.round((kMin + kMax) / 2),
-          tint: kelvinColour, labelOf: (k) => (k % 1000 === 0 ? k / 1000 + 'k' : null), onChange: (k) => later(() => send('light', 'turn_on', id, { color_temp_kelvin: k }).catch(() => {}), 300, 'c') });
-      }
-      p.ctls = [bright, colour, power].filter(Boolean);
-      p.sync = () => { const [lv, lon, hue, kel] = lightPhys(id); bright.show(lon ? lv : 0); power.show(lon); if (colour) colour.show(colourOk ? hue : kel); };
+    if (kind === 'lightdial') {
+      const ld = lightDial(el, opts, id, (cfgKey, v) => later(() => lightSend(id, cfgKey, v).catch(() => {}), cfgKey === 'bright' ? 260 : 300, cfgKey));
+      p.ctls = ld.ctls; p.sync = ld.sync;
     }
     if (kind === 'fader') p.ctl = new Fader(el, { ...opts, value: physState(id, kind)[0], onChange: (l) => later(() => (Math.round(l * 100) ? send('light', 'turn_on', id, { brightness_pct: Math.round(l * 100) }) : send('light', 'turn_off', id)).catch(() => {})) });
     if (kind === 'dial') {
@@ -4079,10 +4056,11 @@ export function mountTestFocus(root, { config, getHass }) {
   }
   function mountPhys(scope) {
     scope.querySelectorAll('[data-phys]').forEach((slot) => {
-      const id = slot.dataset.phys, kind = physKind(id);
+      const id = slot.dataset.phys, pv = slot.dataset.pv || 'phys', kind = physKind(id, pv), key = id + '|' + pv;
       if (!kind) { slot.remove(); return; }
-      let p = physs.get(id);
-      if (!p || p.kind !== kind) { p = makePhys(id, kind); physs.set(id, p); }
+      let p = physs.get(key);
+      if (!p || p.kind !== kind) { p = makePhys(id, kind, pv); physs.set(key, p); }
+      p.el.dataset.pv = pv;
       slot.replaceWith(p.el);
       p.fit();
       syncPhys(p);
@@ -4092,7 +4070,41 @@ export function mountTestFocus(root, { config, getHass }) {
     if (!states[p.id] || performance.now() < p.quiet) return;
     p.sync();
   }
-  const tidyPhys = () => { physs.forEach((p, id) => { if (!p.el.isConnected) { p.ro?.disconnect(); physs.delete(id); } else syncPhys(p); }); };
+  const tidyPhys = () => { physs.forEach((p, key) => { if (!p.el.isConnected) { p.ro?.disconnect(); physs.delete(key); } else syncPhys(p); }); };
+  /* A light's dial (Matt, 25 Nov: "if you press it, it does the brightness, and if you press it again, it does the
+     temperature… a little tiny toggle beside it… to make it colour or to make it temperature"): one knob that sets
+     brightness, pressed to set its colour or warmth and pressed again to go back; the name of what it sets is printed
+     on the plinth. The tiny toggle at its foot picks Colour or White for the second, on a light that has both */
+  const LIGHT_DIAL = {
+    bright: () => ({ min: 0, max: 100, step: 1, tick: 2, major: 25, now: 0, labelOf: (v) => (v % 50 === 0 ? v + '%' : null), title: 'Brightness' }),
+    colour: () => ({ min: 0, max: 360, step: 5, tick: 10, major: 3, tint: (h) => 'hsl(' + h + ',100%,55%)', labelOf: () => null, title: 'Colour' }),
+    warm: (id) => { const [kMin, kMax] = kelvinRange(id); return { min: kMin, max: kMax, step: 50, tick: 100, major: 5, tint: kelvinColour, labelOf: (k) => (k % 1000 === 0 ? k / 1000 + 'k' : null), title: 'Warmth' }; },
+  };
+  function lightDial(el, opts, id, onSet) {
+    const modes = id ? modesOf(id) : ['hs', 'color_temp'], colourOk = modes.some((m) => COLOUR_MODES.includes(m)), warmOk = modes.includes('color_temp');
+    const now = (k) => { if (!id) return { bright: 64, colour: 30, warm: 3000 }[k]; const [b, , hue, kel] = lightPhys(id); return k === 'bright' ? Math.round(b * 100) : k === 'colour' ? hue ?? 30 : kel ?? Math.round(kelvinRange(id).reduce((x, y) => x + y) / 2); };
+    let second = colourOk ? 'colour' : warmOk ? 'warm' : null, mode = 'bright';
+    const cfg = (k) => ({ ...LIGHT_DIAL[k](id), label: (opts.label || 'Light') + ' ' + LIGHT_DIAL[k](id).title.toLowerCase() });
+    const wrap = document.createElement('div');
+    wrap.className = 'tfPhysLightDial';
+    el.appendChild(wrap);
+    const dCell = document.createElement('div'); dCell.className = 'tfPhysCell dial'; wrap.appendChild(dCell);
+    const dial = new Dial(dCell, { ...opts, ...cfg('bright'), value: now('bright'),
+      onChange: (v) => onSet(mode, v),
+      onPress: () => { if (!second) return; mode = mode === 'bright' ? second : 'bright'; dial.setConfig(cfg(mode), now(mode)); } });
+    const ctls = [dial];
+    if (colourOk && warmOk) {
+      const tCell = document.createElement('div'); tCell.className = 'tfPhysCell mini'; wrap.appendChild(tCell);
+      const mini = new Toggle(tCell, { ...opts, label: 'Dial sets colour or white', on: true, labels: ['Colour', 'White'], textSize: 11,
+        onChange: (on) => { second = on ? 'colour' : 'warm'; if (mode !== 'bright') { mode = second; dial.setConfig(cfg(mode), now(mode)); } } });
+      ctls.push(mini);
+    }
+    return { ctls, sync: () => { if (id) dial.show(now(mode)); } };
+  }
+  const lightSend = (id, k, v) => (k === 'bright' ? (v ? send('light', 'turn_on', id, { brightness_pct: v }) : send('light', 'turn_off', id))
+    : k === 'colour' ? send('light', 'turn_on', id, { hs_color: [v % 360, states[id].attributes.hs_color?.[1] || 100] }) : send('light', 'turn_on', id, { color_temp_kelvin: v }));
+  const DIAL_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2a10 10 0 1 1 0 20a10 10 0 0 1 0-20Zm0 3a7 7 0 1 0 0 14a7 7 0 0 0 0-14Zm-1 2h2v5h-2Z"/></svg>';
+  const POWER_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15h12a3 3 0 0 1 0 6H6a3 3 0 0 1 0-6Zm5-11h2v10h-2Zm1-2a2.5 2.5 0 1 1 0 5a2.5 2.5 0 0 1 0-5Z"/></svg>';
   // a light's brightness (0–1), whether it's on, its hue and its colour temperature, for the controls
   const lightPhys = (id) => {
     const st = states[id], a = st.attributes, on = st.state === 'on';
@@ -4109,7 +4121,12 @@ export function mountTestFocus(root, { config, getHass }) {
   };
   function popOf(id) {
     const r = popOfDrawn(id);
-    if (r && physKind(id)) { r.pages[0].space += physSlot(id); r.pages[0].tabs = physTabs(r.pages[0].tabs); }
+    if (r && physKind(id) && id.startsWith('light.') && physKind(id) === 'lightdial') {
+      // Dial, On and off, Dual Axis Controller, Sliders, Colour (Matt, 25 Nov)
+      const had = r.pages[0].tabs || [], has = (m) => had.find((t) => t.mode === m);
+      r.pages[0].space += physSlot(id, 'phys') + physSlot(id, 'physon');
+      r.pages[0].tabs = [{ name: 'Dial', svg: DIAL_SVG, mode: 'phys' }, { name: 'On and off', svg: POWER_SVG, mode: 'physon' }, has('dac'), has('') || { name: 'Sliders', svg: TUNE_SVG, mode: '' }, has('colour')].filter(Boolean);
+    } else if (r && physKind(id)) { r.pages[0].space += physSlot(id); r.pages[0].tabs = physTabs(r.pages[0].tabs); }
     return r;
   }
   function popOfDrawn(id) {
