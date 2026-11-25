@@ -22,6 +22,7 @@ class Control {
     this.fillAmt = this.spring(opts.fill ? 1 : 0, 0.14, 0.7); // 0 = as drawn, 1 = the plate fills the Space
     this.lift = 20; // roughly how tall the control stands, for centring a filled drawing
     const svg = (this.svg = document.createElementNS(NS, 'svg'));
+    this.box = [400, 400];
     svg.setAttribute('viewBox', '0 0 400 400');
     svg.setAttribute('class', 'iso');
     svg.tabIndex = 0;
@@ -48,14 +49,24 @@ class Control {
   }
   pt(e) {
     const r = this.svg.getBoundingClientRect();
-    return [((e.clientX - r.left) * 400) / r.width, ((e.clientY - r.top) * 400) / r.height];
+    return [((e.clientX - r.left) * this.box[0]) / r.width, ((e.clientY - r.top) * this.box[1]) / r.height];
   }
   // the view is worked out from the camera springs each frame, so a camera change glides
   get v() {
-    const [U, ox, oy] = this.base, t = this.fillAmt.x;
+    const [U, ox0, oy0] = this.base, [bw, bh] = this.box, t = this.fillAmt.x;
+    const ox = ox0 + (bw - 400) / 2, oy = oy0 + (bh - 400) / 2; // drawn: centred in the cell as it was in 400 × 400
     const v0 = view(U, ox, oy, this.yaw.x, this.pitch.x);
     if (t < 0.001) return v0;
-    return view(U, lerp(ox, 200, t), lerp(oy, 200 + (this.lift * v0.cp * v0.k) / 2, t), this.yaw.x, this.pitch.x);
+    return view(U, lerp(ox, bw / 2, t), lerp(oy, bh / 2 + (this.lift * v0.cp * v0.k) / 2, t), this.yaw.x, this.pitch.x);
+  }
+  // the cell it's drawn in (a light's fader is a tall column beside its dial): the short side stays 400 units
+  setBox(w, h) {
+    if (!(w > 0 && h > 0)) return;
+    const box = w >= h ? [Math.round((400 * w) / h), 400] : [400, Math.round((400 * h) / w)];
+    if (box[0] === this.box[0] && box[1] === this.box[1]) return;
+    this.box = box;
+    this.svg.setAttribute('viewBox', '0 0 ' + box[0] + ' ' + box[1]);
+    this.paint();
   }
   setFill(on) { this.fillAmt.t = on ? 1 : 0; this.kick(); }
   // Fill: the plate's width and depth so it fills 352 × 352 of the Space at this camera. Only works while the
@@ -65,7 +76,7 @@ class Control {
     if (t < 0.001) return [w0, d0];
     const v = this.v, c = v.cy, s = Math.abs(v.sy), det = c * c - s * s;
     if (det < 0.4) return [w0, d0];
-    const A = 352 / v.k, B = (352 / v.k - this.lift * v.cp) / v.sp;
+    const A = (this.box[0] - 48) / v.k, B = ((this.box[1] - 48) / v.k - this.lift * v.cp) / v.sp;
     const W = Math.max(w0 * 0.6, (A * c - B * s) / det), D = Math.max(d0 * 0.6, (B * c - A * s) / det);
     return [lerp(w0, W, t), lerp(d0, D, t)];
   }
@@ -240,8 +251,12 @@ export class Fader extends Control {
 export class Dial extends Control {
   constructor(host, opts) {
     super(host, opts);
-    this.min = opts.min ?? 10; this.max = opts.max ?? 30; this.now = opts.now ?? 19.5;
+    this.min = opts.min ?? 10; this.max = opts.max ?? 30; this.now = 'now' in opts ? opts.now : 19.5;
     this.value = opts.value ?? 21.5;
+    // a colour dial (Matt, 25 Nov: "a thermostat style control for colour") prints its scale in colour: tint(val)
+    // gives each tick's colour and the knob's top shows the chosen one; step, tick and major set its divisions
+    this.step = opts.step ?? 0.5; this.tickStep = opts.tick ?? 0.5; this.major = opts.major ?? 10; // (tickStep: `tick` is the animation)
+    this.tint = opts.tint || null; this.labelOf = opts.labelOf || ((val) => val);
     this.base = [2.85, 200, 194]; this.lift = 22;
     this.val = this.spring(this.value, 0.35, 0.5);
     this.kh = this.spring(15, 0.3, 0.55);
@@ -252,7 +267,7 @@ export class Dial extends Control {
   // the scale's angle as the viewer sees it: the gap always faces us, min on the left, max on the right
   ang(val) { return 135 + ((val - this.min) / (this.max - this.min)) * 270 - this.yaw.x; }
   set(val) {
-    const snapped = Math.max(this.min, Math.min(this.max, Math.round(val * 2) / 2));
+    const snapped = Math.max(this.min, Math.min(this.max, Math.round(val / this.step) * this.step));
     if (snapped !== this.value) { this.value = snapped; this.onChange(snapped); }
     this.val.t = snapped;
     this.svg.setAttribute('aria-valuenow', snapped);
@@ -270,9 +285,9 @@ export class Dial extends Control {
   }
   up() { this.grab = null; this.kh.t = 15; }
   key(e, isDown) {
-    const step = { ArrowUp: 0.5, ArrowRight: 0.5, ArrowDown: -0.5, ArrowLeft: -0.5 }[e.key];
+    const step = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key];
     if (step === undefined) return false;
-    if (isDown) { this.set(this.value + step); this.kh.t = 12.5; } else this.kh.t = 15;
+    if (isDown) { this.set(this.value + step * this.step); this.kh.t = 12.5; } else this.kh.t = 15;
     return true;
   }
   show(val, now) { if (this.held) return; if (now != null) this.now = now; if (val != null) { this.value = val; this.val.t = val; this.svg.setAttribute('aria-valuenow', val); } this.kick(); }
@@ -282,14 +297,17 @@ export class Dial extends Control {
     const at = (r, t, z) => [r * Math.cos(t) * rx, r * Math.sin(t) * ry, z];
     const plinth = prism(circle(46, 72).map(([x, y]) => [x * rx, y * ry]), 0, 7);
     const knob = prism(circle(22 * m, 64), 7, top);
-    const lo = Math.min(this.now, this.value), hi = Math.max(this.now, this.value);
+    const lo = Math.min(this.now ?? this.value, this.value), hi = Math.max(this.now ?? this.value, this.value);
     let scale = '';
-    for (let k = 0; k <= (this.max - this.min) * 2; k++) {
-      const val = this.min + k / 2, t = rad(this.ang(val));
-      const r1 = k % 10 === 0 ? 36.5 : k % 2 === 0 ? 34.5 : 33.2;
-      const on = val >= lo && val <= hi && this.value > this.now;
-      scale += seg(v, at(30, t, 7), at(r1, t, 7), on ? 'accent' : 'edge');
-      if (k % 10 === 0) scale += surfText(v, at(41, t, 7), val, 4 * m);
+    const n = Math.round((this.max - this.min) / this.tickStep), half = Math.max(1, Math.round(this.major / 2));
+    for (let k = 0; k <= n; k++) {
+      const val = this.min + k * this.tickStep, t = rad(this.ang(val)), major = k % this.major === 0;
+      const r1 = major ? 36.5 : k % half === 0 ? 34.5 : 33.2;
+      const on = !this.tint && this.now != null && val >= lo && val <= hi && this.value > this.now;
+      const cls = this.tint ? 'edge tint" style="stroke:' + this.tint(val) : on ? 'accent' : 'edge';
+      scale += seg(v, at(30, t, 7), at(this.tint ? 37 : r1, t, 7), cls);
+      const label = major ? this.labelOf(val) : null;
+      if (label != null && label !== '') scale += surfText(v, at(41.5, t, 7), label, 4 * m);
     }
     let knurl = '';
     for (let j = 0; j < 40; j++) {
@@ -303,7 +321,9 @@ export class Dial extends Control {
       `<g class="deco">${scale}</g>` +
       shadow(v, knob, 7, h, facePath(v, plinth, 1)) +
       draw(v, knob, 'knob') +
-      `<g class="deco">${knurl}${loop(v, ring)}${seg(v, [5 * m * Math.cos(t), 5 * m * Math.sin(t), top], [15.5 * m * Math.cos(t), 15.5 * m * Math.sin(t), top], 'edge pointer')}</g>`
+      `<g class="deco">${knurl}${loop(v, ring)}` +
+      (this.tint ? `<path class="swatch" style="fill:${this.tint(this.value)}" d="${pathOf(circle(8 * m, 40).map(([x, y]) => v.p([x, y, top])))}"/>` : '') +
+      `${seg(v, [(this.tint ? 10 : 5) * m * Math.cos(t), (this.tint ? 10 : 5) * m * Math.sin(t), top], [15.5 * m * Math.cos(t), 15.5 * m * Math.sin(t), top], 'edge pointer')}</g>`
     );
   }
 }

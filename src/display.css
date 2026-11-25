@@ -1349,7 +1349,7 @@ button.tfAreaIcon{cursor:pointer}
 
 /* Physical controls (25 Nov 2026): the line drawing fills the more-info space; lines in the text colour, faces in the
    space's own fill so they hide what is behind them, shadows hatched in the muted colour */
-#app .tfMoreSpace.tfPhys{position:relative;padding:0;display:block;--face:var(--tile);--shade:var(--muted);--phys-accent:#d0ff00}
+#app .tfMoreSpace.tfPhys{position:relative;padding:0;display:block;background:none;border-radius:0;--face:var(--card);--shade:var(--muted);--phys-accent:#d0ff00}
 #app.light .tfMoreSpace.tfPhys{--phys-accent:var(--text)}
 .tfPhys .iso{position:absolute;inset:0;width:100%;height:100%;display:block;color:var(--text);touch-action:none;outline:none;-webkit-user-select:none;user-select:none}
 .tfPhys .iso:focus-visible{box-shadow:inset 0 0 0 2px var(--text);border-radius:16px}
@@ -1387,3 +1387,11 @@ button.tfAreaIcon{cursor:pointer}
 .tfPhysPreview.dragging .tfPhysPreviewHead{cursor:grabbing}
 .tfPhysPreviewHead .activityTitle{flex:1}
 .tfPhysGrip{width:10px;height:16px;flex:none;margin-left:-4px;background:radial-gradient(circle,var(--muted) 1.3px,transparent 1.6px) 0 0/5px 5.33px}
+/* no background of its own (Matt, 25 Nov): the controls sit on the popup, their faces in its colour. A light's three
+   share the space: the fader a tall column on the left, the colour dial over the switch on the right */
+.tfPhysGrid{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px}
+.tfPhysGrid.two{grid-template-rows:1fr}
+.tfPhysCell{position:relative;min-width:0;min-height:0}
+.tfPhysCell.bright{grid-row:1/-1}
+.tfPhys .iso .tint{stroke-width:2.4}
+.tfPhys .iso .swatch{stroke:currentColor;stroke-width:1}
