@@ -212,8 +212,55 @@ export function mountTestFocus(root, { config, getHass }) {
       if (b.dataset.physBinary) { physBinary = b.dataset.physBinary; local.set(PHYS_BINARY_KEY, physBinary); physs.clear(); }
       showPhys();
       if (b.id === 'physToggle' || b.dataset.physBinary) render();
+      showPreview(b.closest('.toggleRow'));
     });
     showPhys();
+    /* A preview while choosing (Matt, 25 Nov: "see what it actually looks like when I'm selecting those options"):
+       a small pop-up rises over the foot of the screen with three live samples, the on and off control (Toggle or
+       Rocker), a light's fader and a thermostat's dial. They glide to a new angle, stretch with Fill, and dim with a
+       note when Physical controls is off. They can be pressed; nothing is sent to the house */
+    let preview = null;
+    const hidePreview = () => {
+      if (!preview || preview.hidden) return;
+      preview.classList.remove('in');
+      setTimeout(() => { if (!preview.classList.contains('in')) preview.hidden = true; }, 220);
+    };
+    function showPreview(rowEl) {
+      const app = root.querySelector('#app');
+      if (!app) return;
+      if (!preview) {
+        preview = document.createElement('div');
+        preview.className = 'tfPhysPreview';
+        preview.hidden = true;
+        preview.setAttribute('role', 'dialog');
+        preview.setAttribute('aria-label', 'Physical controls preview');
+        preview.innerHTML = '<div class="tfPhysPreviewHead"><span class="activityTitle">Preview</span><button class="tfBack" type="button" data-preview-close aria-label="Close preview">' + CLOSE + '</button></div>' +
+          '<div class="tfPhysPreviewRow"></div><div class="tfPhysPreviewNote">Off: popups show their usual controls.</div>';
+        app.appendChild(preview);
+        preview.querySelector('[data-preview-close]').addEventListener('click', hidePreview);
+      }
+      const row = preview.querySelector('.tfPhysPreviewRow');
+      if (preview.dataset.binary !== physBinary) {
+        // made again when the on and off control changes; otherwise the same ones move, so a change glides
+        preview.dataset.binary = physBinary;
+        const samples = [[physBinary === 'rocker' ? 'Rocker' : 'Toggle', 'Switch'], ['Fader', 'Light'], ['Dial', 'Thermostat']];
+        row.innerHTML = samples.map(([, name]) => '<div class="tfPhysPreviewCell"><div class="tfMoreSpace tfPhys"></div><span>' + name + '</span></div>').join('');
+        const spaces = row.querySelectorAll('.tfPhys'), opts = { camera: physView, fill: physFit === 'fill' };
+        preview.ctls = [
+          physBinary === 'rocker' ? new Rocker(spaces[0], { ...opts, on: true, label: 'Sample switch' }) : new Toggle(spaces[0], { ...opts, on: true, label: 'Sample switch' }),
+          new Fader(spaces[1], { ...opts, value: 0.64, label: 'Sample light brightness' }),
+          new Dial(spaces[2], { ...opts, value: 21.5, now: 19.5, min: 10, max: 30, label: 'Sample thermostat target' }),
+        ];
+      } else preview.ctls.forEach((c) => { c.setCamera(physView); c.setFill(physFit === 'fill'); });
+      preview.classList.toggle('off', !physOn);
+      if (preview.hidden) { preview.hidden = false; void preview.offsetWidth; } // laid out first, so it rises in
+      preview.classList.add('in');
+      // the row being changed stays in sight above it
+      const over = rowEl ? rowEl.getBoundingClientRect().bottom - (preview.getBoundingClientRect().top - 16) : 0;
+      if (over > 0) rowEl.scrollIntoView({ block: 'center', behavior: reduced() ? 'instant' : 'smooth' });
+    }
+    // leaving Settings takes it away
+    ['#homeNav', '#settingsBack', '#tvNav'].forEach((sel) => root.querySelector(sel)?.addEventListener('click', hidePreview));
     [rowOf($('hoursChoice')), rowOf($('wxStyleChoice'))].forEach((row) => row && group('weather').appendChild(row));
     const pane = $('housePane'), bar = pane.querySelector('.houseTabs'), mark = bar.querySelector('.rubberIndicator');
     const LIGHT_VIEW_KEY = 'homecore-light-view';
