@@ -181,8 +181,12 @@ export class Rocker extends Control {
       draw(v, bezel, 'paddle') +
       shadow(v, paddle, base, h, facePath(v, bezel, 1)) +
       draw(v, paddle, 'paddle') +
-      loop(v, o, this.on ? 'edge mark' : 'accent mark') +
-      seg(v, i[0], i[1], this.on ? 'accent mark' : 'edge mark')
+      // words in place of O and I when it's given them (the light dial's Colour / White rocker, Matt 25 Nov): the
+      // pressed half's word is the choice. labels[0] is On, at the front; labels[1] Off, at the back
+      (this.opts.labels
+        ? surfText(v, [0, L / 2, zAt(L / 2)], this.opts.labels[0], (this.opts.textSize || 6) * m, { part: 'paddle', cls: this.on ? 'sel' : '', w: 40 }) +
+          surfText(v, [0, -L / 2, zAt(-L / 2)], this.opts.labels[1], (this.opts.textSize || 6) * m, { part: 'paddle', cls: this.on ? '' : 'sel', w: 40 })
+        : loop(v, o, this.on ? 'edge mark' : 'accent mark') + seg(v, i[0], i[1], this.on ? 'accent mark' : 'edge mark'))
     );
   }
 }

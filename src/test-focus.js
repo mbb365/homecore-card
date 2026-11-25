@@ -4095,7 +4095,8 @@ export function mountTestFocus(root, { config, getHass }) {
     const ctls = [dial];
     if (colourOk && warmOk) {
       const tCell = document.createElement('div'); tCell.className = 'tfPhysCell mini'; wrap.appendChild(tCell);
-      const mini = new Toggle(tCell, { ...opts, label: 'Dial sets colour or white', on: true, labels: ['Colour', 'White'], textSize: 11,
+      // a rocker (Matt, 25 Nov: "make the toggle in the bottom corner be a rocker"): Colour at the front, White behind
+      const mini = new Rocker(tCell, { ...opts, label: 'Dial sets colour or white', on: true, labels: ['Colour', 'White'], textSize: 9,
         onChange: (on) => { second = on ? 'colour' : 'warm'; if (mode !== 'bright') { mode = second; dial.setConfig(cfg(mode), now(mode)); } } });
       ctls.push(mini);
     }
